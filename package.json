@@ -1,0 +1,53 @@
+{
+  "name": "@automattic/wcpay-cli",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Standalone WooPayments CLI for developers, agents, and test-mode workflows.",
+  "type": "module",
+  "bin": {
+    "wcpay": "./dist/cli.js"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/app.d.ts",
+      "import": "./dist/app.js"
+    }
+  },
+  "files": [
+    "dist",
+    "docs",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "dev": "tsx src/cli.ts",
+    "lint": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "check": "npm run lint && npm run test && npm run build",
+    "format": "prettier --write ."
+  },
+  "keywords": [
+    "woocommerce",
+    "woopayments",
+    "wcpay",
+    "cli",
+    "mcp"
+  ],
+  "author": "Automattic",
+  "license": "UNLICENSED",
+  "engines": {
+    "node": ">=20.10"
+  },
+  "dependencies": {
+    "commander": "^12.1.0",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.2",
+    "prettier": "^3.4.2",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2",
+    "vitest": "^2.1.8"
+  }
+}
