@@ -5,6 +5,7 @@ import { registerReadCommands } from './commands/read.js';
 import { registerResourceCommands } from './commands/resources.js';
 import { registerStubCommands } from './commands/stubs.js';
 import { registerToolsCommands } from './commands/tools.js';
+import { registerWriteCommands } from './commands/writes.js';
 
 export function buildProgram(): Command {
 	const program = new Command();
@@ -30,6 +31,7 @@ export function buildProgram(): Command {
 	registerApiCommand( program );
 	registerReadCommands( program );
 	registerResourceCommands( program );
+	registerWriteCommands( program );
 	registerStubCommands( program );
 	registerToolsCommands( program );
 

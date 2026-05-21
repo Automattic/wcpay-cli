@@ -8,9 +8,6 @@ function stubAction( command: string, options: { json?: boolean } = {} ): void {
 }
 
 export function registerStubCommands( program: Command ): void {
-	const refunds = program.command( 'refunds' ).description( 'Create and inspect refunds.' );
-	refunds.command( 'create' ).description( 'Create a test-mode refund.' ).option( '--json', 'Emit JSON output.' ).action( ( options ) => stubAction( 'refunds create', options ) );
-
 	const test = program.command( 'test' ).description( 'Run test/dev-mode WooPayments workflows.' );
 	const testOrder = test.command( 'order' ).description( 'Test order workflows.' );
 	testOrder.command( 'create' ).description( 'Create a test order.' ).option( '--json', 'Emit JSON output.' ).action( ( options ) => stubAction( 'test order create', options ) );
