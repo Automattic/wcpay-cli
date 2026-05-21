@@ -2,6 +2,7 @@ import { Command } from 'commander';
 import { registerApiCommand } from './commands/api.js';
 import { registerAuthCommands, registerProfileCommands, registerWhoamiCommand } from './commands/auth.js';
 import { registerReadCommands } from './commands/read.js';
+import { registerResourceCommands } from './commands/resources.js';
 import { registerStubCommands } from './commands/stubs.js';
 import { registerToolsCommands } from './commands/tools.js';
 
@@ -28,6 +29,7 @@ export function buildProgram(): Command {
 	registerWhoamiCommand( program );
 	registerApiCommand( program );
 	registerReadCommands( program );
+	registerResourceCommands( program );
 	registerStubCommands( program );
 	registerToolsCommands( program );
 
