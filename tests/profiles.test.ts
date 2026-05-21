@@ -5,8 +5,8 @@ import { describe, expect, it } from 'vitest';
 import { deriveProfileName, normalizeSiteUrl, ProfileStore } from '../src/core/profiles.js';
 import {
 	createSecretStore,
-	FallbackSecretStore,
 	FileSecretStore,
+	HelpfulKeychainSecretStore,
 	MacOSKeychainSecretStore,
 	type CommandRunner,
 	type SecretStore,
@@ -114,8 +114,8 @@ describe( 'SecretToolSecretStore', () => {
 	} );
 } );
 
-describe( 'FallbackSecretStore', () => {
-	it( 'falls back when the primary store fails', async () => {
+describe( 'HelpfulKeychainSecretStore', () => {
+	it( 'does not silently fall back when the keychain fails', async () => {
 		const primary: SecretStore = {
 			get: async () => {
 				throw new Error( 'no keychain' );
@@ -125,15 +125,11 @@ describe( 'FallbackSecretStore', () => {
 			},
 			delete: async () => undefined,
 		};
-		const env = await testEnv();
-		const fallback = new FileSecretStore( env );
-		const store = new FallbackSecretStore( primary, fallback );
+		const store = new HelpfulKeychainSecretStore( primary );
 
-		await store.set( 'profile:local', { consumerKey: 'ck_test', consumerSecret: 'cs_test' } );
-		expect( await store.get( 'profile:local' ) ).toEqual( {
-			consumerKey: 'ck_test',
-			consumerSecret: 'cs_test',
-		} );
+		await expect(
+			store.set( 'profile:local', { consumerKey: 'ck_test', consumerSecret: 'cs_test' } )
+		).rejects.toMatchObject( { code: 'keychain_unavailable' } );
 	} );
 } );
 

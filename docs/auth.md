@@ -30,8 +30,8 @@ Current implementation:
 - secrets use the OS keychain where available:
   - macOS: Keychain via the `security` CLI;
   - Linux: Secret Service via `secret-tool` when available;
-- if the OS keychain is unavailable, credentials fall back to `auth.json` with file mode `0600`;
-- set `WCPAY_KEYRING=0` to force file-based storage for CI/containers.
+- if the OS keychain is unavailable, the CLI fails with instructions rather than silently writing secrets to disk;
+- set `WCPAY_KEYRING=0` to explicitly use file-based storage at `auth.json` with file mode `0600` for CI/containers.
 
 ## Environment variables
 
@@ -45,12 +45,12 @@ Planned variables:
 | `WCPAY_CONSUMER_SECRET` | Provide a consumer secret for CI/scripts. |
 | `WCPAY_KEYRING` | Set to `0` to disable OS keychain. |
 
-## No-browser login
+## Login
 
-Use no-browser login for local development, SSH sessions, containers, or any environment where browser auth is unavailable:
+For now, `wcpay login` uses the no-browser WooCommerce REST API key flow by default. This works for local development, SSH sessions, containers, and environments where browser auth is unavailable:
 
 ```bash
-wcpay login --no-browser --site http://localhost:8082
+wcpay login --site http://localhost:8082
 ```
 
 The command prints the WooCommerce REST API key settings URL, then prompts for the generated consumer key and secret. In non-interactive environments, pass credentials explicitly or set env vars:
@@ -58,10 +58,10 @@ The command prints the WooCommerce REST API key settings URL, then prompts for t
 ```bash
 WCPAY_CONSUMER_KEY=ck_... \
 WCPAY_CONSUMER_SECRET=cs_... \
-  wcpay login --no-browser --site http://localhost:8082 --no-verify
+  wcpay login --site http://localhost:8082 --no-verify
 ```
 
-Browser login is intentionally not implemented yet; `wcpay login` without `--no-browser` explains this and points to the manual flow.
+`--no-browser` is still accepted as an explicit alias, but it is no longer required.
 
 ## Add a profile directly
 

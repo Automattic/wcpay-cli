@@ -19,11 +19,7 @@ interface AuthAddOptions {
 	json?: boolean;
 }
 
-interface LoginOptions extends AuthAddOptions {
-	// Commander treats `--no-browser` as a negated `browser` option.
-	browser?: boolean;
-	noBrowser?: boolean;
-}
+type LoginOptions = AuthAddOptions;
 
 interface SaveProfileInput {
 	name?: string;
@@ -37,8 +33,8 @@ interface SaveProfileInput {
 export function registerLoginCommand( program: Command ): void {
 	program
 		.command( 'login' )
-		.description( 'Authenticate with a WooPayments store.' )
-		.option( '--no-browser', 'Use manual WooCommerce REST API key auth without opening a browser.' )
+		.description( 'Authenticate with a WooPayments store using WooCommerce REST API keys.' )
+		.option( '--no-browser', 'Use manual WooCommerce REST API key auth without opening a browser. This is the default for now.' )
 		.option( '--site <url>', 'Store site URL.' )
 		.option( '--name <name>', 'Profile name. Defaults to the site hostname.' )
 		.option( '--consumer-key <key>', `WooCommerce consumer key. Defaults to ${ ENV_CONSUMER_KEY }.` )
@@ -49,15 +45,6 @@ export function registerLoginCommand( program: Command ): void {
 		.action( async ( options: LoginOptions ) => {
 			const json = isJson( program, options );
 			await runAction( { json }, async () => {
-				const noBrowser = options.noBrowser || options.browser === false;
-				if ( ! noBrowser ) {
-					throw new CliError( {
-						code: 'browser_auth_not_implemented',
-						message: 'Browser login is not implemented yet. Use `wcpay login --no-browser` to authenticate with WooCommerce REST API keys.',
-						status: 501,
-					} );
-				}
-
 				const globalOptions = program.opts() as { site?: string };
 				const site = options.site ?? globalOptions.site ?? ( await promptText( 'Site URL: ' ) );
 				const siteUrl = normalizeSiteUrl( site, { allowInsecureLocal: options.allowInsecureLocal } );
@@ -117,7 +104,7 @@ export function registerAuthCommands( program: Command ): void {
 				if ( ! consumerKey || ! consumerSecret ) {
 					throw new CliError( {
 						code: 'missing_credentials_input',
-						message: 'Pass --consumer-key and --consumer-secret, or set WCPAY_CONSUMER_KEY and WCPAY_CONSUMER_SECRET. For a guided flow, run `wcpay login --no-browser`.',
+						message: 'Pass --consumer-key and --consumer-secret, or set WCPAY_CONSUMER_KEY and WCPAY_CONSUMER_SECRET. For a guided flow, run `wcpay login`.',
 						status: 2,
 					} );
 				}

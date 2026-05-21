@@ -78,7 +78,7 @@ Future:
 
 ```bash
 wcpay login
-wcpay login --no-browser
+wcpay login
 ```
 
 ### 5. Sandbox/test workflows as named scenarios

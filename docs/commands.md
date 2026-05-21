@@ -4,15 +4,15 @@ This file is currently hand-written. It should eventually be generated or checke
 
 ## Core/auth
 
-### `wcpay login --no-browser`
+### `wcpay login`
 
-Guided no-browser authentication with WooCommerce REST API keys.
+Guided authentication with WooCommerce REST API keys. For now, this is a no-browser flow by default.
 
 ```bash
-wcpay login --no-browser --site https://store.example
+wcpay login --site https://store.example
 ```
 
-If credentials are not provided through flags or env vars, the command prints the WooCommerce REST API key settings URL and prompts for the generated key and secret.
+If credentials are not provided through flags or env vars, the command prints the WooCommerce REST API key settings URL and prompts for the generated key and secret. `--no-browser` is accepted as an explicit alias but is not required.
 
 ### `wcpay auth add`
 
@@ -39,7 +39,7 @@ Options:
 ### Other auth/profile commands
 
 ```bash
-wcpay login --no-browser
+wcpay login
 wcpay auth list
 wcpay auth test [profile]
 wcpay auth remove <profile>

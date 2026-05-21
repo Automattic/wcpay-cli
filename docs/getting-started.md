@@ -22,7 +22,7 @@ npm install -g @automattic/wcpay-cli
 v1 uses WooCommerce REST API keys. For a guided no-browser flow:
 
 ```bash
-wcpay login --no-browser --site https://store.example --name staging
+wcpay login --site https://store.example --name staging
 ```
 
 Or pass credentials directly:

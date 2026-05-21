@@ -163,30 +163,31 @@ export class SecretToolSecretStore implements SecretStore {
 	}
 }
 
-export class FallbackSecretStore implements SecretStore {
-	public constructor(
-		private readonly primary: SecretStore,
-		private readonly fallback: SecretStore
-	) {}
+export class HelpfulKeychainSecretStore implements SecretStore {
+	public constructor( private readonly keychain: SecretStore ) {}
 
 	public async get( ref: string ): Promise<WooCommerceApiCredentials | undefined> {
 		try {
-			return ( await this.primary.get( ref ) ) ?? ( await this.fallback.get( ref ) );
-		} catch {
-			return this.fallback.get( ref );
+			return await this.keychain.get( ref );
+		} catch ( error ) {
+			throw keychainUnavailableError( error );
 		}
 	}
 
 	public async set( ref: string, credentials: WooCommerceApiCredentials ): Promise<void> {
 		try {
-			await this.primary.set( ref, credentials );
-		} catch {
-			await this.fallback.set( ref, credentials );
+			await this.keychain.set( ref, credentials );
+		} catch ( error ) {
+			throw keychainUnavailableError( error );
 		}
 	}
 
 	public async delete( ref: string ): Promise<void> {
-		await Promise.allSettled( [ this.primary.delete( ref ), this.fallback.delete( ref ) ] );
+		try {
+			await this.keychain.delete( ref );
+		} catch ( error ) {
+			throw keychainUnavailableError( error );
+		}
 	}
 }
 
@@ -194,20 +195,19 @@ export function createSecretStore(
 	env: NodeJS.ProcessEnv = process.env,
 	platform: NodeJS.Platform = process.platform
 ): SecretStore {
-	const fileStore = new FileSecretStore( env );
 	if ( isKeyringDisabled( env ) ) {
-		return fileStore;
+		return new FileSecretStore( env );
 	}
 
 	if ( platform === 'darwin' ) {
-		return new FallbackSecretStore( new MacOSKeychainSecretStore(), fileStore );
+		return new HelpfulKeychainSecretStore( new MacOSKeychainSecretStore() );
 	}
 
 	if ( platform === 'linux' ) {
-		return new FallbackSecretStore( new SecretToolSecretStore(), fileStore );
+		return new HelpfulKeychainSecretStore( new SecretToolSecretStore() );
 	}
 
-	return fileStore;
+	return new FileSecretStore( env );
 }
 
 export function validateCredentials( credentials: WooCommerceApiCredentials ): void {
@@ -239,6 +239,19 @@ function parseCredentialsJson( json: string ): WooCommerceApiCredentials | undef
 
 function isKeyringDisabled( env: NodeJS.ProcessEnv ): boolean {
 	return env[ ENV_KEYRING ] === '0' || env[ ENV_KEYRING ] === 'false';
+}
+
+function keychainUnavailableError( cause: unknown ): CliError {
+	return new CliError( {
+		code: 'keychain_unavailable',
+		message: [
+			'Could not access the OS keychain for WooPayments CLI credentials.',
+			'To store credentials in ~/.config/wcpay/auth.json instead, rerun with WCPAY_KEYRING=0.',
+			'That file will contain WooCommerce API credentials. Treat it like a secret.',
+		].join( ' ' ),
+		status: 2,
+		details: cause instanceof Error ? cause.message : String( cause ),
+	} );
 }
 
 function isNotFoundError( error: unknown ): boolean {
