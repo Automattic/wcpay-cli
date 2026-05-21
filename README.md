@@ -33,6 +33,7 @@ npm run dev -- --help
 
 ```bash
 wcpay --help
+wcpay login --no-browser --site http://localhost:8082
 wcpay auth add --site http://localhost:8082 --consumer-key ck_... --consumer-secret cs_... --no-verify
 wcpay auth list
 wcpay profile use local

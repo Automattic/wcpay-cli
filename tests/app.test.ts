@@ -8,6 +8,7 @@ describe( 'buildProgram', () => {
 		const program = buildProgram();
 		expect( program.name() ).toBe( 'wcpay' );
 		expect( program.commands.map( ( command ) => command.name() ) ).toContain( 'tools' );
+		expect( program.commands.map( ( command ) => command.name() ) ).toContain( 'login' );
 	} );
 } );
 

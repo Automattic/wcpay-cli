@@ -1,12 +1,13 @@
 import { Command } from 'commander';
 import { RestClient } from '../core/api.js';
 import { ENV_CONSUMER_KEY, ENV_CONSUMER_SECRET } from '../core/config.js';
+import { createContext } from '../core/context.js';
 import { CliError } from '../core/errors.js';
 import { classifyMode } from '../core/mode.js';
-import { deriveProfileName, normalizeSiteUrl, ProfileStore, type Profile } from '../core/profiles.js';
-import { createSecretStore, validateCredentials } from '../core/secrets.js';
-import { createContext } from '../core/context.js';
 import { printError, printSuccess } from '../core/output.js';
+import { deriveProfileName, normalizeSiteUrl, ProfileStore, type Profile } from '../core/profiles.js';
+import { promptSecret, promptText } from '../core/prompts.js';
+import { createSecretStore, validateCredentials } from '../core/secrets.js';
 
 interface AuthAddOptions {
 	name?: string;
@@ -16,6 +17,72 @@ interface AuthAddOptions {
 	allowInsecureLocal?: boolean;
 	verify?: boolean;
 	json?: boolean;
+}
+
+interface LoginOptions extends AuthAddOptions {
+	// Commander treats `--no-browser` as a negated `browser` option.
+	browser?: boolean;
+	noBrowser?: boolean;
+}
+
+interface SaveProfileInput {
+	name?: string;
+	site: string;
+	consumerKey: string;
+	consumerSecret: string;
+	allowInsecureLocal?: boolean;
+	verify?: boolean;
+}
+
+export function registerLoginCommand( program: Command ): void {
+	program
+		.command( 'login' )
+		.description( 'Authenticate with a WooPayments store.' )
+		.option( '--no-browser', 'Use manual WooCommerce REST API key auth without opening a browser.' )
+		.option( '--site <url>', 'Store site URL.' )
+		.option( '--name <name>', 'Profile name. Defaults to the site hostname.' )
+		.option( '--consumer-key <key>', `WooCommerce consumer key. Defaults to ${ ENV_CONSUMER_KEY }.` )
+		.option( '--consumer-secret <secret>', `WooCommerce consumer secret. Defaults to ${ ENV_CONSUMER_SECRET }.` )
+		.option( '--allow-insecure-local', 'Allow HTTP for local development stores.' )
+		.option( '--no-verify', 'Save credentials without verifying them first.' )
+		.option( '--json', 'Emit JSON output.' )
+		.action( async ( options: LoginOptions ) => {
+			const json = isJson( program, options );
+			await runAction( { json }, async () => {
+				const noBrowser = options.noBrowser || options.browser === false;
+				if ( ! noBrowser ) {
+					throw new CliError( {
+						code: 'browser_auth_not_implemented',
+						message: 'Browser login is not implemented yet. Use `wcpay login --no-browser` to authenticate with WooCommerce REST API keys.',
+						status: 501,
+					} );
+				}
+
+				const globalOptions = program.opts() as { site?: string };
+				const site = options.site ?? globalOptions.site ?? ( await promptText( 'Site URL: ' ) );
+				const siteUrl = normalizeSiteUrl( site, { allowInsecureLocal: options.allowInsecureLocal } );
+				const consumerKey = options.consumerKey ?? process.env[ ENV_CONSUMER_KEY ];
+				const consumerSecret = options.consumerSecret ?? process.env[ ENV_CONSUMER_SECRET ];
+
+				if ( ! consumerKey || ! consumerSecret ) {
+					writeNoBrowserInstructions( siteUrl, json );
+				}
+
+				const saved = await saveAuthProfile( {
+					name: options.name,
+					site: siteUrl,
+					consumerKey: consumerKey ?? ( await promptText( 'Consumer key: ' ) ),
+					consumerSecret: consumerSecret ?? ( await promptSecret( 'Consumer secret: ' ) ),
+					allowInsecureLocal: options.allowInsecureLocal,
+					verify: options.verify,
+				} );
+
+				printSuccess( saved, {
+					json,
+					human: `Logged in to ${ saved.profile.name } (${ saved.profile.siteUrl })`,
+				} );
+			} );
+		} );
 }
 
 export function registerAuthCommands( program: Command ): void {
@@ -50,54 +117,24 @@ export function registerAuthCommands( program: Command ): void {
 				if ( ! consumerKey || ! consumerSecret ) {
 					throw new CliError( {
 						code: 'missing_credentials_input',
-						message: 'Pass --consumer-key and --consumer-secret, or set WCPAY_CONSUMER_KEY and WCPAY_CONSUMER_SECRET.',
+						message: 'Pass --consumer-key and --consumer-secret, or set WCPAY_CONSUMER_KEY and WCPAY_CONSUMER_SECRET. For a guided flow, run `wcpay login --no-browser`.',
 						status: 2,
 					} );
 				}
 
-				const credentials = { consumerKey, consumerSecret };
-				validateCredentials( credentials );
-
-				const siteUrl = normalizeSiteUrl( site, {
+				const saved = await saveAuthProfile( {
+					name: options.name,
+					site,
+					consumerKey,
+					consumerSecret,
 					allowInsecureLocal: options.allowInsecureLocal,
+					verify: options.verify,
 				} );
-				const name = options.name ?? deriveProfileName( siteUrl );
-				const now = new Date().toISOString();
-				const profile: Profile = {
-					name,
-					siteUrl,
-					allowInsecureLocal: Boolean( options.allowInsecureLocal ),
-					auth: { type: 'woocommerce_api_key', secretRef: `profile:${ name }` },
-					createdAt: now,
-					updatedAt: now,
-				};
 
-				if ( options.verify !== false ) {
-					await verifyProfile( profile, credentials );
-				}
-
-				const profileStore = new ProfileStore();
-				const secretStore = createSecretStore();
-				const savedProfile = await profileStore.upsert( {
-					name,
-					siteUrl,
-					allowInsecureLocal: options.allowInsecureLocal,
+				printSuccess( saved, {
+					json,
+					human: `Added profile ${ saved.profile.name } (${ saved.profile.siteUrl })`,
 				} );
-				await secretStore.set( savedProfile.auth.secretRef, credentials );
-
-				const config = await profileStore.getConfig();
-				if ( ! config.defaultProfile ) {
-					config.defaultProfile = savedProfile.name;
-					await profileStore.saveConfig( config );
-				}
-
-				printSuccess(
-					{ profile: publicProfile( savedProfile ), defaultProfile: config.defaultProfile },
-					{
-						json,
-						human: `Added profile ${ savedProfile.name } (${ savedProfile.siteUrl })`,
-					}
-				);
 			} );
 		} );
 
@@ -198,9 +235,65 @@ export function registerWhoamiCommand( program: Command ): void {
 		} );
 }
 
+async function saveAuthProfile( input: SaveProfileInput ): Promise<{ profile: Omit<Profile, 'auth'>; defaultProfile?: string }> {
+	const credentials = { consumerKey: input.consumerKey, consumerSecret: input.consumerSecret };
+	validateCredentials( credentials );
+
+	const siteUrl = normalizeSiteUrl( input.site, {
+		allowInsecureLocal: input.allowInsecureLocal,
+	} );
+	const name = input.name ?? deriveProfileName( siteUrl );
+	const now = new Date().toISOString();
+	const profile: Profile = {
+		name,
+		siteUrl,
+		allowInsecureLocal: Boolean( input.allowInsecureLocal ),
+		auth: { type: 'woocommerce_api_key', secretRef: `profile:${ name }` },
+		createdAt: now,
+		updatedAt: now,
+	};
+
+	if ( input.verify !== false ) {
+		await verifyProfile( profile, credentials );
+	}
+
+	const profileStore = new ProfileStore();
+	const secretStore = createSecretStore();
+	const savedProfile = await profileStore.upsert( {
+		name,
+		siteUrl,
+		allowInsecureLocal: input.allowInsecureLocal,
+	} );
+	await secretStore.set( savedProfile.auth.secretRef, credentials );
+
+	const config = await profileStore.getConfig();
+	if ( ! config.defaultProfile ) {
+		config.defaultProfile = savedProfile.name;
+		await profileStore.saveConfig( config );
+	}
+
+	return { profile: publicProfile( savedProfile ), defaultProfile: config.defaultProfile };
+}
+
 async function verifyProfile( profile: Profile, credentials: { consumerKey: string; consumerSecret: string } ): Promise<void> {
 	const client = new RestClient( profile, credentials );
 	await client.request( { method: 'GET', path: '/wc/v3/payments/settings' } );
+}
+
+function writeNoBrowserInstructions( siteUrl: string, json: boolean ): void {
+	if ( json ) {
+		return;
+	}
+	const keysUrl = `${ siteUrl }/wp-admin/admin.php?page=wc-settings&tab=advanced&section=keys`;
+	process.stderr.write( [
+		'No-browser login uses WooCommerce REST API keys.',
+		'Create a Read/Write key for a user with manage_woocommerce capability:',
+		'',
+		`  ${ keysUrl }`,
+		'',
+		'Then paste the generated consumer key and consumer secret below.',
+		'',
+	].join( '\n' ) );
 }
 
 function isJson( program: Command, options: { json?: boolean } ): boolean {

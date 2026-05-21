@@ -1,6 +1,11 @@
 import { Command } from 'commander';
 import { registerApiCommand } from './commands/api.js';
-import { registerAuthCommands, registerProfileCommands, registerWhoamiCommand } from './commands/auth.js';
+import {
+	registerAuthCommands,
+	registerLoginCommand,
+	registerProfileCommands,
+	registerWhoamiCommand,
+} from './commands/auth.js';
 import { registerMcpCommand } from './commands/mcp.js';
 import { registerReadCommands } from './commands/read.js';
 import { registerResourceCommands } from './commands/resources.js';
@@ -26,6 +31,7 @@ export function buildProgram(): Command {
 		.option( '--debug', 'Print debug diagnostics to stderr.' )
 		.option( '--timeout <seconds>', 'HTTP timeout in seconds.' );
 
+	registerLoginCommand( program );
 	registerAuthCommands( program );
 	registerProfileCommands( program );
 	registerWhoamiCommand( program );

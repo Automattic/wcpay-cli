@@ -45,7 +45,25 @@ Planned variables:
 | `WCPAY_CONSUMER_SECRET` | Provide a consumer secret for CI/scripts. |
 | `WCPAY_KEYRING` | Set to `0` to disable OS keychain. |
 
-## Add a profile today
+## No-browser login
+
+Use no-browser login for local development, SSH sessions, containers, or any environment where browser auth is unavailable:
+
+```bash
+wcpay login --no-browser --site http://localhost:8082
+```
+
+The command prints the WooCommerce REST API key settings URL, then prompts for the generated consumer key and secret. In non-interactive environments, pass credentials explicitly or set env vars:
+
+```bash
+WCPAY_CONSUMER_KEY=ck_... \
+WCPAY_CONSUMER_SECRET=cs_... \
+  wcpay login --no-browser --site http://localhost:8082 --no-verify
+```
+
+Browser login is intentionally not implemented yet; `wcpay login` without `--no-browser` explains this and points to the manual flow.
+
+## Add a profile directly
 
 ```bash
 wcpay auth add \
