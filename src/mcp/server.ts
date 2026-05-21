@@ -12,6 +12,13 @@ const listArgs = {
 	limit: z.number().int().optional(),
 };
 
+const readOnlyAnnotations = {
+	readOnlyHint: true,
+	destructiveHint: false,
+	idempotentHint: true,
+	openWorldHint: true,
+};
+
 export async function runMcpServer(): Promise<void> {
 	const server = createMcpServer();
 	await server.connect( new StdioServerTransport() );
@@ -28,6 +35,7 @@ export function createMcpServer(): McpServer {
 		{
 			description: 'Read WooPayments mode flags and classify the store as live, test, or dev.',
 			inputSchema: optionalProfile,
+			annotations: readOnlyAnnotations,
 		},
 		async ( args ) => textResult( await getMode( args.profile ) )
 	);
@@ -37,6 +45,7 @@ export function createMcpServer(): McpServer {
 		{
 			description: 'Read WooPayments account status for the selected profile.',
 			inputSchema: optionalProfile,
+			annotations: readOnlyAnnotations,
 		},
 		async ( args ) => textResult( await getEndpoint( args.profile, '/wc/v3/payments/accounts' ) )
 	);
@@ -46,6 +55,7 @@ export function createMcpServer(): McpServer {
 		{
 			description: 'Read WooPayments settings and mode flags.',
 			inputSchema: optionalProfile,
+			annotations: readOnlyAnnotations,
 		},
 		async ( args ) => textResult( await getEndpoint( args.profile, '/wc/v3/payments/settings' ) )
 	);
@@ -55,6 +65,7 @@ export function createMcpServer(): McpServer {
 		{
 			description: 'List WooPayments transactions.',
 			inputSchema: listArgs,
+			annotations: readOnlyAnnotations,
 		},
 		async ( args ) =>
 			textResult(
@@ -67,6 +78,7 @@ export function createMcpServer(): McpServer {
 		{
 			description: 'List WooPayments deposits.',
 			inputSchema: listArgs,
+			annotations: readOnlyAnnotations,
 		},
 		async ( args ) =>
 			textResult( await getEndpoint( args.profile, '/wc/v3/payments/deposits', buildListQuery( args ) ) )
@@ -77,6 +89,7 @@ export function createMcpServer(): McpServer {
 		{
 			description: 'List WooPayments disputes.',
 			inputSchema: listArgs,
+			annotations: readOnlyAnnotations,
 		},
 		async ( args ) =>
 			textResult( await getEndpoint( args.profile, '/wc/v3/payments/disputes', buildListQuery( args ) ) )
@@ -90,6 +103,7 @@ export function createMcpServer(): McpServer {
 				...optionalProfile,
 				path: z.string(),
 			},
+			annotations: readOnlyAnnotations,
 		},
 		async ( args ) => textResult( await getEndpoint( args.profile, args.path ) )
 	);
@@ -99,6 +113,7 @@ export function createMcpServer(): McpServer {
 		{
 			description: 'Run WooPayments CLI diagnostics for the selected profile.',
 			inputSchema: optionalProfile,
+			annotations: readOnlyAnnotations,
 		},
 		async ( args ) => textResult( await doctor( args.profile ) )
 	);
