@@ -25,14 +25,13 @@ wcpay profile use <profile>
 Current implementation:
 
 - non-secret metadata is stored in `profiles.json`;
-- credentials are stored in `auth.json` with file mode `0600`;
 - config is stored in `config.json`;
-- config dir resolves from `WCPAY_HOME`, then XDG config, then `~/.config/wcpay`.
-
-Planned improvement:
-
-- secrets should move to the OS keychain by default;
-- `WCPAY_KEYRING=0` should remain available for CI/containers and file-based fallback.
+- config dir resolves from `WCPAY_HOME`, then XDG config, then `~/.config/wcpay`;
+- secrets use the OS keychain where available:
+  - macOS: Keychain via the `security` CLI;
+  - Linux: Secret Service via `secret-tool` when available;
+- if the OS keychain is unavailable, credentials fall back to `auth.json` with file mode `0600`;
+- set `WCPAY_KEYRING=0` to force file-based storage for CI/containers.
 
 ## Environment variables
 

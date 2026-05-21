@@ -1,7 +1,12 @@
+import { execFile } from 'node:child_process';
 import { join } from 'node:path';
-import { getConfigDir } from './config.js';
+import { promisify } from 'node:util';
+import { ENV_KEYRING, getConfigDir } from './config.js';
 import { CliError } from './errors.js';
 import { readJsonFile, writeJsonFile } from './fs.js';
+
+const execFileAsync = promisify( execFile );
+const SERVICE_NAME = 'wcpay-cli';
 
 export interface WooCommerceApiCredentials {
 	consumerKey: string;
@@ -14,12 +19,22 @@ export interface SecretStore {
 	delete( ref: string ): Promise<void>;
 }
 
+export interface CommandRunner {
+	( command: string, args: string[], options?: { input?: string } ): Promise<{ stdout: string; stderr: string }>;
+}
+
 interface AuthFile {
 	version: 1;
 	credentials: Record<string, WooCommerceApiCredentials>;
 }
 
 const DEFAULT_AUTH_FILE: AuthFile = { version: 1, credentials: {} };
+
+const defaultRunner: CommandRunner = async ( command, args, options = {} ) =>
+	execFileAsync( command, args, {
+		...( options.input !== undefined ? { input: options.input } : {} ),
+		encoding: 'utf8',
+	} );
 
 export class FileSecretStore implements SecretStore {
 	private readonly env: NodeJS.ProcessEnv;
@@ -59,10 +74,140 @@ export class FileSecretStore implements SecretStore {
 	}
 }
 
-export function createSecretStore( env: NodeJS.ProcessEnv = process.env ): SecretStore {
-	// TODO: add a keychain-backed implementation. The file store gives us a deterministic
-	// implementation for local development, CI, and test fixtures.
-	return new FileSecretStore( env );
+export class MacOSKeychainSecretStore implements SecretStore {
+	public constructor( private readonly runner: CommandRunner = defaultRunner ) {}
+
+	public async get( ref: string ): Promise<WooCommerceApiCredentials | undefined> {
+		try {
+			const result = await this.runner( 'security', [
+				'find-generic-password',
+				'-a',
+				ref,
+				'-s',
+				SERVICE_NAME,
+				'-w',
+			] );
+			return parseCredentialsJson( result.stdout.trim() );
+		} catch ( error ) {
+			if ( isNotFoundError( error ) ) {
+				return undefined;
+			}
+			throw error;
+		}
+	}
+
+	public async set( ref: string, credentials: WooCommerceApiCredentials ): Promise<void> {
+		validateCredentials( credentials );
+		await this.runner( 'security', [
+			'add-generic-password',
+			'-a',
+			ref,
+			'-s',
+			SERVICE_NAME,
+			'-w',
+			JSON.stringify( credentials ),
+			'-U',
+		] );
+	}
+
+	public async delete( ref: string ): Promise<void> {
+		try {
+			await this.runner( 'security', [ 'delete-generic-password', '-a', ref, '-s', SERVICE_NAME ] );
+		} catch ( error ) {
+			if ( ! isNotFoundError( error ) ) {
+				throw error;
+			}
+		}
+	}
+}
+
+export class SecretToolSecretStore implements SecretStore {
+	public constructor( private readonly runner: CommandRunner = defaultRunner ) {}
+
+	public async get( ref: string ): Promise<WooCommerceApiCredentials | undefined> {
+		try {
+			const result = await this.runner( 'secret-tool', [
+				'lookup',
+				'service',
+				SERVICE_NAME,
+				'account',
+				ref,
+			] );
+			const value = result.stdout.trim();
+			return value ? parseCredentialsJson( value ) : undefined;
+		} catch ( error ) {
+			if ( isNotFoundError( error ) ) {
+				return undefined;
+			}
+			throw error;
+		}
+	}
+
+	public async set( ref: string, credentials: WooCommerceApiCredentials ): Promise<void> {
+		validateCredentials( credentials );
+		await this.runner(
+			'secret-tool',
+			[ 'store', '--label', 'WooPayments CLI', 'service', SERVICE_NAME, 'account', ref ],
+			{ input: JSON.stringify( credentials ) }
+		);
+	}
+
+	public async delete( ref: string ): Promise<void> {
+		try {
+			await this.runner( 'secret-tool', [ 'clear', 'service', SERVICE_NAME, 'account', ref ] );
+		} catch ( error ) {
+			if ( ! isNotFoundError( error ) ) {
+				throw error;
+			}
+		}
+	}
+}
+
+export class FallbackSecretStore implements SecretStore {
+	public constructor(
+		private readonly primary: SecretStore,
+		private readonly fallback: SecretStore
+	) {}
+
+	public async get( ref: string ): Promise<WooCommerceApiCredentials | undefined> {
+		try {
+			return ( await this.primary.get( ref ) ) ?? ( await this.fallback.get( ref ) );
+		} catch {
+			return this.fallback.get( ref );
+		}
+	}
+
+	public async set( ref: string, credentials: WooCommerceApiCredentials ): Promise<void> {
+		try {
+			await this.primary.set( ref, credentials );
+		} catch {
+			await this.fallback.set( ref, credentials );
+		}
+	}
+
+	public async delete( ref: string ): Promise<void> {
+		await Promise.allSettled( [ this.primary.delete( ref ), this.fallback.delete( ref ) ] );
+	}
+}
+
+export function createSecretStore(
+	env: NodeJS.ProcessEnv = process.env,
+	platform: NodeJS.Platform = process.platform
+): SecretStore {
+	const fileStore = new FileSecretStore( env );
+	if ( isKeyringDisabled( env ) ) {
+		return fileStore;
+	}
+
+	if ( platform === 'darwin' ) {
+		return new FallbackSecretStore( new MacOSKeychainSecretStore(), fileStore );
+	}
+
+	if ( platform === 'linux' ) {
+		return new FallbackSecretStore( new SecretToolSecretStore(), fileStore );
+	}
+
+	return fileStore;
 }
 
 export function validateCredentials( credentials: WooCommerceApiCredentials ): void {
@@ -81,4 +226,30 @@ export function validateCredentials( credentials: WooCommerceApiCredentials ): v
 			status: 2,
 		} );
 	}
+}
+
+function parseCredentialsJson( json: string ): WooCommerceApiCredentials | undefined {
+	if ( ! json ) {
+		return undefined;
+	}
+	const parsed = JSON.parse( json ) as WooCommerceApiCredentials;
+	validateCredentials( parsed );
+	return parsed;
+}
+
+function isKeyringDisabled( env: NodeJS.ProcessEnv ): boolean {
+	return env[ ENV_KEYRING ] === '0' || env[ ENV_KEYRING ] === 'false';
+}
+
+function isNotFoundError( error: unknown ): boolean {
+	if ( ! error || typeof error !== 'object' ) {
+		return false;
+	}
+	const maybeError = error as { code?: unknown; status?: unknown; stderr?: unknown };
+	return (
+		maybeError.code === 'ENOENT' ||
+		maybeError.code === 44 ||
+		maybeError.status === 44 ||
+		( typeof maybeError.stderr === 'string' && /could not be found|No such secret|not found/i.test( maybeError.stderr ) )
+	);
 }
