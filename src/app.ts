@@ -1,4 +1,7 @@
 import { Command } from 'commander';
+import { registerApiCommand } from './commands/api.js';
+import { registerAuthCommands, registerProfileCommands, registerWhoamiCommand } from './commands/auth.js';
+import { registerReadCommands } from './commands/read.js';
 import { registerStubCommands } from './commands/stubs.js';
 import { registerToolsCommands } from './commands/tools.js';
 
@@ -20,6 +23,11 @@ export function buildProgram(): Command {
 		.option( '--debug', 'Print debug diagnostics to stderr.' )
 		.option( '--timeout <seconds>', 'HTTP timeout in seconds.' );
 
+	registerAuthCommands( program );
+	registerProfileCommands( program );
+	registerWhoamiCommand( program );
+	registerApiCommand( program );
+	registerReadCommands( program );
 	registerStubCommands( program );
 	registerToolsCommands( program );
 
