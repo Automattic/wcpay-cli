@@ -100,5 +100,5 @@ wcpay test payment create --order <id> --scenario <scenario>
 ```bash
 wcpay tools describe
 wcpay tools schema
-wcpay mcp # scaffolded
+wcpay mcp
 ```

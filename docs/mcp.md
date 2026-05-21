@@ -1,6 +1,6 @@
 # MCP
 
-`wcpay mcp` will expose a minimal stdio MCP server for agent workflows.
+`wcpay mcp` exposes a minimal stdio MCP server for agent workflows.
 
 ## v1 scope
 
@@ -23,6 +23,14 @@ wcpay_list_deposits
 wcpay_list_disputes
 wcpay_api_get
 ```
+
+Run it with:
+
+```bash
+wcpay mcp
+```
+
+MCP tools return the same JSON envelope shape used by the CLI, serialized as text content for compatibility.
 
 ## Write tools
 

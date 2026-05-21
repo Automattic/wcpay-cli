@@ -51,7 +51,7 @@ wcpay tools describe
 wcpay tools schema
 ```
 
-Some v1 commands remain scaffolded, including `wcpay mcp`, `wcpay test order create`, and `wcpay test payment create`.
+Some v1 commands remain scaffolded, including `wcpay test order create` and `wcpay test payment create`.
 
 ## Documentation
 

@@ -13,6 +13,4 @@ export function registerStubCommands( program: Command ): void {
 	testOrder.command( 'create' ).description( 'Create a test order.' ).option( '--json', 'Emit JSON output.' ).action( ( options ) => stubAction( 'test order create', options ) );
 	const testPayment = test.command( 'payment' ).description( 'Test payment workflows.' );
 	testPayment.command( 'create' ).description( 'Create a test payment.' ).option( '--json', 'Emit JSON output.' ).action( ( options ) => stubAction( 'test payment create', options ) );
-
-	program.command( 'mcp' ).description( 'Run the WooPayments CLI MCP server over stdio.' ).action( () => stubAction( 'mcp' ) );
 }
