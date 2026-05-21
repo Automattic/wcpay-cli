@@ -35,8 +35,6 @@ Current implementation:
 
 ## Environment variables
 
-Planned variables:
-
 | Variable | Purpose |
 | --- | --- |
 | `WCPAY_HOME` | Override config directory. |
