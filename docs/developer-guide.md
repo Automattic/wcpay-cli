@@ -19,6 +19,8 @@ npm run dev -- --help
 npm run lint
 npm run test
 npm run build
+npm run docs:generate
+npm run docs:check
 npm run check
 ```
 
@@ -30,6 +32,16 @@ npm run check
 4. Add examples for human and JSON output.
 5. Add tests for parsing, output, and safety behavior.
 6. If the command writes, add live-mode guard tests proving no write request is sent in live mode.
+
+## Generated command reference
+
+After changing command names, descriptions, or options, run:
+
+```bash
+npm run docs:generate
+```
+
+CI/checks run `npm run docs:check` and fail if `docs/command-reference.generated.md` is stale.
 
 ## Documentation requirements
 

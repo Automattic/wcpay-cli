@@ -10,13 +10,14 @@ Documentation is a product requirement for `wcpay`. Every user-facing feature sh
 4. [Authentication](auth.md)
 5. [Safety model](safety.md)
 6. [API command syntax](api.md)
-7. [Command reference](commands.md)
-8. [Endpoint inventory](endpoint-inventory.md)
-9. [Test scenarios](test-scenarios.md)
-10. [MCP](mcp.md)
-11. [Developer guide](developer-guide.md)
-12. [Local smoke testing](local-smoke-testing.md)
-13. [Architecture decisions](decisions/0001-initial-product-shape.md)
+7. [Command guide](commands.md)
+8. [Generated command reference](command-reference.generated.md)
+9. [Endpoint inventory](endpoint-inventory.md)
+10. [Test scenarios](test-scenarios.md)
+11. [MCP](mcp.md)
+12. [Developer guide](developer-guide.md)
+13. [Local smoke testing](local-smoke-testing.md)
+14. [Architecture decisions](decisions/0001-initial-product-shape.md)
 
 ## Documentation standards
 
