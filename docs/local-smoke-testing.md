@@ -32,6 +32,8 @@ WCPAY_HOME=$TMP_WCPAY_HOME WCPAY_KEYRING=0 \
 
 WCPAY_HOME=$TMP_WCPAY_HOME WCPAY_KEYRING=0 node dist/cli.js mode --json
 WCPAY_HOME=$TMP_WCPAY_HOME WCPAY_KEYRING=0 node dist/cli.js account status --json
+WCPAY_HOME=$TMP_WCPAY_HOME WCPAY_KEYRING=0 node dist/cli.js refunds create --order 123 --amount 500 --dry-run --json
+WCPAY_HOME=$TMP_WCPAY_HOME WCPAY_KEYRING=0 node dist/cli.js test order create --product 123 --quantity 1 --dry-run --json
 ```
 
 ## 2026-05-21 result
@@ -42,3 +44,5 @@ Validated successfully against the local WooPayments site:
 - HTTP local OAuth signing worked.
 - `wcpay mode --json` returned `dev` mode with `is_test_mode_enabled`, `is_test_mode_onboarding`, and `is_dev_mode_enabled` all true.
 - `wcpay account status --json` returned successfully with `data: false` for the current disconnected/local account state.
+- `wcpay refunds create --dry-run --json` passed the test/dev-mode guard and printed a redacted POST request without sending it.
+- `wcpay test order create --dry-run --json` passed the test/dev-mode guard and printed a redacted POST request without sending it.
