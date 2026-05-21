@@ -108,11 +108,15 @@ wcpay test order create --product <id> --quantity <n> --yes
 
 `test order create` uses `/wc/v3/orders`, requires an existing product, marks the order with `_wcpay_cli_created` metadata, and is guarded by WooPayments test/dev mode.
 
-## Scaffolded test payment workflow
+## Test payment workflows
 
 ```bash
-wcpay test payment create --order <id> --scenario <scenario>
+wcpay test payment scenarios
+wcpay test payment create --order <id> --scenario success --dry-run
+wcpay test payment create --order <id> --scenario success --yes
 ```
+
+Supported initial scenarios: `success`, `decline`, `3ds`, `dispute`, `fraudulent`.
 
 ## Agent tooling
 

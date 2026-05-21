@@ -3,6 +3,7 @@ import { createContext } from '../core/context.js';
 import { CliError } from '../core/errors.js';
 import { ModeService } from '../core/mode.js';
 import { printError, printSuccess } from '../core/output.js';
+import { getTestPaymentScenario, listTestPaymentScenarios } from '../core/test-scenarios.js';
 
 interface RefundCreateOptions {
 	order?: string;
@@ -26,6 +27,15 @@ interface TestOrderCreateOptions {
 	product?: string;
 	quantity?: string;
 	email?: string;
+	dryRun?: boolean;
+	yes?: boolean;
+	json?: boolean;
+}
+
+interface TestPaymentCreateOptions {
+	order?: string;
+	scenario?: string;
+	paymentMethod?: string;
 	dryRun?: boolean;
 	yes?: boolean;
 	json?: boolean;
@@ -115,16 +125,49 @@ function registerTestCommands( program: Command ): void {
 
 	const payment = test.command( 'payment' ).description( 'Test payment workflows.' );
 	payment
-		.command( 'create' )
-		.description( 'Create a test payment.' )
+		.command( 'scenarios' )
+		.description( 'List built-in test payment scenarios.' )
 		.option( '--json', 'Emit JSON output.' )
 		.action( ( options: { json?: boolean } ) => {
-			printError( new CliError( {
-				code: 'not_implemented',
-				message: 'The `test payment create` command is scaffolded but not implemented yet.',
-				status: 501,
-			} ), { json: isJson( program, options ) } );
-			process.exitCode = 1;
+			const scenarios = listTestPaymentScenarios();
+			printSuccess( { scenarios }, {
+				json: isJson( program, options ),
+				human: scenarios.map( ( scenario ) => `${ scenario.alias }\t${ scenario.paymentMethod }\t${ scenario.description }` ).join( '\n' ),
+			} );
+		} );
+	payment
+		.command( 'create' )
+		.description( 'Create a test payment using a built-in scenario alias.' )
+		.requiredOption( '--order <order-id>', 'WooCommerce order ID.' )
+		.option( '--scenario <scenario>', 'Built-in scenario alias.', 'success' )
+		.option( '--payment-method <payment-method-id>', 'Override the scenario payment method ID.' )
+		.option( '--dry-run', 'Print the request without sending it.' )
+		.option( '--yes', 'Confirm the test/dev-mode write.' )
+		.option( '--json', 'Emit JSON output.' )
+		.action( async ( options: TestPaymentCreateOptions ) => {
+			const json = isJson( program, options );
+			await runWriteAction( { json }, async () => {
+				const scenario = getTestPaymentScenario( options.scenario ?? 'success' );
+				if ( ! scenario && ! options.paymentMethod ) {
+					throw new CliError( {
+						code: 'unknown_test_payment_scenario',
+						message: `Unknown test payment scenario: ${ options.scenario }. Run \`wcpay test payment scenarios\` for supported aliases.`,
+						status: 2,
+					} );
+				}
+
+				await sendGuardedWrite( program, {
+					path: '/wc/v3/payments/payment_intents',
+					body: {
+						order_id: Number.parseInt( options.order!, 10 ),
+						payment_method: options.paymentMethod ?? scenario!.paymentMethod,
+						_wcpay_cli_scenario: options.scenario ?? scenario!.alias,
+					},
+					dryRun: Boolean( options.dryRun || ( program.opts() as { dryRun?: boolean } ).dryRun ),
+					yes: Boolean( options.yes || ( program.opts() as { yes?: boolean } ).yes ),
+					json,
+				} );
+			} );
 		} );
 }
 
