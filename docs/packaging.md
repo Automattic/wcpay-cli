@@ -22,6 +22,13 @@ npm link
 wcpay --help
 ```
 
+## Shell completions
+
+```bash
+wcpay completions bash
+wcpay completions zsh
+```
+
 ## Planned npm install
 
 ```bash

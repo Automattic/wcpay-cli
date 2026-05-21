@@ -6,6 +6,7 @@ import {
 	registerProfileCommands,
 	registerWhoamiCommand,
 } from './commands/auth.js';
+import { registerCompletionsCommand } from './commands/completions.js';
 import { registerMcpCommand } from './commands/mcp.js';
 import { registerReadCommands } from './commands/read.js';
 import { registerResourceCommands } from './commands/resources.js';
@@ -40,6 +41,7 @@ export function buildProgram(): Command {
 	registerResourceCommands( program );
 	registerWriteCommands( program );
 	registerMcpCommand( program );
+	registerCompletionsCommand( program );
 	registerStubCommands( program );
 	registerToolsCommands( program );
 

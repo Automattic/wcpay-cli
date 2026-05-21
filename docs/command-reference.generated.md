@@ -312,6 +312,14 @@ Options:
 
 Run the WooPayments CLI MCP server over stdio.
 
+## `completions <shell>`
+
+Print shell completion script for bash or zsh.
+
+Options:
+
+- `--json` — Emit JSON output.
+
 ## `tools [command]`
 
 Inspect agent/tool metadata.
