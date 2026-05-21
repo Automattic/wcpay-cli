@@ -1,5 +1,6 @@
 import { Command } from 'commander';
 import { createContext } from '../core/context.js';
+import { formatList } from '../core/format.js';
 import { printError, printSuccess } from '../core/output.js';
 
 interface ListOptions {
@@ -45,7 +46,10 @@ export function registerResourceCommands( program: Command ): void {
 					path: '/wc/v3/payments/transactions',
 					query: buildListQuery( options, { currencyParam: 'store_currency_is' } ),
 				} );
-				printSuccess( data, { json: isJson( program, options ) } );
+				printSuccess( data, {
+					json: isJson( program, options ),
+					human: formatList( data, [ 'id', 'date', 'type', 'amount', 'currency' ] ),
+				} );
 			} );
 		} );
 
@@ -102,7 +106,10 @@ function registerListGetResource(
 					path: resource.basePath,
 					query: buildListQuery( options ),
 				} );
-				printSuccess( data, { json: isJson( program, options ) } );
+				printSuccess( data, {
+					json: isJson( program, options ),
+					human: formatList( data, columnsForResource( resource.name ) ),
+				} );
 			} );
 		} );
 
@@ -120,6 +127,16 @@ function registerListGetResource(
 				printSuccess( data, { json: isJson( program, options ) } );
 			} );
 		} );
+}
+
+function columnsForResource( resourceName: string ): string[] {
+	if ( resourceName === 'deposits' ) {
+		return [ 'id', 'date', 'amount', 'currency', 'status' ];
+	}
+	if ( resourceName === 'disputes' ) {
+		return [ 'id', 'created', 'amount', 'currency', 'status' ];
+	}
+	return [ 'id' ];
 }
 
 function buildListQuery(

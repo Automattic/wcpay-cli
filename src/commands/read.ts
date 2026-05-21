@@ -1,6 +1,7 @@
 import { Command } from 'commander';
 import { createContext } from '../core/context.js';
 import { classifyMode, ModeService } from '../core/mode.js';
+import { formatKeyValue } from '../core/format.js';
 import { printError, printSuccess } from '../core/output.js';
 
 export function registerReadCommands( program: Command ): void {
@@ -60,7 +61,7 @@ export function registerReadCommands( program: Command ): void {
 			await runReadAction( { json }, async () => {
 				const context = await createContext( { profile: program.opts().profile } );
 				const data = await context.client.request( { method: 'GET', path: '/wc/v3/payments/accounts' } );
-				printSuccess( data, { json } );
+				printSuccess( data, { json, human: formatAccountStatus( data, context.profile.siteUrl ) } );
 			} );
 		} );
 
@@ -74,9 +75,55 @@ export function registerReadCommands( program: Command ): void {
 			await runReadAction( { json }, async () => {
 				const context = await createContext( { profile: program.opts().profile } );
 				const data = await context.client.request( { method: 'GET', path: '/wc/v3/payments/settings' } );
-				printSuccess( data, { json } );
+				printSuccess( data, { json, human: formatSettings( data, context.profile.siteUrl ) } );
 			} );
 		} );
+}
+
+function formatAccountStatus( data: unknown, site: string ): string {
+	if ( data === false ) {
+		return formatKeyValue( { Site: site, Account: 'not connected or unavailable' } );
+	}
+	if ( data && typeof data === 'object' ) {
+		const account = data as Record<string, unknown>;
+		return formatKeyValue( {
+			Site: site,
+			Status: account.status,
+			Country: account.country,
+			'Test mode': account.test_mode,
+			'Test onboarding': account.test_mode_onboarding,
+			Currency: getNested( account, [ 'store_currencies', 'default' ] ),
+		} );
+	}
+	return String( data );
+}
+
+function formatSettings( data: unknown, site: string ): string {
+	if ( data && typeof data === 'object' ) {
+		const settings = data as Record<string, unknown>;
+		return formatKeyValue( {
+			Site: site,
+			Mode: settings.is_dev_mode_enabled ? 'dev' : settings.is_test_mode_enabled ? 'test' : 'live',
+			Enabled: settings.is_wcpay_enabled,
+			'Test mode': settings.is_test_mode_enabled,
+			'Dev mode': settings.is_dev_mode_enabled,
+			Country: settings.account_country,
+			Currency: settings.account_domestic_currency,
+			Deposits: settings.deposit_status,
+		} );
+	}
+	return String( data );
+}
+
+function getNested( object: Record<string, unknown>, path: string[] ): unknown {
+	let current: unknown = object;
+	for ( const key of path ) {
+		if ( ! current || typeof current !== 'object' || ! ( key in current ) ) {
+			return undefined;
+		}
+		current = ( current as Record<string, unknown> )[ key ];
+	}
+	return current;
 }
 
 function isJson( program: Command, options: { json?: boolean } ): boolean {
