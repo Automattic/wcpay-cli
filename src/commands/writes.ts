@@ -3,6 +3,7 @@ import { createContext } from '../core/context.js';
 import { CliError } from '../core/errors.js';
 import { ModeService } from '../core/mode.js';
 import { printError, printSuccess } from '../core/output.js';
+import { redactHeaders, redactUrl } from '../core/redact.js';
 import { getTestPaymentScenario, listTestPaymentScenarios } from '../core/test-scenarios.js';
 
 interface RefundCreateOptions {
@@ -218,16 +219,12 @@ async function sendGuardedWrite(
 	const request = { method: 'POST' as const, path: input.path, body: input.body };
 	if ( input.dryRun ) {
 		const resolved = context.client.resolve( request );
-		const headers = { ...resolved.headers };
-		if ( headers.Authorization ) {
-			headers.Authorization = 'Basic [redacted]';
-		}
 		printSuccess( {
 			method: resolved.method,
-			url: redactOAuthSignature( resolved.url ),
-			headers,
+			url: redactUrl( resolved.url ),
+			headers: redactHeaders( resolved.headers ),
 			body: input.body,
-		}, { json: input.json, human: `${ resolved.method } ${ redactOAuthSignature( resolved.url ) }` } );
+		}, { json: input.json, human: `${ resolved.method } ${ redactUrl( resolved.url ) }` } );
 		return;
 	}
 
@@ -237,14 +234,6 @@ async function sendGuardedWrite(
 
 function isJson( program: Command, options: { json?: boolean } ): boolean {
 	return Boolean( options.json || ( program.opts() as { json?: boolean } ).json );
-}
-
-function redactOAuthSignature( urlString: string ): string {
-	const url = new URL( urlString );
-	if ( url.searchParams.has( 'oauth_signature' ) ) {
-		url.searchParams.set( 'oauth_signature', '[redacted]' );
-	}
-	return url.toString();
 }
 
 async function runWriteAction( options: { json?: boolean }, action: () => Promise<void> ): Promise<void> {

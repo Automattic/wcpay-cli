@@ -4,6 +4,7 @@ import { createContext } from '../core/context.js';
 import { ModeService } from '../core/mode.js';
 import { printError, printSuccess } from '../core/output.js';
 import { parseApiFields } from '../core/fields.js';
+import { redactHeaders, redactUrl } from '../core/redact.js';
 
 interface ApiOptions {
 	json?: boolean;
@@ -44,19 +45,15 @@ export function registerApiCommand( program: Command ): void {
 
 				if ( options.dryRun ) {
 					const resolved = context.client.resolve( request );
-					const safeHeaders = { ...resolved.headers };
-					if ( safeHeaders.Authorization ) {
-						safeHeaders.Authorization = 'Basic [redacted]';
-					}
 
 					printSuccess( {
 						method: resolved.method,
-						url: redactOAuthSignature( resolved.url ),
-						headers: safeHeaders,
+						url: redactUrl( resolved.url ),
+						headers: redactHeaders( resolved.headers ),
 						body: resolved.body ? JSON.parse( resolved.body ) : undefined,
 					}, {
 						json: options.json,
-						human: `${ resolved.method } ${ redactOAuthSignature( resolved.url ) }`,
+						human: `${ resolved.method } ${ redactUrl( resolved.url ) }`,
 					} );
 					return;
 				}
@@ -90,10 +87,3 @@ function extractTrailingFlags( fields: string[] ): { fields: string[]; json: boo
 	return { fields: remaining, json, dryRun };
 }
 
-function redactOAuthSignature( urlString: string ): string {
-	const url = new URL( urlString );
-	if ( url.searchParams.has( 'oauth_signature' ) ) {
-		url.searchParams.set( 'oauth_signature', '[redacted]' );
-	}
-	return url.toString();
-}
