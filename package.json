@@ -3,6 +3,14 @@
   "version": "0.0.0",
   "private": true,
   "description": "Standalone WooPayments CLI for developers, agents, and test-mode workflows.",
+  "homepage": "https://github.com/Automattic/wcpay-cli#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Automattic/wcpay-cli.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Automattic/wcpay-cli/issues"
+  },
   "type": "module",
   "bin": {
     "wcpay": "./dist/cli.js"
@@ -27,6 +35,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "check": "npm run lint && npm run docs:check && npm run test && npm run build",
+    "pack:dry-run": "npm pack --dry-run",
     "format": "prettier --write ."
   },
   "keywords": [
@@ -37,7 +46,10 @@
     "mcp"
   ],
   "author": "Automattic",
-  "license": "UNLICENSED",
+  "license": "GPL-3.0-or-later",
+  "publishConfig": {
+    "access": "public"
+  },
   "engines": {
     "node": ">=20.10"
   },

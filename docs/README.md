@@ -17,7 +17,8 @@ Documentation is a product requirement for `wcpay`. Every user-facing feature sh
 11. [MCP](mcp.md)
 12. [Developer guide](developer-guide.md)
 13. [Local smoke testing](local-smoke-testing.md)
-14. [Architecture decisions](decisions/0001-initial-product-shape.md)
+14. [Packaging and release](packaging.md)
+15. [Architecture decisions](decisions/0001-initial-product-shape.md)
 
 ## Documentation standards
 
