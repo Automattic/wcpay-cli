@@ -22,13 +22,17 @@ wcpay profile use <profile>
 
 ## Storage model
 
-Planned behavior:
+Current implementation:
 
-- secrets in OS keychain by default;
-- non-secret metadata in `profiles.json`;
-- config in `config.json`;
-- config dir resolved from `WCPAY_HOME`, then XDG config, then `~/.config/wcpay`;
-- `WCPAY_KEYRING=0` allows file-based fallback for CI/containers.
+- non-secret metadata is stored in `profiles.json`;
+- credentials are stored in `auth.json` with file mode `0600`;
+- config is stored in `config.json`;
+- config dir resolves from `WCPAY_HOME`, then XDG config, then `~/.config/wcpay`.
+
+Planned improvement:
+
+- secrets should move to the OS keychain by default;
+- `WCPAY_KEYRING=0` should remain available for CI/containers and file-based fallback.
 
 ## Environment variables
 
@@ -41,6 +45,18 @@ Planned variables:
 | `WCPAY_CONSUMER_KEY` | Provide a consumer key for CI/scripts. |
 | `WCPAY_CONSUMER_SECRET` | Provide a consumer secret for CI/scripts. |
 | `WCPAY_KEYRING` | Set to `0` to disable OS keychain. |
+
+## Add a profile today
+
+```bash
+wcpay auth add \
+  --site http://localhost:8082 \
+  --consumer-key ck_... \
+  --consumer-secret cs_... \
+  --no-verify
+```
+
+Omit `--no-verify` to validate credentials against `/wc/v3/payments/settings` before saving.
 
 ## Future auth
 

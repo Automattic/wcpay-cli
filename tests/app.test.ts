@@ -18,10 +18,11 @@ describe( 'config paths', () => {
 } );
 
 describe( 'tool registry', () => {
-	it( 'contains MCP-ready read tools', () => {
+	it( 'contains MCP-ready read tools and classified write tools', () => {
 		const tools = getToolRegistry();
 		expect( tools.length ).toBeGreaterThan( 0 );
-		expect( tools.every( ( tool ) => tool.mcp ) ).toBe( true );
+		expect( tools.filter( ( tool ) => tool.mcp ).every( ( tool ) => tool.safety === 'read' ) ).toBe( true );
 		expect( tools.some( ( tool ) => tool.name === 'wcpay_get_mode' ) ).toBe( true );
+		expect( tools.some( ( tool ) => tool.safety === 'test_mode_write' ) ).toBe( true );
 	} );
 } );

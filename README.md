@@ -29,16 +29,29 @@ Or run without linking:
 npm run dev -- --help
 ```
 
-## Current scaffold commands
+## Implemented foundation commands
 
 ```bash
 wcpay --help
+wcpay auth add --site http://localhost:8082 --consumer-key ck_... --consumer-secret cs_... --no-verify
+wcpay auth list
+wcpay profile use local
+wcpay api get /wc/v3/payments/accounts --json
+wcpay api post /wc/v3/payments/refund order_id:=123 amount:=500 reason="CLI test" --dry-run --json
+wcpay mode
+wcpay doctor
+wcpay account status
+wcpay settings get
+wcpay transactions list
+wcpay deposits list
+wcpay disputes list
+wcpay charges get ch_...
+wcpay refunds create --order 123 --amount 500 --dry-run
 wcpay tools describe
 wcpay tools schema
-wcpay api get /wc/v3/payments/accounts --dry-run --json
 ```
 
-Most product commands are intentionally stubbed until the HTTP/auth/mode layers are implemented.
+Some v1 commands remain scaffolded, including `wcpay mcp`, `wcpay test order create`, and `wcpay test payment create`.
 
 ## Documentation
 
@@ -54,7 +67,7 @@ Docs are a first-class part of this project. Start here:
 
 ## Safety model
 
-v1 must block all write/destructive operations on live-mode stores before sending a write request. Writes are allowed only when WooPayments is in test/dev mode.
+v1 blocks all write/destructive operations on live-mode stores before sending a write request. Writes are allowed only when WooPayments is in test/dev mode. Write commands require `--yes` or `--dry-run`.
 
 ## Package identity
 

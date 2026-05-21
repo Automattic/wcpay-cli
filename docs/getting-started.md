@@ -22,13 +22,22 @@ npm install -g @automattic/wcpay-cli
 v1 will use WooCommerce REST API keys.
 
 ```bash
-wcpay auth add --site https://store.example --name staging
+wcpay auth add \
+  --site https://store.example \
+  --name staging \
+  --consumer-key ck_... \
+  --consumer-secret cs_...
 ```
 
 For local development stores:
 
 ```bash
-wcpay auth add --site http://localhost:8082 --name local --allow-insecure-local
+wcpay auth add \
+  --site http://localhost:8082 \
+  --name local \
+  --consumer-key ck_... \
+  --consumer-secret cs_... \
+  --no-verify
 ```
 
 ## Run diagnostics
@@ -50,7 +59,8 @@ wcpay settings get
 
 ```bash
 wcpay api get /wc/v3/payments/accounts
-wcpay api get /wc/v3/payments/transactions page:=1 per_page:=25
+wcpay api get /wc/v3/payments/transactions page:=1 pagesize:=25
+wcpay api post /wc/v3/payments/refund order_id:=123 amount:=500 reason="CLI test" --dry-run --json
 ```
 
 ## Safety reminder

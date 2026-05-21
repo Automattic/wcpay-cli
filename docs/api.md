@@ -48,3 +48,13 @@ Inspired by Notion CLI:
 ## Safety
 
 All non-read methods use the live-mode write guard. Use `--dry-run` to inspect a write request without sending it.
+
+`--dry-run` still checks WooPayments mode before printing a write request. If the store is live, the command fails before resolving/sending the write.
+
+## Current implementation notes
+
+- HTTPS stores use Basic Auth with WooCommerce consumer key/secret.
+- HTTP local stores use WooCommerce OAuth 1.0 query parameters with `HMAC-SHA256`.
+- `Authorization` and OAuth signatures are redacted from dry-run output.
+- For GET/DELETE, inline fields become query parameters.
+- For POST/PUT/PATCH, inline fields become a JSON body.
