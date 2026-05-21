@@ -120,6 +120,21 @@ export const toolRegistry: ToolDescriptor[] = [
 		},
 		examples: [ 'wcpay refunds create --order 123 --amount 500 --dry-run --json' ],
 	},
+	{
+		name: 'wcpay_create_test_order',
+		description: 'Create a WooCommerce test order from an existing product in WooPayments test/dev mode.',
+		command: 'wcpay test order create --product <id> --quantity <n> --yes --json',
+		safety: 'test_mode_write',
+		mcp: false,
+		inputs: {
+			product: { type: 'string' },
+			quantity: { type: 'number', optional: true },
+			email: { type: 'string', optional: true },
+			confirm: { type: 'boolean' },
+			dryRun: { type: 'boolean', optional: true },
+		},
+		examples: [ 'wcpay test order create --product 123 --quantity 1 --dry-run --json' ],
+	},
 ];
 
 export function getToolRegistry(): ToolDescriptor[] {

@@ -88,10 +88,18 @@ Safety:
 - write commands require `--yes` or `--dry-run`;
 - `--dry-run` still checks mode.
 
-## Scaffolded test workflows
+## Test order workflows
 
 ```bash
-wcpay test order create --product <id> --quantity <n>
+wcpay test order create --product <id> --quantity <n> --dry-run
+wcpay test order create --product <id> --quantity <n> --yes
+```
+
+`test order create` uses `/wc/v3/orders`, requires an existing product, marks the order with `_wcpay_cli_created` metadata, and is guarded by WooPayments test/dev mode.
+
+## Scaffolded test payment workflow
+
+```bash
 wcpay test payment create --order <id> --scenario <scenario>
 ```
 

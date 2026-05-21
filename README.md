@@ -47,11 +47,12 @@ wcpay deposits list
 wcpay disputes list
 wcpay charges get ch_...
 wcpay refunds create --order 123 --amount 500 --dry-run
+wcpay test order create --product 123 --quantity 1 --dry-run
 wcpay tools describe
 wcpay tools schema
 ```
 
-Some v1 commands remain scaffolded, including `wcpay test order create` and `wcpay test payment create`.
+Some v1 commands remain scaffolded, including `wcpay test payment create`.
 
 ## Documentation
 

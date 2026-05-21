@@ -22,6 +22,15 @@ interface AuthorizationOptions {
 	json?: boolean;
 }
 
+interface TestOrderCreateOptions {
+	product?: string;
+	quantity?: string;
+	email?: string;
+	dryRun?: boolean;
+	yes?: boolean;
+	json?: boolean;
+}
+
 export function registerWriteCommands( program: Command ): void {
 	const refunds = program.command( 'refunds' ).description( 'Create and inspect refunds.' );
 	refunds
@@ -62,6 +71,61 @@ export function registerWriteCommands( program: Command ): void {
 	const authorizations = program.command( 'authorizations' ).description( 'Capture or cancel test/dev-mode authorizations.' );
 	registerAuthorizationCommand( program, authorizations, 'capture', 'capture_authorization' );
 	registerAuthorizationCommand( program, authorizations, 'cancel', 'cancel_authorization' );
+
+	registerTestCommands( program );
+}
+
+function registerTestCommands( program: Command ): void {
+	const test = program.command( 'test' ).description( 'Run test/dev-mode WooPayments workflows.' );
+	const order = test.command( 'order' ).description( 'Test order workflows.' );
+	order
+		.command( 'create' )
+		.description( 'Create a test order from an existing product.' )
+		.requiredOption( '--product <product-id>', 'Existing WooCommerce product ID.' )
+		.option( '--quantity <quantity>', 'Quantity.', '1' )
+		.option( '--email <email>', 'Billing email for the order.', 'wcpay-cli-test@example.com' )
+		.option( '--dry-run', 'Print the request without sending it.' )
+		.option( '--yes', 'Confirm the test/dev-mode write.' )
+		.option( '--json', 'Emit JSON output.' )
+		.action( async ( options: TestOrderCreateOptions ) => {
+			const json = isJson( program, options );
+			await runWriteAction( { json }, async () => {
+				await sendGuardedWrite( program, {
+					path: '/wc/v3/orders',
+					body: {
+						status: 'pending',
+						billing: { email: options.email },
+						line_items: [
+							{
+								product_id: Number.parseInt( options.product!, 10 ),
+								quantity: Number.parseInt( options.quantity ?? '1', 10 ),
+							},
+						],
+						meta_data: [
+							{ key: '_wcpay_cli_created', value: '1' },
+							{ key: '_wcpay_cli_created_at', value: new Date().toISOString() },
+						],
+					},
+					dryRun: Boolean( options.dryRun || ( program.opts() as { dryRun?: boolean } ).dryRun ),
+					yes: Boolean( options.yes || ( program.opts() as { yes?: boolean } ).yes ),
+					json,
+				} );
+			} );
+		} );
+
+	const payment = test.command( 'payment' ).description( 'Test payment workflows.' );
+	payment
+		.command( 'create' )
+		.description( 'Create a test payment.' )
+		.option( '--json', 'Emit JSON output.' )
+		.action( ( options: { json?: boolean } ) => {
+			printError( new CliError( {
+				code: 'not_implemented',
+				message: 'The `test payment create` command is scaffolded but not implemented yet.',
+				status: 501,
+			} ), { json: isJson( program, options ) } );
+			process.exitCode = 1;
+		} );
 }
 
 function registerAuthorizationCommand(
