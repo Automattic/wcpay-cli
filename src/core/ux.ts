@@ -6,8 +6,16 @@ export function isPrettyTerminal(env: NodeJS.ProcessEnv = process.env): boolean 
 	return Boolean(process.stdout.isTTY && process.stderr.isTTY && !env.CI);
 }
 
-export function logo(): string {
-	return figlet.textSync('wcpay', { font: 'Small' }).trimEnd();
+const FANCY_LOGO_MIN_COLUMNS = 76;
+
+export function logo(columns = getTerminalColumns()): string {
+	const font = columns >= FANCY_LOGO_MIN_COLUMNS ? 'ANSI Shadow' : 'Small';
+	return figlet.textSync('wcpay', { font }).trimEnd();
+}
+
+function getTerminalColumns(): number {
+	const columns = process.stdout.columns;
+	return columns && columns > 0 ? columns : 80;
 }
 
 export function printWelcome(): void {
