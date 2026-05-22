@@ -1,82 +1,40 @@
 # Command Guide
 
-This guide groups common commands by workflow. For an option-level reference generated from command metadata, see [Generated command reference](command-reference.generated.md).
+This guide explains the main `wcpay` workflows. For a complete option-level reference generated from command metadata, see [Generated command reference](command-reference.generated.md).
 
-## Core/auth
+## Connect and choose a store
 
-### `wcpay login`
-
-Guided authentication with WooCommerce REST API keys. For now, this is a no-browser flow by default.
+Start by creating a profile for each store you work with. A profile stores the site URL and points to credentials in the OS keychain.
 
 ```bash
-wcpay login --site https://store.example
-```
-
-If credentials are not provided through flags or env vars, the command prints the WooCommerce REST API key settings URL and prompts for the generated key and secret. `--no-browser` is accepted as an explicit alias but is not required.
-
-### `wcpay auth add`
-
-Add a profile using WooCommerce REST API credentials.
-
-```bash
-wcpay auth add \
-  --site http://localhost:8082 \
-  --consumer-key ck_... \
-  --consumer-secret cs_... \
-  --no-verify
-```
-
-Options:
-
-- `--site <url>`
-- `--name <name>`
-- `--consumer-key <key>`
-- `--consumer-secret <secret>`
-- `--allow-insecure-local`
-- `--no-verify`
-- `--json`
-
-### Other auth/profile commands
-
-```bash
-wcpay login
+wcpay login --site https://store.example --name staging
 wcpay auth list
-wcpay auth test [profile]
-wcpay auth remove <profile>
-wcpay profile use <profile>
+wcpay profile use staging
 wcpay whoami
 ```
 
-## Diagnostics
+Use `wcpay whoami` whenever you want to confirm which store and profile a command will use.
+
+## Check whether the store is healthy
+
+When debugging a store, start with diagnostics and mode detection:
 
 ```bash
 wcpay doctor
 wcpay doctor --json --redact
 wcpay mode
-wcpay mode --json
-```
-
-## API
-
-```bash
-wcpay api <method> <path> [fields...]
-```
-
-Examples:
-
-```bash
-wcpay api get /wc/v3/payments/accounts
-wcpay api get /wc/v3/payments/transactions page:=1 pagesize:=25
-wcpay api post /wc/v3/payments/refund order_id:=123 amount:=500 reason="CLI test" --dry-run --json
-```
-
-## Reads
-
-```bash
 wcpay account status
 wcpay settings get
+```
+
+`doctor --json --redact` is the safest output to attach to an issue or support conversation. It keeps the structured response shape while avoiding sensitive values.
+
+## Inspect transactions, deposits, disputes, and charges
+
+These commands are read-only and safe for live stores:
+
+```bash
 wcpay transactions list --limit 25
-wcpay transactions get <id> # currently reports no allowlisted single endpoint
 wcpay deposits list
 wcpay deposits get <id>
 wcpay disputes list
@@ -84,44 +42,71 @@ wcpay disputes get <id>
 wcpay charges get <id>
 ```
 
-## Test/dev-mode writes
+Typical flow:
+
+1. Use a list command to find the relevant record.
+2. Copy the ID from the output.
+3. Use the matching `get` command for details.
+4. Add `--json` when piping the result into another tool.
+
+## Make a direct REST API request
+
+Use `wcpay api` when a specific curated command does not exist or you need to reproduce a raw endpoint call:
+
+```bash
+wcpay api get /wc/v3/payments/accounts
+wcpay api get /wc/v3/payments/transactions page:=1 pagesize:=25
+```
+
+Fields use typed shell-friendly syntax:
+
+```bash
+wcpay api post /wc/v3/payments/refund order_id:=123 amount:=500 reason="CLI test" --dry-run --json
+```
+
+Read requests are allowed on live stores. Write methods use the same live-mode guard as curated write commands.
+
+## Preview or run test/dev-mode writes
+
+Write-capable commands are guarded in two ways:
+
+- they run only when WooPayments is in test/dev mode;
+- they require `--dry-run` or `--yes`.
+
+Preview what would happen:
 
 ```bash
 wcpay refunds create --order <id> --amount <minor-units> --dry-run
-wcpay refunds create --charge <charge-id> --amount <minor-units> --yes
 wcpay authorizations capture --order <id> --intent <payment-intent-id> --dry-run
 wcpay authorizations cancel --order <id> --intent <payment-intent-id> --dry-run
 ```
 
-Safety:
+Send the request in test/dev mode:
 
-- write commands run only in WooPayments test/dev mode;
-- write commands require `--yes` or `--dry-run`;
-- `--dry-run` still checks mode.
+```bash
+wcpay refunds create --charge <charge-id> --amount <minor-units> --yes
+```
 
-## Test order workflows
+## Create test orders and payments
+
+Use these commands to exercise WooPayments flows on a test/dev store:
 
 ```bash
 wcpay test order create --product <id> --quantity <n> --dry-run
-wcpay test order create --product <id> --quantity <n> --yes
-```
-
-`test order create` uses `/wc/v3/orders`, requires an existing product, marks the order with `_wcpay_cli_created` metadata, and is guarded by WooPayments test/dev mode.
-
-## Test payment workflows
-
-```bash
 wcpay test payment scenarios
 wcpay test payment create --order <id> --scenario success --dry-run
-wcpay test payment create --order <id> --scenario success --yes
 ```
 
-Supported scenarios: `success`, `decline`, `3ds`, `dispute`, `fraudulent`.
+`test order create` requires an existing product and marks the order with `_wcpay_cli_created` metadata.
 
-## Agent tooling
+Supported payment scenarios: `success`, `decline`, `3ds`, `dispute`, `fraudulent`.
+
+## Use agent tooling
 
 ```bash
 wcpay tools describe
 wcpay tools schema
 wcpay mcp
 ```
+
+`wcpay mcp` starts a local stdio MCP server with read-only tools for agents. It uses the same profiles, credentials, and safety model as the CLI.

@@ -1,13 +1,20 @@
 # Getting Started
 
-## Install
+This guide walks through the first successful `wcpay` session: install the CLI, connect a store, confirm WooPayments is reachable, and run a few safe reads.
 
-Development install:
+## 1. Install the CLI
+
+From this checkout:
 
 ```bash
 npm install
 npm run build
 npm link
+```
+
+Confirm the binary is available:
+
+```bash
 wcpay --help
 ```
 
@@ -17,15 +24,21 @@ Package identity:
 npm install -g @automattic/wcpay-cli
 ```
 
-## Add a profile
+## 2. Connect a store
 
-Use the guided no-browser login flow:
+`wcpay` uses WooCommerce REST API keys. The guided login flow prints the WooCommerce API key settings URL, then asks for the generated consumer key and secret:
 
 ```bash
 wcpay login --site https://store.example --name staging
 ```
 
-Or pass WooCommerce REST API credentials directly:
+For a local development store:
+
+```bash
+wcpay login --site http://localhost:8082 --name local --no-verify
+```
+
+You can also pass credentials directly, which is useful for scripts and CI:
 
 ```bash
 wcpay auth add \
@@ -35,40 +48,67 @@ wcpay auth add \
   --consumer-secret cs_...
 ```
 
-For local development stores:
+## 3. Confirm the connection
 
-```bash
-wcpay auth add \
-  --site http://localhost:8082 \
-  --name local \
-  --consumer-key ck_... \
-  --consumer-secret cs_... \
-  --no-verify
-```
-
-## Run diagnostics
+Run diagnostics first:
 
 ```bash
 wcpay doctor
+```
+
+For output that is safer to paste into an issue or support conversation:
+
+```bash
 wcpay doctor --json --redact
 ```
 
-## Inspect WooPayments state
+Check the selected profile and WooPayments mode:
 
 ```bash
+wcpay whoami
 wcpay mode
 wcpay account status
-wcpay settings get
 ```
 
-## Make an API request
+## 4. Inspect WooPayments activity
+
+Read commands are safe to run against live stores:
 
 ```bash
-wcpay api get /wc/v3/payments/accounts
-wcpay api get /wc/v3/payments/transactions page:=1 pagesize:=25
-wcpay api post /wc/v3/payments/refund order_id:=123 amount:=500 reason="CLI test" --dry-run --json
+wcpay transactions list --limit 25
+wcpay deposits list
+wcpay disputes list
 ```
+
+Use IDs from list output to inspect individual records:
+
+```bash
+wcpay deposits get po_...
+wcpay disputes get dp_...
+wcpay charges get ch_...
+```
+
+## 5. Preview a write without sending it
+
+Use `--dry-run` whenever you want to see what a write command would do:
+
+```bash
+wcpay refunds create --order 123 --amount 500 --dry-run
+```
+
+Dry runs still authenticate, check WooPayments mode, resolve the HTTP request, and redact secrets from output.
+
+## 6. Use JSON for scripts and agents
+
+Most commands support `--json`:
+
+```bash
+wcpay transactions list --limit 10 --json
+wcpay api get /wc/v3/payments/accounts --json
+```
+
+JSON responses use a stable envelope with `ok`, `data`, `error`, and `meta` fields.
 
 ## Safety reminder
 
-Writes are blocked unless WooPayments is in test/dev mode. Use `--dry-run` to inspect write requests without sending them.
+Live-mode stores are read-only. Write requests are blocked unless WooPayments is in test/dev mode, and write-capable commands require `--dry-run` or `--yes`.
