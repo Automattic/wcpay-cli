@@ -36,10 +36,30 @@ function isLoopbackHostname( hostname: string ): boolean {
 	return [ 'localhost', '127.0.0.1', '::1' ].includes( hostname );
 }
 
+function hasExplicitProtocol( siteUrl: string ): boolean {
+	return /^[a-zA-Z][a-zA-Z\d+.-]*:\/\//.test( siteUrl );
+}
+
+function addDefaultProtocol( siteUrl: string ): string {
+	const hostname = extractBareHostname( siteUrl );
+	const protocol = isLocalHostname( hostname ) ? 'http' : 'https';
+	return `${ protocol }://${ siteUrl }`;
+}
+
+function extractBareHostname( siteUrl: string ): string {
+	const authority = siteUrl.split( /[/?#]/, 1 )[0] ?? '';
+	if ( authority.startsWith( '[' ) ) {
+		return authority.slice( 1, authority.indexOf( ']' ) ).toLowerCase();
+	}
+	return authority.split( ':', 1 )[0]?.toLowerCase() ?? '';
+}
+
 export function normalizeSiteUrl( siteUrl: string, options: { allowInsecureLocal?: boolean } = {} ): string {
+	const input = siteUrl.trim();
+	const normalizedInput = hasExplicitProtocol( input ) ? input : addDefaultProtocol( input );
 	let url: URL;
 	try {
-		url = new URL( siteUrl );
+		url = new URL( normalizedInput );
 	} catch {
 		throw new CliError( {
 			code: 'invalid_site_url',

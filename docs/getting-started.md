@@ -31,7 +31,13 @@ npm install -g @automattic/wcpay-cli
 `wcpay` uses WooCommerce REST API keys. The guided login flow prints the WooCommerce API key settings URL, asks for the generated consumer key and secret, verifies the connection, and stores credentials in the OS keychain. If you already have a default profile, it asks before continuing:
 
 ```bash
-wcpay login --site https://store.example --name staging
+wcpay login --site store.example --name staging
+```
+
+For local development, you can omit the scheme too:
+
+```bash
+wcpay login --site localhost:8082 --name local
 ```
 
 <img src="assets/login-wizard.png" alt="WooPayments CLI login wizard" width="760">

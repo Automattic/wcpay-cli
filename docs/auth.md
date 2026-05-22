@@ -19,10 +19,10 @@ wcpay whoami
 `wcpay login` uses a no-browser WooCommerce REST API key flow by default. This works for local development, SSH sessions, containers, and environments where browser auth is unavailable:
 
 ```bash
-wcpay login --site http://localhost:8082
+wcpay login --site localhost:8082
 ```
 
-The command prints the WooCommerce REST API key settings URL, prompts securely for the generated consumer key and secret, verifies the connection unless `--no-verify` is used, and then saves credentials.
+The command prints the WooCommerce REST API key settings URL, prompts securely for the generated consumer key and secret, verifies the connection unless `--no-verify` is used, and then saves credentials. Bare remote domains default to HTTPS; bare loopback hosts such as `localhost:8082` default to HTTP for local development.
 
 If a default profile is already configured, interactive `wcpay login` asks for confirmation before continuing. Pass `--yes` to skip that confirmation in scripts or repeat setup flows.
 
@@ -33,7 +33,7 @@ In non-interactive environments, pass credentials explicitly or set environment 
 ```bash
 WCPAY_CONSUMER_KEY=ck_... \
 WCPAY_CONSUMER_SECRET=cs_... \
-  wcpay login --site http://localhost:8082 --no-verify
+  wcpay login --site localhost:8082 --no-verify
 ```
 
 `--no-browser` is accepted as an explicit alias, but it is not required.
@@ -42,7 +42,7 @@ WCPAY_CONSUMER_SECRET=cs_... \
 
 ```bash
 wcpay auth add \
-  --site http://localhost:8082 \
+  --site localhost:8082 \
   --consumer-key ck_... \
   --consumer-secret cs_... \
   --no-verify
