@@ -4,13 +4,13 @@
 
 ## Initial aliases
 
-| Alias | Intended behavior |
-| --- | --- |
-| `success` | Successful card payment. |
-| `decline` | Generic declined card/payment. |
-| `3ds` | Authentication/3D Secure flow. |
-| `dispute` | Payment suitable for dispute simulation. |
-| `fraudulent` | Fraud/risk scenario. |
+| Alias        | Intended behavior                        |
+| ------------ | ---------------------------------------- |
+| `success`    | Successful card payment.                 |
+| `decline`    | Generic declined card/payment.           |
+| `3ds`        | Authentication/3D Secure flow.           |
+| `dispute`    | Payment suitable for dispute simulation. |
+| `fraudulent` | Fraud/risk scenario.                     |
 
 ## Commands
 

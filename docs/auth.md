@@ -22,7 +22,9 @@ wcpay whoami
 wcpay login --site http://localhost:8082
 ```
 
-The command prints the WooCommerce REST API key settings URL, then prompts for the generated consumer key and secret.
+The command prints the WooCommerce REST API key settings URL, prompts securely for the generated consumer key and secret, verifies the connection unless `--no-verify` is used, and then saves credentials.
+
+![WooPayments CLI login wizard](assets/login-wizard.png)
 
 In non-interactive environments, pass credentials explicitly or set environment variables:
 

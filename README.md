@@ -11,6 +11,16 @@ Use it when you need to answer questions like:
 
 The CLI works with local and remote stores, stores credentials keychain-first, and treats live stores as read-only. Write-capable commands are only allowed when WooPayments is in test/dev mode, and they require either `--dry-run` or `--yes`.
 
+## What it feels like
+
+Running `wcpay` without a command gives a short, terminal-native starting point:
+
+![WooPayments CLI welcome screen](docs/assets/welcome.png)
+
+The login flow is a guided wizard that points you to the WooCommerce REST API key screen, prompts securely for credentials, verifies the connection, and suggests useful next commands:
+
+![WooPayments CLI login wizard](docs/assets/login-wizard.png)
+
 ## Start here
 
 Install and link the CLI from this checkout:
@@ -27,7 +37,7 @@ Connect a store with the guided login flow:
 wcpay login --site https://store.example --name staging
 ```
 
-The wizard points you to the WooCommerce REST API key screen, securely prompts for the generated key and secret, verifies the connection, and saves credentials in your OS keychain.
+The wizard saves credentials in your OS keychain when available.
 
 Then check that the CLI can talk to WooPayments:
 
@@ -75,6 +85,8 @@ wcpay authorizations capture --order 123 --intent pi_... --dry-run
 ```
 
 `--dry-run` resolves the request, checks the store mode, redacts secrets, and prints what would be sent without making the write request.
+
+![WooPayments CLI dry-run output](docs/assets/dry-run.png)
 
 ### Use the underlying REST API
 

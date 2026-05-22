@@ -34,7 +34,7 @@ npm run pack:dry-run
 5. Add tests for parsing, output, and safety behavior.
 6. If the command writes, add live-mode guard tests proving no write request is sent in live mode.
 
-## Git hooks
+## Git hooks and repository hygiene
 
 `npm install` runs the `prepare` script and installs Husky hooks:
 
@@ -46,6 +46,8 @@ If hooks are not installed, run:
 ```bash
 npm run prepare
 ```
+
+The GitHub `main` branch is protected. Changes should go through pull requests with the `test` status check passing before merge.
 
 ## Generated command reference
 

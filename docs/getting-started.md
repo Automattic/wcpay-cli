@@ -15,8 +15,10 @@ npm link
 Confirm the binary is available:
 
 ```bash
-wcpay --help
+wcpay
 ```
+
+![WooPayments CLI welcome screen](assets/welcome.png)
 
 Package identity:
 
@@ -26,11 +28,13 @@ npm install -g @automattic/wcpay-cli
 
 ## 2. Connect a store
 
-`wcpay` uses WooCommerce REST API keys. The guided login flow prints the WooCommerce API key settings URL, then asks for the generated consumer key and secret:
+`wcpay` uses WooCommerce REST API keys. The guided login flow prints the WooCommerce API key settings URL, asks for the generated consumer key and secret, verifies the connection, and stores credentials in the OS keychain:
 
 ```bash
 wcpay login --site https://store.example --name staging
 ```
+
+![WooPayments CLI login wizard](assets/login-wizard.png)
 
 For a local development store:
 
@@ -97,6 +101,8 @@ wcpay refunds create --order 123 --amount 500 --dry-run
 ```
 
 Dry runs still authenticate, check WooPayments mode, resolve the HTTP request, and redact secrets from output.
+
+![WooPayments CLI dry-run output](assets/dry-run.png)
 
 ## 6. Use JSON for scripts and agents
 

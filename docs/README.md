@@ -17,6 +17,14 @@
 11. [Local smoke testing](local-smoke-testing.md)
 12. [Packaging and release](packaging.md)
 
+## Screenshots
+
+Reusable screenshots live in [`assets/`](assets/):
+
+- [`welcome.png`](assets/welcome.png) — first-run welcome screen.
+- [`login-wizard.png`](assets/login-wizard.png) — guided login flow.
+- [`dry-run.png`](assets/dry-run.png) — redacted write dry-run output.
+
 ## Documentation standards
 
 User-facing command docs should include:
