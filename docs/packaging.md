@@ -31,7 +31,9 @@ wcpay completions zsh
 
 ## Package contents
 
-`npm run pack:dry-run` shows the files included in the package. The package includes built `dist` files, documentation, `README.md`, `LICENSE`, and `package.json`.
+`npm run pack:dry-run` shows the files included in the package. The package includes built `dist` files, Markdown documentation, `README.md`, `LICENSE`, and `package.json`.
+
+Screenshot assets under `docs/assets/` are used by the GitHub docs but excluded from the npm package to keep installs smaller.
 
 ## npm install command
 
