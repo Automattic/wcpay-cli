@@ -163,6 +163,20 @@ export class SecretToolSecretStore implements SecretStore {
 	}
 }
 
+export class UnsupportedKeychainSecretStore implements SecretStore {
+	public async get( _ref: string ): Promise<WooCommerceApiCredentials | undefined> {
+		throw new Error( 'No supported OS keychain integration is available on this platform.' );
+	}
+
+	public async set( _ref: string, _credentials: WooCommerceApiCredentials ): Promise<void> {
+		throw new Error( 'No supported OS keychain integration is available on this platform.' );
+	}
+
+	public async delete( _ref: string ): Promise<void> {
+		throw new Error( 'No supported OS keychain integration is available on this platform.' );
+	}
+}
+
 export class HelpfulKeychainSecretStore implements SecretStore {
 	public constructor( private readonly keychain: SecretStore ) {}
 
@@ -207,7 +221,7 @@ export function createSecretStore(
 		return new HelpfulKeychainSecretStore( new SecretToolSecretStore() );
 	}
 
-	return new FileSecretStore( env );
+	return new HelpfulKeychainSecretStore( new UnsupportedKeychainSecretStore() );
 }
 
 export function validateCredentials( credentials: WooCommerceApiCredentials ): void {
@@ -250,7 +264,7 @@ function keychainUnavailableError( cause: unknown ): CliError {
 			'That file will contain WooCommerce API credentials. Treat it like a secret.',
 		].join( ' ' ),
 		status: 2,
-		details: cause instanceof Error ? cause.message : String( cause ),
+		details: cause instanceof Error ? cause.name : 'unknown_error',
 	} );
 }
 

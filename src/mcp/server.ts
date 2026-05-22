@@ -1,7 +1,9 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { z } from 'zod';
+import { normalizeRestPath } from '../core/api.js';
 import { createContext } from '../core/context.js';
+import { CliError } from '../core/errors.js';
 import { classifyMode, ModeService } from '../core/mode.js';
 import type { CliEnvelope } from '../core/types.js';
 
@@ -105,7 +107,7 @@ export function createMcpServer(): McpServer {
 			},
 			annotations: readOnlyAnnotations,
 		},
-		async ( args ) => textResult( await getEndpoint( args.profile, args.path ) )
+		async ( args ) => textResult( await getMcpApiEndpoint( args.profile, args.path ) )
 	);
 
 	server.registerTool(
@@ -127,6 +129,14 @@ async function getMode( profile?: string ): Promise<CliEnvelope> {
 		const modeService = new ModeService( context.client );
 		const settings = await modeService.getSettings();
 		return { ok: true, data: { mode: classifyMode( settings ), settings } };
+	} catch ( error ) {
+		return errorEnvelope( error );
+	}
+}
+
+async function getMcpApiEndpoint( profile: string | undefined, path: string ): Promise<CliEnvelope> {
+	try {
+		return await getEndpoint( profile, normalizeMcpApiGetPath( path ) );
 	} catch ( error ) {
 		return errorEnvelope( error );
 	}
@@ -174,6 +184,18 @@ function buildListQuery( args: { page?: number; limit?: number } ): Record<strin
 		...( args.page ? { page: args.page } : {} ),
 		...( args.limit ? { pagesize: args.limit } : {} ),
 	};
+}
+
+function normalizeMcpApiGetPath( path: string ): string {
+	const normalized = normalizeRestPath( path );
+	if ( ! normalized.startsWith( '/wc/v3/payments' ) ) {
+		throw new CliError( {
+			code: 'mcp_path_not_allowed',
+			message: 'MCP api_get is limited to WooPayments REST paths under /wc/v3/payments.',
+			status: 2,
+		} );
+	}
+	return normalized;
 }
 
 function textResult( envelope: CliEnvelope ) {

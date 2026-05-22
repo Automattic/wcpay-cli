@@ -50,7 +50,7 @@ export class ModeService {
 		if ( ! canWriteInMode( mode ) ) {
 			throw new CliError( {
 				code: 'live_mode_write_blocked',
-				message: `Refusing to run ${ method } ${ path } because WooPayments is in live mode. WooPayments CLI v1 only allows write operations when test/dev mode is active.`,
+				message: `Refusing to run ${ method } ${ path } because WooPayments is in live mode. WooPayments CLI only allows write operations when test/dev mode is active.`,
 				status: 409,
 				details: { method, path, mode },
 			} );

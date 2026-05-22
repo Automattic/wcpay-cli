@@ -22,10 +22,3 @@ export class CliError extends Error {
 		};
 	}
 }
-
-export const notImplemented = ( command: string ): CliError =>
-	new CliError( {
-		code: 'not_implemented',
-		message: `The \`${ command }\` command is scaffolded but not implemented yet.`,
-		status: 501,
-	} );

@@ -5,6 +5,7 @@ import { ModeService } from '../core/mode.js';
 import { printError, printSuccess } from '../core/output.js';
 import { redactHeaders, redactUrl } from '../core/redact.js';
 import { getTestPaymentScenario, listTestPaymentScenarios } from '../core/test-scenarios.js';
+import { parsePositiveInteger } from '../core/validation.js';
 
 interface RefundCreateOptions {
 	order?: string;
@@ -67,9 +68,9 @@ export function registerWriteCommands( program: Command ): void {
 				await sendGuardedWrite( program, {
 					path: '/wc/v3/payments/refund',
 					body: {
-						...( options.order ? { order_id: options.order } : {} ),
+						...( options.order ? { order_id: parsePositiveInteger( options.order, '--order' ) } : {} ),
 						...( options.charge ? { charge_id: options.charge } : {} ),
-						amount: Number.parseInt( options.amount!, 10 ),
+						amount: parsePositiveInteger( options.amount, '--amount' ),
 						reason: options.reason,
 					},
 					dryRun: Boolean( options.dryRun || ( program.opts() as { dryRun?: boolean } ).dryRun ),
@@ -108,8 +109,8 @@ function registerTestCommands( program: Command ): void {
 						billing: { email: options.email },
 						line_items: [
 							{
-								product_id: Number.parseInt( options.product!, 10 ),
-								quantity: Number.parseInt( options.quantity ?? '1', 10 ),
+								product_id: parsePositiveInteger( options.product, '--product' ),
+								quantity: parsePositiveInteger( options.quantity ?? '1', '--quantity' ),
 							},
 						],
 						meta_data: [
@@ -160,7 +161,7 @@ function registerTestCommands( program: Command ): void {
 				await sendGuardedWrite( program, {
 					path: '/wc/v3/payments/payment_intents',
 					body: {
-						order_id: Number.parseInt( options.order!, 10 ),
+						order_id: parsePositiveInteger( options.order, '--order' ),
 						payment_method: options.paymentMethod ?? scenario!.paymentMethod,
 						_wcpay_cli_scenario: options.scenario ?? scenario!.alias,
 					},
@@ -189,8 +190,9 @@ function registerAuthorizationCommand(
 		.action( async ( options: AuthorizationOptions ) => {
 			const json = isJson( program, options );
 			await runWriteAction( { json }, async () => {
+				const orderId = parsePositiveInteger( options.order, '--order' );
 				await sendGuardedWrite( program, {
-					path: `/wc/v3/payments/orders/${ encodeURIComponent( options.order! ) }/${ endpointAction }`,
+					path: `/wc/v3/payments/orders/${ orderId }/${ endpointAction }`,
 					body: { payment_intent_id: options.intent },
 					dryRun: Boolean( options.dryRun || ( program.opts() as { dryRun?: boolean } ).dryRun ),
 					yes: Boolean( options.yes || ( program.opts() as { yes?: boolean } ).yes ),

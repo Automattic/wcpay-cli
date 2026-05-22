@@ -34,7 +34,7 @@ export function registerLoginCommand( program: Command ): void {
 	program
 		.command( 'login' )
 		.description( 'Authenticate with a WooPayments store using WooCommerce REST API keys.' )
-		.option( '--no-browser', 'Use manual WooCommerce REST API key auth without opening a browser. This is the default for now.' )
+		.option( '--no-browser', 'Use manual WooCommerce REST API key auth without opening a browser.' )
 		.option( '--site <url>', 'Store site URL.' )
 		.option( '--name <name>', 'Profile name. Defaults to the site hostname.' )
 		.option( '--consumer-key <key>', `WooCommerce consumer key. Defaults to ${ ENV_CONSUMER_KEY }.` )
@@ -45,8 +45,7 @@ export function registerLoginCommand( program: Command ): void {
 		.action( async ( options: LoginOptions ) => {
 			const json = isJson( program, options );
 			await runAction( { json }, async () => {
-				const globalOptions = program.opts() as { site?: string };
-				const site = options.site ?? globalOptions.site ?? ( await promptText( 'Site URL: ' ) );
+				const site = options.site ?? ( await promptText( 'Site URL: ' ) );
 				const siteUrl = normalizeSiteUrl( site, { allowInsecureLocal: options.allowInsecureLocal } );
 				const consumerKey = options.consumerKey ?? process.env[ ENV_CONSUMER_KEY ];
 				const consumerSecret = options.consumerSecret ?? process.env[ ENV_CONSUMER_SECRET ];
@@ -86,8 +85,8 @@ export function registerAuthCommands( program: Command ): void {
 		.option( '--no-verify', 'Save credentials without verifying them first.' )
 		.option( '--json', 'Emit JSON output.' )
 		.action( async ( options: AuthAddOptions ) => {
-			const globalOptions = program.opts() as { site?: string; json?: boolean };
-			const site = options.site ?? globalOptions.site;
+			const globalOptions = program.opts() as { json?: boolean };
+			const site = options.site;
 			const json = Boolean( options.json || globalOptions.json );
 			await runAction( { json }, async () => {
 				const consumerKey = options.consumerKey ?? process.env[ ENV_CONSUMER_KEY ];

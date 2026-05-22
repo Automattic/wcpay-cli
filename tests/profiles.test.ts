@@ -1,4 +1,4 @@
-import { mkdtemp } from 'node:fs/promises';
+import { mkdtemp, stat } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
@@ -28,6 +28,19 @@ describe( 'normalizeSiteUrl', () => {
 
 	it( 'rejects remote http sites', () => {
 		expect( () => normalizeSiteUrl( 'http://example.com' ) ).toThrow( 'Refusing to store credentials' );
+	} );
+
+	it( 'rejects remote http sites even with local opt-in', () => {
+		expect( () => normalizeSiteUrl( 'http://example.com', { allowInsecureLocal: true } ) ).toThrow(
+			'Refusing to store credentials'
+		);
+	} );
+
+	it( 'requires explicit opt-in for http .local development stores', () => {
+		expect( () => normalizeSiteUrl( 'http://store.local' ) ).toThrow( '--allow-insecure-local' );
+		expect( normalizeSiteUrl( 'http://store.local', { allowInsecureLocal: true } ) ).toBe(
+			'http://store.local'
+		);
 	} );
 } );
 
@@ -66,6 +79,28 @@ describe( 'FileSecretStore', () => {
 
 		await store.delete( 'profile:local' );
 		expect( await store.get( 'profile:local' ) ).toBeUndefined();
+	} );
+
+	it( 'does not share missing-file fallback state across config dirs', async () => {
+		const firstEnv = await testEnv();
+		const secondEnv = await testEnv();
+		await new FileSecretStore( firstEnv ).set( 'profile:first', {
+			consumerKey: 'ck_test',
+			consumerSecret: 'cs_test',
+		} );
+
+		expect( await new FileSecretStore( secondEnv ).get( 'profile:first' ) ).toBeUndefined();
+	} );
+
+	it( 'writes the auth file with user-only permissions', async () => {
+		const env = await testEnv();
+		await new FileSecretStore( env ).set( 'profile:local', {
+			consumerKey: 'ck_test',
+			consumerSecret: 'cs_test',
+		} );
+
+		const fileStat = await stat( join( env.WCPAY_HOME!, 'auth.json' ) );
+		expect( fileStat.mode & 0o777 ).toBe( 0o600 );
 	} );
 } );
 
@@ -131,6 +166,24 @@ describe( 'HelpfulKeychainSecretStore', () => {
 			store.set( 'profile:local', { consumerKey: 'ck_test', consumerSecret: 'cs_test' } )
 		).rejects.toMatchObject( { code: 'keychain_unavailable' } );
 	} );
+
+	it( 'does not include raw keychain error messages in JSON details', async () => {
+		const primary: SecretStore = {
+			get: async () => undefined,
+			set: async () => {
+				throw new Error( 'failed to save cs_test' );
+			},
+			delete: async () => undefined,
+		};
+		const store = new HelpfulKeychainSecretStore( primary );
+
+		try {
+			await store.set( 'profile:local', { consumerKey: 'ck_test', consumerSecret: 'cs_test' } );
+			throw new Error( 'Expected set to fail' );
+		} catch ( error ) {
+			expect( JSON.stringify( error ) ).not.toContain( 'cs_test' );
+		}
+	} );
 } );
 
 describe( 'createSecretStore', () => {
@@ -138,5 +191,12 @@ describe( 'createSecretStore', () => {
 		expect( createSecretStore( { WCPAY_KEYRING: '0' } as NodeJS.ProcessEnv, 'darwin' ) ).toBeInstanceOf(
 			FileSecretStore
 		);
+	} );
+
+	it( 'does not silently fall back to file storage on unsupported platforms', async () => {
+		const store = createSecretStore( {} as NodeJS.ProcessEnv, 'win32' );
+		await expect( store.get( 'profile:local' ) ).rejects.toMatchObject( {
+			code: 'keychain_unavailable',
+		} );
 	} );
 } );

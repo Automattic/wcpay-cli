@@ -16,7 +16,7 @@ export function parseApiFields( method: string, fields: string[] ): ParsedFields
 }
 
 export function parseAssignments( fields: string[] ): Record<string, unknown> {
-	const result: Record<string, unknown> = {};
+	const result: Record<string, unknown> = Object.create( null ) as Record<string, unknown>;
 	for ( const field of fields ) {
 		const assignment = parseAssignment( field );
 		result[ assignment.key ] = assignment.value;

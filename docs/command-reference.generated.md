@@ -8,7 +8,7 @@ Authenticate with a WooPayments store using WooCommerce REST API keys.
 
 Options:
 
-- `--no-browser` — Use manual WooCommerce REST API key auth without opening a browser. This is the default for now.
+- `--no-browser` — Use manual WooCommerce REST API key auth without opening a browser.
 - `--site <url>` — Store site URL.
 - `--name <name>` — Profile name. Defaults to the site hostname.
 - `--consumer-key <key>` — WooCommerce consumer key. Defaults to WCPAY_CONSUMER_KEY.

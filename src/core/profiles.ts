@@ -29,7 +29,11 @@ const DEFAULT_CONFIG: WcpayConfig = { version: 1 };
 const DEFAULT_PROFILES: ProfilesFile = { version: 1, profiles: {} };
 
 export function isLocalHostname( hostname: string ): boolean {
-	return [ 'localhost', '127.0.0.1', '::1' ].includes( hostname ) || hostname.endsWith( '.local' );
+	return isLoopbackHostname( hostname ) || hostname.endsWith( '.local' );
+}
+
+function isLoopbackHostname( hostname: string ): boolean {
+	return [ 'localhost', '127.0.0.1', '::1' ].includes( hostname );
 }
 
 export function normalizeSiteUrl( siteUrl: string, options: { allowInsecureLocal?: boolean } = {} ): string {
@@ -52,12 +56,22 @@ export function normalizeSiteUrl( siteUrl: string, options: { allowInsecureLocal
 		} );
 	}
 
-	if ( url.protocol === 'http:' && ! isLocalHostname( url.hostname ) && ! options.allowInsecureLocal ) {
-		throw new CliError( {
-			code: 'insecure_remote_site_url',
-			message: 'Refusing to store credentials for a non-HTTPS remote site. Use HTTPS for remote stores.',
-			status: 2,
-		} );
+	if ( url.protocol === 'http:' ) {
+		if ( ! isLocalHostname( url.hostname ) ) {
+			throw new CliError( {
+				code: 'insecure_remote_site_url',
+				message: 'Refusing to store credentials for a non-HTTPS remote site. Use HTTPS for remote stores.',
+				status: 2,
+			} );
+		}
+
+		if ( ! isLoopbackHostname( url.hostname ) && ! options.allowInsecureLocal ) {
+			throw new CliError( {
+				code: 'insecure_local_site_url_requires_opt_in',
+				message: 'HTTP .local development stores require --allow-insecure-local.',
+				status: 2,
+			} );
+		}
 	}
 
 	url.hash = '';

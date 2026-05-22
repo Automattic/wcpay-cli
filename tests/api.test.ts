@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { buildRestUrl, createOAuthSignature, normalizeRestPath, RestClient } from '../src/core/api.js';
-import { parseApiFields, parseAssignment } from '../src/core/fields.js';
+import { parseApiFields, parseAssignment, parseAssignments } from '../src/core/fields.js';
 import type { Profile } from '../src/core/profiles.js';
 
 const profile: Profile = {
@@ -31,6 +31,14 @@ describe( 'parseAssignment', () => {
 		expect( parseAssignment( 'reason=CLI test' ) ).toEqual( { key: 'reason', value: 'CLI test' } );
 		expect( parseAssignment( 'amount:=500' ) ).toEqual( { key: 'amount', value: 500 } );
 		expect( parseAssignment( 'dry:=true' ) ).toEqual( { key: 'dry', value: true } );
+	} );
+} );
+
+describe( 'parseAssignments', () => {
+	it( 'does not mutate Object.prototype for reserved keys', () => {
+		const parsed = parseAssignments( [ '__proto__={"polluted":true}' ] );
+		expect( Object.prototype ).not.toHaveProperty( 'polluted' );
+		expect( parsed.__proto__ ).toBe( '{"polluted":true}' );
 	} );
 } );
 

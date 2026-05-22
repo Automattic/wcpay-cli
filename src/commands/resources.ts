@@ -2,6 +2,7 @@ import { Command } from 'commander';
 import { createContext } from '../core/context.js';
 import { formatList } from '../core/format.js';
 import { printError, printSuccess } from '../core/output.js';
+import { parseOptionalPositiveInteger } from '../core/validation.js';
 
 interface ListOptions {
 	json?: boolean;
@@ -144,11 +145,13 @@ function buildListQuery(
 	config: { currencyParam?: string } = {}
 ): Record<string, string | number> {
 	const query: Record<string, string | number> = {};
-	if ( options.page ) {
-		query.page = Number.parseInt( options.page, 10 );
+	const page = parseOptionalPositiveInteger( options.page, '--page' );
+	const limit = parseOptionalPositiveInteger( options.limit, '--limit' );
+	if ( page ) {
+		query.page = page;
 	}
-	if ( options.limit ) {
-		query.pagesize = Number.parseInt( options.limit, 10 );
+	if ( limit ) {
+		query.pagesize = limit;
 	}
 	if ( options.since ) {
 		query.date_after = options.since;

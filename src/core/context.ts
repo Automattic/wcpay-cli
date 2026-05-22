@@ -1,12 +1,11 @@
 import { ENV_CONSUMER_KEY, ENV_CONSUMER_SECRET } from './config.js';
 import { CliError } from './errors.js';
 import { ProfileStore, type Profile } from './profiles.js';
-import { createSecretStore, type SecretStore, type WooCommerceApiCredentials } from './secrets.js';
+import { createSecretStore, validateCredentials, type SecretStore, type WooCommerceApiCredentials } from './secrets.js';
 import { RestClient } from './api.js';
 
 export interface ResolveProfileOptions {
 	profile?: string;
-	site?: string;
 }
 
 export interface CliContext {
@@ -36,10 +35,12 @@ export async function resolveCredentials(
 	env: NodeJS.ProcessEnv = process.env
 ): Promise<WooCommerceApiCredentials> {
 	if ( env[ ENV_CONSUMER_KEY ] && env[ ENV_CONSUMER_SECRET ] ) {
-		return {
+		const credentials = {
 			consumerKey: env[ ENV_CONSUMER_KEY ],
 			consumerSecret: env[ ENV_CONSUMER_SECRET ],
 		};
+		validateCredentials( credentials );
+		return credentials;
 	}
 
 	const credentials = await secretStore.get( profile.auth.secretRef );
