@@ -25,12 +25,12 @@ wcpay api get /wp-json/wc/v3/payments/accounts
 
 Initial syntax:
 
-| Form | Meaning |
-| --- | --- |
-| `foo=bar` | string value |
-| `foo:=123` | JSON number |
+| Form        | Meaning      |
+| ----------- | ------------ |
+| `foo=bar`   | string value |
+| `foo:=123`  | JSON number  |
 | `foo:=true` | JSON boolean |
-| `foo:=null` | JSON null |
+| `foo:=null` | JSON null    |
 
 For GET/DELETE, fields become query parameters. For POST/PUT/PATCH, fields become a JSON body.
 
@@ -38,11 +38,11 @@ For GET/DELETE, fields become query parameters. For POST/PUT/PATCH, fields becom
 
 Inspired by Notion CLI:
 
-| Form | Meaning |
-| --- | --- |
-| `name==value` | explicit query parameter |
-| `Header:Value` | request header |
-| `path.to.key=value` | nested body field |
+| Form                 | Meaning                                 |
+| -------------------- | --------------------------------------- |
+| `name==value`        | explicit query parameter                |
+| `Header:Value`       | request header                          |
+| `path.to.key=value`  | nested body field                       |
 | `path[key][0]=value` | nested body field with bracket notation |
 
 ## Safety
