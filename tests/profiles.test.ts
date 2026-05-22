@@ -27,6 +27,16 @@ describe('normalizeSiteUrl', () => {
 		expect(normalizeSiteUrl('http://localhost:8082/')).toBe('http://localhost:8082');
 	});
 
+	it('defaults bare local sites to http', () => {
+		expect(normalizeSiteUrl('localhost:8082')).toBe('http://localhost:8082');
+		expect(normalizeSiteUrl('127.0.0.1:8082')).toBe('http://127.0.0.1:8082');
+	});
+
+	it('defaults bare remote sites to https', () => {
+		expect(normalizeSiteUrl('example.com')).toBe('https://example.com');
+		expect(normalizeSiteUrl('example.com/wp-admin')).toBe('https://example.com/wp-admin');
+	});
+
 	it('rejects remote http sites', () => {
 		expect(() => normalizeSiteUrl('http://example.com')).toThrow(
 			'Refusing to store credentials'
