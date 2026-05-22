@@ -22,6 +22,7 @@ npm run build
 npm run docs:generate
 npm run docs:check
 npm run check
+npm run pack:dry-run
 ```
 
 ## Adding a command
@@ -32,6 +33,19 @@ npm run check
 4. Add examples for human and JSON output.
 5. Add tests for parsing, output, and safety behavior.
 6. If the command writes, add live-mode guard tests proving no write request is sent in live mode.
+
+## Git hooks
+
+`npm install` runs the `prepare` script and installs Husky hooks:
+
+- pre-commit: `npm run lint` and `npm run docs:check`
+- pre-push: `npm run check`
+
+If hooks are not installed, run:
+
+```bash
+npm run prepare
+```
 
 ## Generated command reference
 

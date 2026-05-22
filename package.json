@@ -36,6 +36,7 @@
 		"test": "vitest run",
 		"test:watch": "vitest",
 		"check": "npm run lint && npm run docs:check && npm run test && npm run build",
+		"prepare": "husky",
 		"pack:dry-run": "npm pack --dry-run",
 		"format": "prettier --write ."
 	},
@@ -65,6 +66,7 @@
 	},
 	"devDependencies": {
 		"@types/node": "^22.10.2",
+		"husky": "9.1.7",
 		"prettier": "^3.4.2",
 		"tsx": "^4.19.2",
 		"typescript": "^5.7.2",
