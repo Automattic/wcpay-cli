@@ -24,6 +24,8 @@ wcpay login --site http://localhost:8082
 
 The command prints the WooCommerce REST API key settings URL, prompts securely for the generated consumer key and secret, verifies the connection unless `--no-verify` is used, and then saves credentials.
 
+If a default profile is already configured, interactive `wcpay login` asks for confirmation before continuing. Pass `--yes` to skip that confirmation in scripts or repeat setup flows.
+
 <img src="assets/login-wizard.png" alt="WooPayments CLI login wizard" width="760">
 
 In non-interactive environments, pass credentials explicitly or set environment variables:

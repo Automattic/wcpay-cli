@@ -71,14 +71,20 @@ export function registerLoginCommand(program: Command): void {
 		)
 		.option('--allow-insecure-local', 'Allow HTTP for local development stores.')
 		.option('--no-verify', 'Save credentials without verifying them first.')
+		.option('--yes', 'Continue even if a profile is already configured.')
 		.option('--json', 'Emit JSON output.')
-		.action(async (options: LoginOptions) => {
+		.action(async (options: LoginOptions & { yes?: boolean }) => {
 			const json = isJson(program, options);
 			await runAction({ json }, async () => {
 				const pretty = isPrettyTerminal() && !json;
 				if (pretty) {
 					printLoginIntro();
 				}
+
+				await confirmLoginWhenProfileExists({
+					interactive: pretty,
+					yes: Boolean(options.yes || (program.opts() as { yes?: boolean }).yes),
+				});
 
 				const site = options.site ?? (await promptText('Store URL'));
 				const normalized = await normalizeLoginSite(site, {
@@ -344,6 +350,45 @@ async function saveAuthProfile(
 		secretStorage,
 		verified: shouldVerify,
 	};
+}
+
+async function confirmLoginWhenProfileExists(options: {
+	interactive: boolean;
+	yes: boolean;
+}): Promise<void> {
+	if (!options.interactive || options.yes) {
+		return;
+	}
+
+	const store = new ProfileStore();
+	const config = await store.getConfig();
+	if (!config.defaultProfile) {
+		return;
+	}
+
+	let currentProfile: Profile | undefined;
+	try {
+		currentProfile = await store.get(config.defaultProfile);
+	} catch {
+		return;
+	}
+
+	process.stdout.write(
+		[
+			formatWarning('A WooPayments CLI profile is already configured.'),
+			formatMuted(`Current profile: ${currentProfile.name} (${currentProfile.siteUrl})`),
+			'',
+		].join('\n')
+	);
+
+	const shouldContinue = await promptConfirm('Continue and add or update a login?', false);
+	if (!shouldContinue) {
+		throw new CliError({
+			code: 'login_cancelled',
+			message: 'Login cancelled. Your existing profile was not changed.',
+			status: 2,
+		});
+	}
 }
 
 async function normalizeLoginSite(

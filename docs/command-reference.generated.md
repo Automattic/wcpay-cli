@@ -15,6 +15,7 @@ Options:
 - `--consumer-secret <secret>` — WooCommerce consumer secret. Defaults to WCPAY_CONSUMER_SECRET.
 - `--allow-insecure-local` — Allow HTTP for local development stores.
 - `--no-verify` — Save credentials without verifying them first.
+- `--yes` — Continue even if a profile is already configured.
 - `--json` — Emit JSON output.
 
 ## `auth [command]`
