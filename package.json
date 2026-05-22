@@ -32,6 +32,7 @@
 		"dev": "tsx src/cli.ts",
 		"lint": "tsc -p tsconfig.json --noEmit",
 		"docs:generate": "tsx scripts/generate-command-reference.ts",
+		"docs:assets": "tsx scripts/render-doc-assets.ts",
 		"docs:check": "tsx scripts/generate-command-reference.ts --check",
 		"test": "vitest run",
 		"test:watch": "vitest",

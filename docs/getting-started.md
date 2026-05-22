@@ -18,7 +18,7 @@ Confirm the binary is available:
 wcpay
 ```
 
-![WooPayments CLI welcome screen](assets/welcome.png)
+<img src="assets/welcome.png" alt="WooPayments CLI welcome screen" width="760">
 
 Package identity:
 
@@ -34,7 +34,7 @@ npm install -g @automattic/wcpay-cli
 wcpay login --site https://store.example --name staging
 ```
 
-![WooPayments CLI login wizard](assets/login-wizard.png)
+<img src="assets/login-wizard.png" alt="WooPayments CLI login wizard" width="760">
 
 For a local development store:
 
@@ -102,7 +102,7 @@ wcpay refunds create --order 123 --amount 500 --dry-run
 
 Dry runs still authenticate, check WooPayments mode, resolve the HTTP request, and redact secrets from output.
 
-![WooPayments CLI dry-run output](assets/dry-run.png)
+<img src="assets/dry-run.png" alt="WooPayments CLI dry-run output" width="760">
 
 ## 6. Use JSON for scripts and agents
 
