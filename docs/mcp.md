@@ -1,17 +1,16 @@
 # MCP
 
-`wcpay mcp` exposes a minimal stdio MCP server for agent workflows.
+`wcpay mcp` exposes a local stdio MCP server for agent workflows.
 
-## v1 scope
+## Scope
 
-- stdio transport only;
+- stdio transport;
 - local process launched by an MCP client;
 - same profile/auth/config as CLI commands;
-- same safety guard as CLI commands;
-- read-oriented tools first;
-- no hosted service or daemon.
+- same JSON envelope shape as CLI commands;
+- read-only WooPayments tools.
 
-## Initial tools
+## Tools
 
 ```text
 wcpay_doctor
@@ -32,18 +31,8 @@ wcpay mcp
 
 MCP tools return the same JSON envelope shape used by the CLI, serialized as text content for compatibility.
 
-## Write tools
-
-Write tools may be added only when they can reuse the CLI mode guard cleanly.
-
-Requirements:
-
-- test/dev mode only;
-- `dryRun` support;
-- explicit structured confirmation, e.g. `confirm: true`;
-- no interactive prompts;
-- stable JSON errors.
-
 ## Security notes
 
-Agents can be affected by prompt injection and tool misuse. Users should enable human confirmation in MCP clients for write-capable tools. v1 blocks live-mode writes entirely.
+Agents can be affected by prompt injection and tool misuse. The MCP server exposes read-only tools and uses the same local profile/auth configuration as the CLI.
+
+Live-mode write blocking is part of the shared CLI safety model. If write-capable MCP tools are added later, they must reuse the same mode guard and require explicit structured confirmation.

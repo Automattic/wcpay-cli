@@ -1,46 +1,43 @@
 # WooPayments CLI Documentation
 
-Documentation is a product requirement for `wcpay`. Every user-facing feature should ship with docs, examples, JSON output notes, and safety behavior.
+`wcpay` is a standalone CLI for inspecting, debugging, and safely exercising WooPayments stores over REST APIs.
 
 ## Start here
 
-1. [Product spec](spec.md)
-2. [CLI practices research](cli-practices.md)
-3. [Getting started](getting-started.md)
-4. [Authentication](auth.md)
-5. [Safety model](safety.md)
+1. [Getting started](getting-started.md)
+2. [Authentication](auth.md)
+3. [Safety model](safety.md)
+4. [Command guide](commands.md)
+5. [Generated command reference](command-reference.generated.md)
 6. [API command syntax](api.md)
-7. [Command guide](commands.md)
-8. [Generated command reference](command-reference.generated.md)
-9. [Endpoint inventory](endpoint-inventory.md)
-10. [Test scenarios](test-scenarios.md)
-11. [MCP](mcp.md)
-12. [Developer guide](developer-guide.md)
-13. [Local smoke testing](local-smoke-testing.md)
-14. [Packaging and release](packaging.md)
-15. [Architecture decisions](decisions/0001-initial-product-shape.md)
+7. [Endpoint inventory](endpoint-inventory.md)
+8. [Test scenarios](test-scenarios.md)
+9. [MCP](mcp.md)
+10. [Developer guide](developer-guide.md)
+11. [Local smoke testing](local-smoke-testing.md)
+12. [Packaging and release](packaging.md)
 
 ## Documentation standards
 
-Each command doc should include:
+User-facing command docs should include:
 
 - what the command does;
 - required auth/capabilities;
 - live-mode/test-mode behavior;
 - examples for human use;
 - `--json` examples for agents/scripts;
-- error examples;
+- stable error examples;
 - related REST endpoints;
 - redaction/PII notes where relevant.
 
-## Docs-as-code plan
+## Generated reference
 
-Command metadata should eventually generate or validate:
+`docs/command-reference.generated.md` is generated from command metadata.
 
-- `wcpay tools describe`;
-- `wcpay tools schema`;
-- MCP tool definitions;
-- command reference pages;
-- JSON output examples.
+After changing command names, descriptions, or options, run:
 
-Generated docs should be checked into the repo only if it improves reviewability; otherwise, docs checks should fail when metadata and docs drift.
+```bash
+npm run docs:generate
+```
+
+`npm run check` includes `npm run docs:check` and fails when the generated command reference is stale.

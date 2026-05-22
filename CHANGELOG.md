@@ -1,12 +1,10 @@
 # Changelog
 
-All notable changes to `@automattic/wcpay-cli` will be documented in this file.
-
-The project is pre-release. Version `0.0.0` is the active development version.
+All notable changes to `@automattic/wcpay-cli` are documented in this file.
 
 ## 0.0.0
 
-Initial development scaffold and core v1 implementation work:
+Current package contents:
 
 - Manual WooCommerce REST API key login.
 - Keychain-first secret storage with explicit file fallback.
@@ -18,4 +16,6 @@ Initial development scaffold and core v1 implementation work:
 - Test/dev-mode write dry-runs.
 - Test payment scenario aliases.
 - Minimal MCP server.
-- First-class documentation scaffold.
+- Generated command reference.
+- Shell completion output for bash and zsh.
+- Documentation for auth, safety, commands, API syntax, MCP, test scenarios, packaging, and local smoke testing.

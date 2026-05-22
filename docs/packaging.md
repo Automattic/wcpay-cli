@@ -29,17 +29,12 @@ wcpay completions bash
 wcpay completions zsh
 ```
 
-## Planned npm install
+## Package contents
+
+`npm run pack:dry-run` shows the files included in the package. The package includes built `dist` files, documentation, `README.md`, `LICENSE`, and `package.json`.
+
+## npm install command
 
 ```bash
 npm install -g @automattic/wcpay-cli
 ```
-
-## Release readiness checklist
-
-- [ ] Decide when to set `private: false`.
-- [ ] Confirm license with project stakeholders.
-- [ ] Confirm package scope permissions for `@automattic/wcpay-cli`.
-- [ ] Add release automation once the GitHub repo exists.
-- [ ] Add provenance/signing if required by Automattic standards.
-- [ ] Add Homebrew/standalone binary distribution after npm package stabilizes.

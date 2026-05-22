@@ -11,7 +11,7 @@ npm link
 wcpay --help
 ```
 
-Planned public install:
+Package identity:
 
 ```bash
 npm install -g @automattic/wcpay-cli
@@ -19,13 +19,13 @@ npm install -g @automattic/wcpay-cli
 
 ## Add a profile
 
-v1 uses WooCommerce REST API keys. For a guided no-browser flow:
+Use the guided no-browser login flow:
 
 ```bash
 wcpay login --site https://store.example --name staging
 ```
 
-Or pass credentials directly:
+Or pass WooCommerce REST API credentials directly:
 
 ```bash
 wcpay auth add \
@@ -71,4 +71,4 @@ wcpay api post /wc/v3/payments/refund order_id:=123 amount:=500 reason="CLI test
 
 ## Safety reminder
 
-In v1, writes are blocked unless WooPayments is in test/dev mode.
+Writes are blocked unless WooPayments is in test/dev mode. Use `--dry-run` to inspect write requests without sending them.

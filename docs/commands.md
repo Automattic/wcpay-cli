@@ -1,6 +1,6 @@
-# Command Reference
+# Command Guide
 
-This file is currently hand-written. It should eventually be generated or checked against command metadata.
+This guide groups common commands by workflow. For an option-level reference generated from command metadata, see [Generated command reference](command-reference.generated.md).
 
 ## Core/auth
 
@@ -116,7 +116,7 @@ wcpay test payment create --order <id> --scenario success --dry-run
 wcpay test payment create --order <id> --scenario success --yes
 ```
 
-Supported initial scenarios: `success`, `decline`, `3ds`, `dispute`, `fraudulent`.
+Supported scenarios: `success`, `decline`, `3ds`, `dispute`, `fraudulent`.
 
 ## Agent tooling
 

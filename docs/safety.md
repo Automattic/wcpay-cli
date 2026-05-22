@@ -1,12 +1,12 @@
 # Safety Model
 
-`wcpay` is designed for developers and agents, so safety must be enforced by code, not only documentation.
+`wcpay` is designed for developers and agents, so safety is enforced by code, not only by documentation.
 
-## v1 rule
+## Live-mode rule
 
 Live-mode stores are read-only.
 
-`wcpay` must block any write/destructive operation before sending the request unless WooPayments is in test/dev mode.
+`wcpay` blocks any write/destructive operation before sending the request unless WooPayments is in test/dev mode.
 
 ## Read methods
 
@@ -23,50 +23,46 @@ Live-mode stores are read-only.
 
 ## Mode detection
 
-Before a write, call:
+Before a write, the CLI calls:
 
 ```http
 GET /wp-json/wc/v3/payments/settings
 ```
 
-Use:
+Writes are allowed only when one of these mode flags indicates test/dev mode:
 
 - `is_test_mode_enabled`
 - `is_test_mode_onboarding`
 - `is_dev_mode_enabled`
 
-Allow writes only when test/dev mode is active.
-
 ## Dry runs
 
-Every write-capable command must support:
+Every write-capable command supports:
 
 ```bash
 --dry-run
 ```
 
-Dry-run should validate auth, resolve the request, check mode, print what would happen, and send no write request.
+Dry runs validate auth, resolve the request, check mode, print what would happen, and send no write request. Dry-run output redacts auth query parameters and authorization headers.
 
 ## Non-interactive confirmation
 
-Interactive writes should prompt. Non-interactive writes must require:
+Interactive writes prompt for confirmation. Non-interactive writes require:
 
 ```bash
 --yes
 ```
 
-MCP write tools must require structured confirmation such as `confirm: true`, unless run as dry-run.
-
 ## Error shape
 
-JSON errors should be stable:
+JSON errors are stable:
 
 ```json
 {
   "ok": false,
   "error": {
     "code": "live_mode_write_blocked",
-    "message": "WooPayments CLI v1 only allows write operations in test/dev mode.",
+    "message": "WooPayments CLI only allows write operations in test/dev mode.",
     "status": 409
   },
   "meta": {
