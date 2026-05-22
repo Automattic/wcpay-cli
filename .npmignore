@@ -1,0 +1,7 @@
+docs/assets/
+scripts/
+tests/
+src/
+.github/
+.husky/
+*.tsbuildinfo
