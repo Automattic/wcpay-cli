@@ -59,16 +59,16 @@ JSON errors are stable:
 
 ```json
 {
-  "ok": false,
-  "error": {
-    "code": "live_mode_write_blocked",
-    "message": "WooPayments CLI only allows write operations in test/dev mode.",
-    "status": 409
-  },
-  "meta": {
-    "method": "POST",
-    "path": "/wc/v3/payments/refund",
-    "mode": "live"
-  }
+	"ok": false,
+	"error": {
+		"code": "live_mode_write_blocked",
+		"message": "WooPayments CLI only allows write operations in test/dev mode.",
+		"status": 409
+	},
+	"meta": {
+		"method": "POST",
+		"path": "/wc/v3/payments/refund",
+		"mode": "live"
+	}
 }
 ```

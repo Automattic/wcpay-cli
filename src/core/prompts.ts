@@ -1,58 +1,32 @@
-import { Writable } from 'node:stream';
-import readline from 'node:readline';
+import { confirm, input, password } from '@inquirer/prompts';
 import { CliError } from './errors.js';
 
-export async function promptText( label: string ): Promise<string> {
+export async function promptText(label: string): Promise<string> {
 	ensureInteractive();
-	return question( label, false );
+	return (await input({ message: stripTrailingColon(label) })).trim();
 }
 
-export async function promptSecret( label: string ): Promise<string> {
+export async function promptSecret(label: string): Promise<string> {
 	ensureInteractive();
-	return question( label, true );
+	return (await password({ message: stripTrailingColon(label), mask: '*' })).trim();
+}
+
+export async function promptConfirm(label: string, defaultValue = false): Promise<boolean> {
+	ensureInteractive();
+	return confirm({ message: stripTrailingColon(label), default: defaultValue });
 }
 
 function ensureInteractive(): void {
-	if ( ! process.stdin.isTTY || ! process.stdout.isTTY ) {
-		throw new CliError( {
+	if (!process.stdin.isTTY || !process.stdout.isTTY) {
+		throw new CliError({
 			code: 'interactive_auth_required',
-			message: 'No-browser auth needs credentials. Pass --consumer-key/--consumer-secret or set WCPAY_CONSUMER_KEY/WCPAY_CONSUMER_SECRET.',
+			message:
+				'No-browser auth needs credentials. Pass --consumer-key/--consumer-secret or set WCPAY_CONSUMER_KEY/WCPAY_CONSUMER_SECRET.',
 			status: 2,
-		} );
+		});
 	}
 }
 
-function question( label: string, secret: boolean ): Promise<string> {
-	let muted = false;
-	const output = secret
-		? new Writable( {
-				write( chunk, _encoding, callback ) {
-					if ( ! muted ) {
-						process.stdout.write( chunk );
-					}
-					callback();
-				},
-			} )
-		: process.stdout;
-
-	const rl = readline.createInterface( {
-		input: process.stdin,
-		output,
-		terminal: true,
-	} );
-
-	return new Promise( ( resolve ) => {
-		if ( secret ) {
-			process.stdout.write( label );
-			muted = true;
-		}
-		rl.question( secret ? '' : label, ( answer ) => {
-			muted = false;
-			rl.close();
-			if ( secret ) {
-				process.stdout.write( '\n' );
-			}
-			resolve( answer.trim() );
-		} );
-	} );
+function stripTrailingColon(label: string): string {
+	return label.replace(/:\s*$/, '');
 }

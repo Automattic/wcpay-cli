@@ -21,11 +21,13 @@ npm run build
 npm link
 ```
 
-Connect a store:
+Connect a store with the guided login flow:
 
 ```bash
 wcpay login --site https://store.example --name staging
 ```
+
+The wizard points you to the WooCommerce REST API key screen, securely prompts for the generated key and secret, verifies the connection, and saves credentials in your OS keychain.
 
 Then check that the CLI can talk to WooPayments:
 

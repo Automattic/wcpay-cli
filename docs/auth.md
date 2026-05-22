@@ -52,17 +52,17 @@ Omit `--no-verify` to validate credentials against `/wc/v3/payments/settings` be
 - CLI config is stored in `config.json`.
 - The config directory resolves from `WCPAY_HOME`, then XDG config, then `~/.config/wcpay`.
 - Secrets use the OS keychain where available:
-  - macOS: Keychain via the `security` CLI.
-  - Linux: Secret Service via `secret-tool` when available.
+    - macOS: Keychain via the `security` CLI.
+    - Linux: Secret Service via `secret-tool` when available.
 - If the OS keychain is unavailable, the CLI fails with instructions rather than silently writing secrets to disk.
 - Set `WCPAY_KEYRING=0` to explicitly use file-based storage at `auth.json` with file mode `0600` for CI/containers.
 
 ## Environment variables
 
-| Variable | Purpose |
-| --- | --- |
-| `WCPAY_HOME` | Override config directory. |
-| `WCPAY_PROFILE` | Override default profile for one shell/session. |
-| `WCPAY_CONSUMER_KEY` | Provide a consumer key for CI/scripts. |
-| `WCPAY_CONSUMER_SECRET` | Provide a consumer secret for CI/scripts. |
-| `WCPAY_KEYRING` | Set to `0` to disable OS keychain. |
+| Variable                | Purpose                                         |
+| ----------------------- | ----------------------------------------------- |
+| `WCPAY_HOME`            | Override config directory.                      |
+| `WCPAY_PROFILE`         | Override default profile for one shell/session. |
+| `WCPAY_CONSUMER_KEY`    | Provide a consumer key for CI/scripts.          |
+| `WCPAY_CONSUMER_SECRET` | Provide a consumer secret for CI/scripts.       |
+| `WCPAY_KEYRING`         | Set to `0` to disable OS keychain.              |
