@@ -20,6 +20,7 @@ npm run lint
 npm run test
 npm run build
 npm run docs:generate
+npm run docs:assets
 npm run docs:check
 npm run check
 npm run pack:dry-run
@@ -48,6 +49,16 @@ npm run prepare
 ```
 
 The GitHub `main` branch is protected. Changes should go through pull requests with the `test` status check passing before merge.
+
+## Screenshot assets
+
+Screenshot-style docs images are generated with Chrome/Chromium:
+
+```bash
+npm run docs:assets
+```
+
+Set `CHROME_BIN=/path/to/chrome` if Chrome is not installed in a standard location.
 
 ## Generated command reference
 
