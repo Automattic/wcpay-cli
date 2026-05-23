@@ -2,6 +2,8 @@
 
 `wcpay api` makes authenticated REST API requests to the selected WooCommerce/WooPayments store.
 
+Curated read commands use WooPayments Abilities API definitions when the selected store exposes them, then automatically fall back to WooPayments REST endpoints. This keeps newer WooPayments/WooCommerce 10.9+ stores aligned with the shared Abilities surface while preserving compatibility with older stores or sites where WooPayments abilities are disabled.
+
 ## Examples
 
 ```bash

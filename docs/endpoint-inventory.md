@@ -12,6 +12,19 @@ This document will track WooPayments/WooCommerce REST endpoints reviewed for CLI
 | `blocked`                | Should not be exposed by curated commands.                        |
 | `unknown`                | Needs review.                                                     |
 
+## Abilities compatibility
+
+Curated read commands prefer WooPayments abilities when available and fall back to the REST endpoints below when abilities are missing, disabled, or unsupported by the store.
+
+| CLI surface         | Preferred ability                       | REST fallback                           |
+| ------------------- | --------------------------------------- | --------------------------------------- |
+| `account status`    | `woocommerce-payments/get-account`      | `/wc/v3/payments/accounts`              |
+| `transactions list` | `woocommerce-payments/get-transactions` | `/wc/v3/payments/transactions`          |
+| `deposits list`     | `woocommerce-payments/get-deposits`     | `/wc/v3/payments/deposits`              |
+| `disputes list`     | `woocommerce-payments/get-disputes`     | `/wc/v3/payments/disputes`              |
+| `disputes get`      | `woocommerce-payments/get-dispute`      | `/wc/v3/payments/disputes/{dispute_id}` |
+| `charges get`       | `woocommerce-payments/get-charge`       | `/wc/v3/payments/charges/{charge_id}`   |
+
 ## Initial candidates
 
 | Method | Path                                                      | Purpose                     | Classification           | Notes                                                      |
