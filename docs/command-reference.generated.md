@@ -4,10 +4,11 @@
 
 ## `login [options]`
 
-Authenticate with a WooPayments store using WooCommerce REST API keys.
+Authenticate with a WooPayments store.
 
 Options:
 
+- `--browser` — Use the browser-based WooPayments connection flow when available.
 - `--no-browser` — Use manual WooCommerce REST API key auth without opening a browser.
 - `--site <url>` — Store site URL.
 - `--name <name>` — Profile name. Defaults to the site hostname.

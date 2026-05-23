@@ -16,13 +16,13 @@ wcpay whoami
 
 ## Login
 
-`wcpay login` uses a no-browser WooCommerce REST API key flow by default. This works for local development, SSH sessions, containers, and environments where browser auth is unavailable:
+`wcpay login` uses the browser-based WooPayments connection flow when the store supports it. This flow opens WordPress/WooCommerce in your browser, asks an administrator to authorize WooPayments CLI, receives generated WooCommerce REST API credentials through a temporary localhost callback, verifies the connection unless `--no-verify` is used, and then stores credentials securely.
 
 ```bash
 wcpay login --site localhost:8082
 ```
 
-The command prints the WooCommerce REST API key settings URL, prompts securely for the generated consumer key and secret, verifies the connection unless `--no-verify` is used, and then saves credentials. Bare remote domains default to HTTPS; bare loopback hosts such as `localhost:8082` default to HTTP for local development.
+Browser login requires WooPayments 10.9 or later. Older stores automatically fall back to the manual WooCommerce REST API key flow, which prints the WooCommerce REST API key settings URL and prompts securely for the generated consumer key and secret. Bare remote domains default to HTTPS; bare loopback hosts such as `localhost:8082` default to HTTP for local development.
 
 If a default profile is already configured, interactive `wcpay login` asks for confirmation before continuing. Pass `--yes` to skip that confirmation in scripts or repeat setup flows.
 
@@ -36,7 +36,7 @@ WCPAY_CONSUMER_SECRET=cs_... \
   wcpay login --site localhost:8082 --no-verify
 ```
 
-`--no-browser` is accepted as an explicit alias, but it is not required.
+Use `--no-browser` to skip browser login and go straight to the manual API key flow.
 
 ## Add a profile directly
 
@@ -70,3 +70,40 @@ Omit `--no-verify` to validate credentials against `/wc/v3/payments/settings` be
 | `WCPAY_CONSUMER_KEY`    | Provide a consumer key for CI/scripts.          |
 | `WCPAY_CONSUMER_SECRET` | Provide a consumer secret for CI/scripts.       |
 | `WCPAY_KEYRING`         | Set to `0` to disable OS keychain.              |
+
+## Browser login endpoint contract
+
+WooPayments 10.9+ is expected to expose `POST /wc/v3/payments/cli/authorize` without existing API-key authentication. The CLI sends:
+
+```json
+{
+	"app_name": "WooPayments CLI",
+	"scope": "read_write",
+	"state": "random-cli-state",
+	"callback_url": "http://127.0.0.1:{port}/callback",
+	"profile_name": "optional-profile-name"
+}
+```
+
+A supporting store responds with:
+
+```json
+{
+	"authorize_url": "https://store.example/wp-admin/...",
+	"expires_at": "2026-01-01T00:00:00Z"
+}
+```
+
+After administrator approval, WooPayments redirects the browser to the supplied localhost callback with `success=1`, the original `state`, and a short-lived `code`. The CLI validates `state`, exchanges the code with `POST /wc/v3/payments/cli/token`, stores the returned credentials in the configured secret store, and verifies them against `/wc/v3/payments/settings` unless `--no-verify` is passed.
+
+The token exchange response is:
+
+```json
+{
+	"consumer_key": "ck_...",
+	"consumer_secret": "cs_...",
+	"key_id": "optional-key-id"
+}
+```
+
+If the endpoint returns `404` or `405`, `wcpay login` treats the store as older than the browser-login capability and falls back to the manual API key flow.

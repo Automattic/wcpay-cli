@@ -1,5 +1,6 @@
 import { Command } from 'commander';
 import { RestClient } from '../core/api.js';
+import { runBrowserAuth } from '../core/browser-auth.js';
 import { ENV_CONSUMER_KEY, ENV_CONSUMER_SECRET } from '../core/config.js';
 import { createContext } from '../core/context.js';
 import { CliError } from '../core/errors.js';
@@ -33,7 +34,10 @@ interface AuthAddOptions {
 	json?: boolean;
 }
 
-type LoginOptions = AuthAddOptions;
+interface LoginOptions extends AuthAddOptions {
+	browser?: boolean;
+	yes?: boolean;
+}
 
 interface SaveProfileInput {
 	name?: string;
@@ -54,7 +58,12 @@ interface SavedProfileResult {
 export function registerLoginCommand(program: Command): void {
 	program
 		.command('login')
-		.description('Authenticate with a WooPayments store using WooCommerce REST API keys.')
+		.description('Authenticate with a WooPayments store.')
+		.option(
+			'--browser',
+			'Use the browser-based WooPayments connection flow when available.',
+			true
+		)
 		.option(
 			'--no-browser',
 			'Use manual WooCommerce REST API key auth without opening a browser.'
@@ -73,7 +82,7 @@ export function registerLoginCommand(program: Command): void {
 		.option('--no-verify', 'Save credentials without verifying them first.')
 		.option('--yes', 'Continue even if a profile is already configured.')
 		.option('--json', 'Emit JSON output.')
-		.action(async (options: LoginOptions & { yes?: boolean }) => {
+		.action(async (options: LoginOptions) => {
 			const json = isJson(program, options);
 			await runAction({ json }, async () => {
 				const pretty = isPrettyTerminal() && !json;
@@ -91,8 +100,31 @@ export function registerLoginCommand(program: Command): void {
 					allowInsecureLocal: options.allowInsecureLocal,
 					interactive: pretty,
 				});
-				const consumerKey = options.consumerKey ?? process.env[ENV_CONSUMER_KEY];
-				const consumerSecret = options.consumerSecret ?? process.env[ENV_CONSUMER_SECRET];
+				let consumerKey = options.consumerKey ?? process.env[ENV_CONSUMER_KEY];
+				let consumerSecret = options.consumerSecret ?? process.env[ENV_CONSUMER_SECRET];
+				let usedBrowserLogin = false;
+
+				if (!consumerKey && !consumerSecret && options.browser && pretty) {
+					try {
+						process.stdout.write(
+							`${formatMuted('Opening your store to authorize WooPayments CLI...')}\n`
+						);
+						const browserAuth = await runBrowserAuth({
+							siteUrl: normalized.siteUrl,
+							profileName: options.name,
+						});
+						consumerKey = browserAuth.credentials.consumerKey;
+						consumerSecret = browserAuth.credentials.consumerSecret;
+						usedBrowserLogin = true;
+					} catch (error) {
+						if (!isBrowserAuthFallbackError(error)) {
+							throw error;
+						}
+						process.stdout.write(
+							`${formatMuted('Browser login is not available on this store yet. Falling back to manual API key login.')}\n\n`
+						);
+					}
+				}
 
 				if (!consumerKey || !consumerSecret) {
 					writeNoBrowserInstructions(normalized.siteUrl, json);
@@ -112,7 +144,7 @@ export function registerLoginCommand(program: Command): void {
 
 				printSuccess(saved, {
 					json,
-					human: formatLoginSuccess(saved),
+					human: formatLoginSuccess(saved, { browserLogin: usedBrowserLogin }),
 				});
 			});
 		});
@@ -430,11 +462,19 @@ async function verifyProfile(
 	await client.request({ method: 'GET', path: '/wc/v3/payments/settings' });
 }
 
-function formatLoginSuccess(saved: SavedProfileResult): string {
+function isBrowserAuthFallbackError(error: unknown): boolean {
+	return error instanceof CliError && error.code === 'browser_auth_unavailable';
+}
+
+function formatLoginSuccess(
+	saved: SavedProfileResult,
+	options: { browserLogin?: boolean } = {}
+): string {
 	return [
 		'',
 		formatCheck(`Connected to ${saved.profile.name}`),
 		formatMuted(`Store: ${saved.profile.siteUrl}`),
+		formatMuted(`Login flow: ${options.browserLogin ? 'browser' : 'manual API key'}`),
 		formatMuted(`Credentials: ${saved.secretStorage}`),
 		...(saved.defaultProfile === saved.profile.name
 			? [formatMuted('Default profile: yes')]
