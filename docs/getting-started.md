@@ -28,7 +28,7 @@ npm install -g @automattic/wcpay-cli
 
 ## 2. Connect a store
 
-`wcpay` uses WooCommerce REST API keys. The guided login flow prints the WooCommerce API key settings URL, asks for the generated consumer key and secret, verifies the connection, and stores credentials in the OS keychain. If you already have a default profile, it asks before continuing:
+`wcpay` uses WooCommerce REST API keys. On WooPayments 10.9 or later, the guided login flow opens your browser so an administrator can authorize the CLI and send generated credentials back to a temporary localhost callback. On older WooPayments versions, it automatically falls back to the manual API key flow. In both cases, credentials are verified and stored in the OS keychain. If you already have a default profile, it asks before continuing:
 
 ```bash
 wcpay login --site store.example --name staging
@@ -42,10 +42,16 @@ wcpay login --site localhost:8082 --name local
 
 <img src="assets/login-wizard.png" alt="WooPayments CLI login wizard" width="760">
 
-For a local development store:
+To skip browser login and use the manual API key flow directly:
 
 ```bash
-wcpay login --site http://localhost:8082 --name local --no-verify
+wcpay login --site localhost:8082 --name local --no-browser
+```
+
+For a local development store where you want to save credentials without verification:
+
+```bash
+wcpay login --site localhost:8082 --name local --no-verify
 ```
 
 You can also pass credentials directly, which is useful for scripts and CI:
