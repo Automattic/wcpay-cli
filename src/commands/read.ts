@@ -9,6 +9,7 @@ import { classifyMode, ModeService } from '../core/mode.js';
 import { formatKeyValue } from '../core/format.js';
 import { printError, printSuccess } from '../core/output.js';
 import { describeSecretStorage } from '../core/secrets.js';
+import { formatCommand, formatMuted } from '../core/ux.js';
 
 export function registerReadCommands(program: Command): void {
 	program
@@ -127,19 +128,56 @@ interface DoctorCheck {
 	name: string;
 	status: DoctorStatus;
 	message: string;
+	group: DoctorGroup;
 	details?: unknown;
 }
 
+type DoctorGroup = 'setup' | 'connection' | 'woopayments' | 'capabilities';
+
+const DOCTOR_GROUPS: Array<{ key: DoctorGroup; label: string }> = [
+	{ key: 'setup', label: 'Local setup' },
+	{ key: 'connection', label: 'Connection' },
+	{ key: 'woopayments', label: 'WooPayments' },
+	{ key: 'capabilities', label: 'Capabilities' },
+];
+
+const DOCTOR_GROUP_BY_CHECK: Record<string, DoctorGroup> = {
+	profile: 'setup',
+	site_url: 'setup',
+	credentials_storage: 'setup',
+	auth: 'connection',
+	browser_login: 'connection',
+	mode: 'woopayments',
+	payments_enabled: 'woopayments',
+	account: 'woopayments',
+	abilities: 'capabilities',
+};
+
 function pass(name: string, message: string, details?: unknown): DoctorCheck {
-	return { name, status: 'pass', message, ...(details !== undefined ? { details } : {}) };
+	return check(name, 'pass', message, details);
 }
 
 function warn(name: string, message: string, details?: unknown): DoctorCheck {
-	return { name, status: 'warn', message, ...(details !== undefined ? { details } : {}) };
+	return check(name, 'warn', message, details);
 }
 
 function fail(name: string, message: string, details?: unknown): DoctorCheck {
-	return { name, status: 'fail', message, ...(details !== undefined ? { details } : {}) };
+	return check(name, 'fail', message, details);
+}
+
+function check(
+	name: string,
+	status: DoctorStatus,
+	message: string,
+	details?: unknown
+): DoctorCheck {
+	return {
+		name,
+		status,
+		message,
+		group: DOCTOR_GROUP_BY_CHECK[name] ?? 'setup',
+		...(details !== undefined ? { details } : {}),
+	};
 }
 
 async function addAccountCheck(
@@ -215,11 +253,34 @@ function summarizeChecks(checks: DoctorCheck[]): Record<DoctorStatus, number> {
 }
 
 function formatDoctorChecks(checks: DoctorCheck[], summary: Record<DoctorStatus, number>): string {
-	return [
-		`Doctor summary: ${summary.pass} passed, ${summary.warn} warnings, ${summary.fail} failed`,
+	const lines = [
+		'WooPayments CLI doctor',
+		formatMuted(`${summary.pass} passed · ${summary.warn} warnings · ${summary.fail} failed`),
 		'',
-		...checks.map((check) => `${doctorIcon(check.status)} ${check.name}\t${check.message}`),
-	].join('\n');
+	];
+
+	for (const group of DOCTOR_GROUPS) {
+		const groupChecks = checks.filter((check) => check.group === group.key);
+		if (groupChecks.length === 0) {
+			continue;
+		}
+		lines.push(group.label);
+		for (const check of groupChecks) {
+			lines.push(`  ${doctorIcon(check.status)} ${formatDoctorName(check.name)} ${formatMuted(check.message)}`);
+		}
+		lines.push('');
+	}
+
+	const nextSteps = getDoctorNextSteps(checks);
+	if (nextSteps.length > 0) {
+		lines.push('Next steps');
+		for (const step of nextSteps) {
+			lines.push(`  • ${step}`);
+		}
+		lines.push('');
+	}
+
+	return lines.join('\n').trimEnd();
 }
 
 function doctorIcon(status: DoctorStatus): string {
@@ -230,6 +291,27 @@ function doctorIcon(status: DoctorStatus): string {
 		return '!';
 	}
 	return '✗';
+}
+
+function formatDoctorName(name: string): string {
+	return name.replace(/_/g, ' ').padEnd(19, ' ');
+}
+
+function getDoctorNextSteps(checks: DoctorCheck[]): string[] {
+	const steps: string[] = [];
+	if (checks.some((checkItem) => checkItem.status === 'fail')) {
+		steps.push(`Run ${formatCommand('wcpay doctor --json')} for structured error details.`);
+	}
+	if (checks.some((checkItem) => checkItem.name === 'browser_login' && checkItem.status === 'warn')) {
+		steps.push(`Use ${formatCommand('wcpay login --no-browser')} if browser login is not supported by this store.`);
+	}
+	if (checks.some((checkItem) => checkItem.name === 'abilities' && checkItem.status === 'warn')) {
+		steps.push('Abilities are optional; curated commands will continue to use REST fallbacks.');
+	}
+	if (checks.some((checkItem) => checkItem.name === 'mode' && checkItem.status === 'warn')) {
+		steps.push('Live-mode stores are read-only in wcpay; switch WooPayments to test/dev mode before write commands.');
+	}
+	return steps;
 }
 
 function errorMessage(error: unknown): string {
