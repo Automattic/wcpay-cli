@@ -112,6 +112,9 @@ export function registerLoginCommand(program: Command): void {
 						const browserAuth = await runBrowserAuth({
 							siteUrl: normalized.siteUrl,
 							profileName: options.name,
+							onAuthorizeUrl: (url) => {
+								process.stdout.write(`${formatMuted('If your browser did not open, visit:')}\n  ${formatCommand(url)}\n`);
+							},
 						});
 						consumerKey = browserAuth.credentials.consumerKey;
 						consumerSecret = browserAuth.credentials.consumerSecret;

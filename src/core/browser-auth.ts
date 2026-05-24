@@ -12,6 +12,7 @@ export interface BrowserAuthOptions {
 	siteUrl: string;
 	profileName?: string;
 	openBrowser?: (url: string) => Promise<void>;
+	onAuthorizeUrl?: (url: string) => void;
 	fetch?: typeof fetch;
 	timeoutMs?: number;
 }
@@ -49,6 +50,7 @@ export async function runBrowserAuth(options: BrowserAuthOptions): Promise<Brows
 			fetchImpl: options.fetch ?? fetch,
 		});
 
+		options.onAuthorizeUrl?.(init.authorizeUrl);
 		await (options.openBrowser ?? openUrl)(init.authorizeUrl);
 		const result = await callback.result;
 		const credentials =

@@ -7,6 +7,7 @@ describe('runBrowserAuth', () => {
 		let callbackUrl = '';
 		let state = '';
 		let openedUrl = '';
+		let reportedUrl = '';
 
 		const result = await runBrowserAuth({
 			siteUrl: 'https://example.com',
@@ -35,6 +36,9 @@ describe('runBrowserAuth', () => {
 					}
 				);
 			},
+			onAuthorizeUrl: (url) => {
+				reportedUrl = url;
+			},
 			openBrowser: async (url) => {
 				openedUrl = url;
 				const callback = new URL(callbackUrl);
@@ -45,6 +49,7 @@ describe('runBrowserAuth', () => {
 			},
 		});
 
+		expect(reportedUrl).toBe('https://example.com/authorize');
 		expect(openedUrl).toBe('https://example.com/authorize');
 		expect(result).toEqual({
 			credentials: { consumerKey: 'ck_browser', consumerSecret: 'cs_browser' },
