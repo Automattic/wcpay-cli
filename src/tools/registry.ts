@@ -96,6 +96,28 @@ export const toolRegistry: ToolDescriptor[] = [
 		examples: [ 'wcpay charges get ch_123 --json' ],
 	},
 	{
+		name: 'wcpay_abilities_list',
+		description: 'Discover read-only WooPayments abilities exposed by the selected store.',
+		command: 'wcpay abilities list --json',
+		safety: 'read',
+		mcp: true,
+		inputs: { profile: { type: 'string', optional: true } },
+		examples: [ 'wcpay abilities list --json' ],
+	},
+	{
+		name: 'wcpay_ability_run',
+		description: 'Run a discovered read-only WooPayments ability by name.',
+		command: 'wcpay abilities run <ability> --json',
+		safety: 'read',
+		mcp: true,
+		inputs: {
+			ability: { type: 'string' },
+			input: { type: 'object', optional: true },
+			profile: { type: 'string', optional: true },
+		},
+		examples: [ 'wcpay abilities run woocommerce-payments/get-account --json' ],
+	},
+	{
 		name: 'wcpay_api_get',
 		description: 'Make an authenticated GET request to a store REST API path.',
 		command: 'wcpay api get <path> --json',

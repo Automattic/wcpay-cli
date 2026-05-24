@@ -1,6 +1,7 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { z } from 'zod';
+import { listReadOnlyWcpayAbilities, runAbility } from '../core/abilities.js';
 import { normalizeRestPath } from '../core/api.js';
 import { createContext } from '../core/context.js';
 import { CliError } from '../core/errors.js';
@@ -98,6 +99,30 @@ export function createMcpServer(): McpServer {
 	);
 
 	server.registerTool(
+		'wcpay_abilities_list',
+		{
+			description: 'Discover read-only WooPayments abilities exposed by the selected store.',
+			inputSchema: optionalProfile,
+			annotations: readOnlyAnnotations,
+		},
+		async ( args ) => textResult( await listMcpAbilities( args.profile ) )
+	);
+
+	server.registerTool(
+		'wcpay_ability_run',
+		{
+			description: 'Run a discovered read-only WooPayments ability by name.',
+			inputSchema: {
+				...optionalProfile,
+				ability: z.string(),
+				input: z.record( z.unknown() ).optional(),
+			},
+			annotations: readOnlyAnnotations,
+		},
+		async ( args ) => textResult( await runMcpAbility( args.profile, args.ability, args.input ?? {} ) )
+	);
+
+	server.registerTool(
 		'wcpay_api_get',
 		{
 			description: 'Make an authenticated GET request to a store REST API path.',
@@ -121,6 +146,38 @@ export function createMcpServer(): McpServer {
 	);
 
 	return server;
+}
+
+async function listMcpAbilities( profile?: string ): Promise<CliEnvelope> {
+	try {
+		const context = await createContext( { profile } );
+		const abilities = await listReadOnlyWcpayAbilities( context.client );
+		return { ok: true, data: { abilities }, meta: { profile: context.profile.name, site: context.profile.siteUrl } };
+	} catch ( error ) {
+		return errorEnvelope( error );
+	}
+}
+
+async function runMcpAbility(
+	profile: string | undefined,
+	ability: string,
+	input: Record<string, unknown>
+): Promise<CliEnvelope> {
+	try {
+		const context = await createContext( { profile } );
+		const abilities = await listReadOnlyWcpayAbilities( context.client );
+		if ( ! abilities.some( ( item ) => item.name === ability ) ) {
+			throw new CliError( {
+				code: 'ability_not_exposed',
+				message: `Read-only WooPayments ability is not exposed by this store: ${ ability }`,
+				status: 2,
+			} );
+		}
+		const data = await runAbility( context.client, ability, input );
+		return { ok: true, data, meta: { profile: context.profile.name, site: context.profile.siteUrl } };
+	} catch ( error ) {
+		return errorEnvelope( error );
+	}
 }
 
 async function getMode( profile?: string ): Promise<CliEnvelope> {

@@ -104,6 +104,8 @@ Supported payment scenarios: `success`, `decline`, `3ds`, `dispute`, `fraudulent
 ## Use agent tooling
 
 ```bash
+wcpay abilities list
+wcpay abilities run woocommerce-payments/get-account
 wcpay tools describe
 wcpay tools schema
 wcpay mcp

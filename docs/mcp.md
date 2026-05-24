@@ -9,6 +9,7 @@
 - same profile/auth/config as CLI commands;
 - same JSON envelope shape as CLI commands;
 - read-only WooPayments tools.
+- dynamic discovery and execution of read-only WooPayments Abilities API actions when the selected store exposes them.
 
 ## Tools
 
