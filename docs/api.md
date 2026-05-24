@@ -4,6 +4,8 @@
 
 Curated read commands use WooPayments Abilities API definitions when the selected store exposes them, then automatically fall back to WooPayments REST endpoints. This keeps newer WooPayments/WooCommerce 10.9+ stores aligned with the shared Abilities surface while preserving compatibility with older stores or sites where WooPayments abilities are disabled.
 
+For dynamic discovery, use `wcpay abilities list`. Advanced users and agents can run discovered read-only WooPayments abilities with `wcpay abilities run <ability> [key=value|key:=json]`.
+
 ## Examples
 
 ```bash

@@ -90,6 +90,26 @@ Options:
 - `--json` — Emit JSON output.
 - `--dry-run` — Print the request without sending it.
 
+## `abilities [command]`
+
+Discover and run WooPayments Abilities API actions when available.
+
+## `abilities list [options]`
+
+List WooPayments abilities exposed by the selected store.
+
+Options:
+
+- `--json` — Emit JSON output.
+
+## `abilities run <ability> [fields...]`
+
+Run a discovered read-only WooPayments ability.
+
+Options:
+
+- `--json` — Emit JSON output.
+
 ## `mode [options]`
 
 Show WooPayments mode for the selected profile.
