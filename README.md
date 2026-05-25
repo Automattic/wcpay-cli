@@ -11,7 +11,7 @@ Use it when you need to answer questions like:
 
 The CLI works with local and remote stores, stores credentials keychain-first, and treats live stores as read-only. Write-capable commands are only allowed when WooPayments is in test/dev mode, and they require either `--dry-run` or `--yes`.
 
-## What it feels like
+## Preview
 
 Running `wcpay` without a command gives a short, terminal-native starting point:
 
