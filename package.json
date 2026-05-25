@@ -33,9 +33,10 @@
 		"docs:generate": "tsx scripts/generate-command-reference.ts",
 		"docs:assets": "tsx scripts/render-doc-assets.ts",
 		"docs:check": "tsx scripts/generate-command-reference.ts --check",
+		"release:check": "tsx scripts/check-release-docs.ts",
 		"test": "vitest run",
 		"test:watch": "vitest",
-		"check": "npm run lint && npm run docs:check && npm run test && npm run build",
+		"check": "npm run lint && npm run docs:check && npm run release:check && npm run test && npm run build",
 		"prepare": "husky",
 		"pack:dry-run": "npm pack --dry-run",
 		"format": "prettier --write ."
