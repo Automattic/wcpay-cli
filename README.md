@@ -21,7 +21,7 @@ The login flow uses browser-based WooPayments authorization when the store suppo
 
 <img src="docs/assets/login-wizard.png" alt="WooPayments CLI login wizard" width="760">
 
-## Start here
+## Installation
 
 Install the latest tagged version directly from GitHub:
 
@@ -29,9 +29,10 @@ Install the latest tagged version directly from GitHub:
 npm install -g github:Automattic/wcpay-cli#v0.2.1
 ```
 
-Or install and link the CLI from this checkout:
+Or, clone the repo and build it manually:
 
 ```bash
+git clone git@github.com:Automattic/wcpay-cli.git && cd wcpay-git
 npm install
 npm run build
 npm link
