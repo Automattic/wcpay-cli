@@ -27,13 +27,14 @@ wcpay test payment create --order 123 --scenario success --dry-run
 wcpay test payment create --order 123 --scenario success --yes
 ```
 
-The command uses the existing WooPayments payment-intents REST endpoint:
+The command uses existing WooPayments REST endpoints:
 
 ```http
+POST /wc/v3/payments/orders/{order_id}/create_customer
 POST /wc/v3/payments/payment_intents
 ```
 
-It sends the order ID and mapped test payment method ID.
+It creates/updates the WooPayments customer for the order, then sends the order ID, mapped test payment method ID, and returned customer ID to the payment-intents endpoint.
 
 ## Rules
 
@@ -41,7 +42,7 @@ It sends the order ID and mapped test payment method ID.
 - Never accepts arbitrary raw card numbers.
 - Internally maps aliases to official Stripe test fixtures or WooPayments-compatible PaymentMethod tokens.
 - Current implementation maps aliases to Stripe test PaymentMethod IDs and sends them to the existing WooPayments payment-intents endpoint.
-- A local/connected account smoke test still needs to confirm each alias succeeds end-to-end in WooPayments.
+- The `success` alias has been smoke-tested end-to-end against a local connected test/dev account.
 
 ## References
 

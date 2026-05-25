@@ -1,6 +1,6 @@
 import { Command } from 'commander';
-import { RestClient } from '../core/api.js';
-import { runBrowserAuth } from '../core/browser-auth.js';
+import { buildRestUrl, RestClient } from '../core/api.js';
+import { runBrowserAuth, type BrowserAuthScope } from '../core/browser-auth.js';
 import { ENV_CONSUMER_KEY, ENV_CONSUMER_SECRET } from '../core/config.js';
 import { createContext } from '../core/context.js';
 import { CliError } from '../core/errors.js';
@@ -36,6 +36,7 @@ interface AuthAddOptions {
 
 interface LoginOptions extends AuthAddOptions {
 	browser?: boolean;
+	scope?: string;
 	yes?: boolean;
 }
 
@@ -46,6 +47,7 @@ interface SaveProfileInput {
 	consumerSecret: string;
 	allowInsecureLocal?: boolean;
 	verify?: boolean;
+	keyId?: string;
 }
 
 interface SavedProfileResult {
@@ -79,6 +81,7 @@ export function registerLoginCommand(program: Command): void {
 			`WooCommerce consumer secret. Defaults to ${ENV_CONSUMER_SECRET}.`
 		)
 		.option('--allow-insecure-local', 'Allow HTTP for local development stores.')
+		.option('--scope <scope>', 'Browser login key scope: read, write, or read_write.', 'read')
 		.option('--no-verify', 'Save credentials without verifying them first.')
 		.option('--yes', 'Continue even if a profile is already configured.')
 		.option('--json', 'Emit JSON output.')
@@ -100,8 +103,10 @@ export function registerLoginCommand(program: Command): void {
 					allowInsecureLocal: options.allowInsecureLocal,
 					interactive: pretty,
 				});
+				const scope = normalizeAuthScope(options.scope ?? 'read');
 				let consumerKey = options.consumerKey ?? process.env[ENV_CONSUMER_KEY];
 				let consumerSecret = options.consumerSecret ?? process.env[ENV_CONSUMER_SECRET];
+				let browserKeyId: string | undefined;
 				let usedBrowserLogin = false;
 
 				if (!consumerKey && !consumerSecret && options.browser && pretty) {
@@ -112,10 +117,14 @@ export function registerLoginCommand(program: Command): void {
 						const browserAuth = await runBrowserAuth({
 							siteUrl: normalized.siteUrl,
 							profileName: options.name,
+							scope,
 							onAuthorizeUrl: (url) => {
-								process.stdout.write(`${formatMuted('If your browser did not open, visit:')}\n  ${formatCommand(url)}\n`);
+								process.stdout.write(
+									`${formatMuted('If your browser did not open, visit:')}\n  ${formatCommand(url)}\n`
+								);
 							},
 						});
+						browserKeyId = browserAuth.keyId;
 						consumerKey = browserAuth.credentials.consumerKey;
 						consumerSecret = browserAuth.credentials.consumerSecret;
 						usedBrowserLogin = true;
@@ -141,6 +150,7 @@ export function registerLoginCommand(program: Command): void {
 						consumerSecret: consumerSecret ?? (await promptSecret('Consumer secret')),
 						allowInsecureLocal: normalized.allowInsecureLocal,
 						verify: options.verify,
+						keyId: browserKeyId,
 					},
 					{ spinner: pretty }
 				);
@@ -240,19 +250,39 @@ export function registerAuthCommands(program: Command): void {
 
 	auth.command('remove <profile>')
 		.description('Remove a site profile.')
+		.option(
+			'--revoke',
+			'Revoke the WooCommerce REST API key before removing local credentials.'
+		)
 		.option('--json', 'Emit JSON output.')
-		.action(async (name: string, options: { json?: boolean }) => {
+		.action(async (name: string, options: { revoke?: boolean; json?: boolean }) => {
 			const json = isJson(program, options);
 			await runAction({ json }, async () => {
 				const store = new ProfileStore();
 				const secretStore = createSecretStore();
+				const profile = await store.get(name);
+				const credentials = await secretStore.get(profile.auth.secretRef);
+				let revoked = false;
+
+				if (options.revoke) {
+					if (!credentials) {
+						throw new CliError({
+							code: 'missing_credentials_for_revoke',
+							message: `Credentials for profile ${name} were not found; cannot revoke the remote key.`,
+							status: 2,
+						});
+					}
+					await revokeProfileKey(profile, credentials);
+					revoked = true;
+				}
+
 				const removed = await store.remove(name);
 				await secretStore.delete(removed.auth.secretRef);
 				printSuccess(
-					{ profile: publicProfile(removed) },
+					{ profile: publicProfile(removed), revoked },
 					{
 						json,
-						human: `Removed profile ${removed.name}`,
+						human: `Removed profile ${removed.name}${revoked ? ' and revoked its WooCommerce REST API key' : ''}`,
 					}
 				);
 			});
@@ -342,7 +372,11 @@ async function saveAuthProfile(
 		name,
 		siteUrl,
 		allowInsecureLocal: Boolean(input.allowInsecureLocal),
-		auth: { type: 'woocommerce_api_key', secretRef: `profile:${name}` },
+		auth: {
+			type: 'woocommerce_api_key',
+			secretRef: `profile:${name}`,
+			...(input.keyId ? { keyId: input.keyId } : {}),
+		},
 		createdAt: now,
 		updatedAt: now,
 	};
@@ -365,6 +399,7 @@ async function saveAuthProfile(
 				name,
 				siteUrl,
 				allowInsecureLocal: input.allowInsecureLocal,
+				keyId: input.keyId,
 			});
 			await secretStore.set(saved.auth.secretRef, credentials);
 
@@ -463,6 +498,67 @@ async function verifyProfile(
 ): Promise<void> {
 	const client = new RestClient(profile, credentials);
 	await client.request({ method: 'GET', path: '/wc/v3/payments/settings' });
+}
+
+async function revokeProfileKey(
+	profile: Profile,
+	credentials: { consumerKey: string; consumerSecret: string }
+): Promise<void> {
+	if (!profile.auth.keyId) {
+		throw new CliError({
+			code: 'missing_revoke_key_id',
+			message:
+				'This profile does not include a remote key ID, so wcpay cannot revoke it automatically. Remove it in WooCommerce > Settings > Advanced > REST API, or run without --revoke to remove only local credentials.',
+			status: 2,
+		});
+	}
+
+	const url = buildRestUrl(profile.siteUrl, '/wc/v3/payments/cli/revoke');
+	const response = await fetch(url, {
+		method: 'POST',
+		headers: {
+			Accept: 'application/json',
+			'Content-Type': 'application/json; charset=utf-8',
+			'User-Agent': 'wcpay-cli/0.0.0',
+		},
+		body: JSON.stringify({
+			key_id: profile.auth.keyId,
+			consumer_key: credentials.consumerKey,
+			consumer_secret: credentials.consumerSecret,
+		}),
+	});
+
+	if (!response.ok) {
+		throw new CliError({
+			code: 'revoke_failed',
+			message: `Could not revoke the remote WooCommerce REST API key. Status ${response.status}.`,
+			status: response.status,
+			details: await safeParseJsonResponse(response),
+		});
+	}
+}
+
+async function safeParseJsonResponse(response: Response): Promise<unknown> {
+	const text = await response.text();
+	if (!text) {
+		return undefined;
+	}
+	try {
+		return JSON.parse(text);
+	} catch {
+		return text;
+	}
+}
+
+function normalizeAuthScope(scope: string): BrowserAuthScope {
+	if (scope === 'read' || scope === 'write' || scope === 'read_write') {
+		return scope;
+	}
+	throw new CliError({
+		code: 'invalid_auth_scope',
+		message: 'Login scope must be one of: read, write, read_write.',
+		status: 2,
+	});
 }
 
 function isBrowserAuthFallbackError(error: unknown): boolean {

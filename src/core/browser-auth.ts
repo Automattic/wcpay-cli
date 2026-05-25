@@ -8,9 +8,12 @@ import type { WooCommerceApiCredentials } from './secrets.js';
 export const BROWSER_AUTH_ENDPOINT = '/wc/v3/payments/cli/authorize';
 export const BROWSER_AUTH_TOKEN_ENDPOINT = '/wc/v3/payments/cli/token';
 
+export type BrowserAuthScope = 'read' | 'write' | 'read_write';
+
 export interface BrowserAuthOptions {
 	siteUrl: string;
 	profileName?: string;
+	scope?: BrowserAuthScope;
 	openBrowser?: (url: string) => Promise<void>;
 	onAuthorizeUrl?: (url: string) => void;
 	fetch?: typeof fetch;
@@ -47,6 +50,7 @@ export async function runBrowserAuth(options: BrowserAuthOptions): Promise<Brows
 			callbackUrl: callback.url,
 			state,
 			profileName: options.profileName,
+			scope: options.scope ?? 'read',
 			fetchImpl: options.fetch ?? fetch,
 		});
 
@@ -79,6 +83,7 @@ async function requestBrowserAuth(options: {
 	callbackUrl: string;
 	state: string;
 	profileName?: string;
+	scope: BrowserAuthScope;
 	fetchImpl: typeof fetch;
 }): Promise<{ authorizeUrl: string }> {
 	const url = buildRestUrl(options.siteUrl, BROWSER_AUTH_ENDPOINT);
@@ -93,7 +98,7 @@ async function requestBrowserAuth(options: {
 			},
 			body: JSON.stringify({
 				app_name: 'WooPayments CLI',
-				scope: 'read_write',
+				scope: options.scope,
 				state: options.state,
 				callback_url: options.callbackUrl,
 				profile_name: options.profileName,
@@ -138,6 +143,7 @@ async function requestBrowserAuth(options: {
 		});
 	}
 
+	assertSameOriginAuthorizeUrl(options.siteUrl, data.authorize_url);
 	return { authorizeUrl: data.authorize_url };
 }
 
@@ -350,6 +356,30 @@ function parseJson(text: string): unknown {
 		return JSON.parse(text);
 	} catch {
 		return text;
+	}
+}
+
+function assertSameOriginAuthorizeUrl(siteUrl: string, authorizeUrl: string): void {
+	let storeOrigin: string;
+	let authorizeOrigin: string;
+	try {
+		storeOrigin = new URL(siteUrl).origin;
+		authorizeOrigin = new URL(authorizeUrl).origin;
+	} catch {
+		throw new CliError({
+			code: 'browser_auth_invalid_authorize_url',
+			message: 'The store returned an invalid browser authorization URL.',
+			status: 2,
+		});
+	}
+
+	if (authorizeOrigin !== storeOrigin) {
+		throw new CliError({
+			code: 'browser_auth_authorize_url_origin_mismatch',
+			message: 'The store returned a browser authorization URL on a different origin.',
+			status: 2,
+			details: { expectedOrigin: storeOrigin, actualOrigin: authorizeOrigin },
+		});
 	}
 }
 

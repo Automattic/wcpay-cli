@@ -15,6 +15,7 @@ Options:
 - `--consumer-key <key>` — WooCommerce consumer key. Defaults to WCPAY_CONSUMER_KEY.
 - `--consumer-secret <secret>` — WooCommerce consumer secret. Defaults to WCPAY_CONSUMER_SECRET.
 - `--allow-insecure-local` — Allow HTTP for local development stores.
+- `--scope <scope>` — Browser login key scope: read, write, or read_write.
 - `--no-verify` — Save credentials without verifying them first.
 - `--yes` — Continue even if a profile is already configured.
 - `--json` — Emit JSON output.
@@ -51,6 +52,7 @@ Remove a site profile.
 
 Options:
 
+- `--revoke` — Revoke the WooCommerce REST API key before removing local credentials.
 - `--json` — Emit JSON output.
 
 ## `auth test [profile]`
@@ -89,6 +91,7 @@ Options:
 
 - `--json` — Emit JSON output.
 - `--dry-run` — Print the request without sending it.
+- `--allow-unsafe-path` — Allow raw write requests outside reviewed WooPayments/WooCommerce paths.
 
 ## `abilities [command]`
 
@@ -251,7 +254,7 @@ Options:
 - `--order <order-id>` — WooCommerce order ID.
 - `--charge <charge-id>` — WooPayments/Stripe charge ID.
 - `--amount <minor-units>` — Refund amount in minor currency units.
-- `--reason <reason>` — Refund reason.
+- `--reason <reason>` — Refund reason: requested_by_customer, duplicate, or fraudulent.
 - `--dry-run` — Print the request without sending it.
 - `--yes` — Confirm the test/dev-mode write.
 - `--json` — Emit JSON output.

@@ -17,7 +17,7 @@ Running `wcpay` without a command gives a short, terminal-native starting point:
 
 <img src="docs/assets/welcome.png" alt="WooPayments CLI welcome screen" width="760">
 
-The login flow is a guided wizard that points you to the WooCommerce REST API key screen, prompts securely for credentials, verifies the connection, and suggests useful next commands:
+The login flow uses browser-based WooPayments authorization when the store supports it, falls back to manual WooCommerce REST API key entry for older stores, verifies the connection, and suggests useful next commands:
 
 <img src="docs/assets/login-wizard.png" alt="WooPayments CLI login wizard" width="760">
 
@@ -37,7 +37,7 @@ Connect a store with the guided login flow:
 wcpay login --site https://store.example --name staging
 ```
 
-The wizard saves credentials in your OS keychain when available.
+The wizard saves credentials in your OS keychain when available. Browser login creates read-only WooCommerce REST API keys by default; pass `--scope read_write` only for write-capable test/dev workflows.
 
 Then check that the CLI can talk to WooPayments:
 
@@ -95,7 +95,7 @@ wcpay api get /wc/v3/payments/accounts --json
 wcpay api get /wc/v3/payments/transactions page:=1 pagesize:=25 --json
 ```
 
-The raw API command is useful when a curated command does not exist yet. Non-read methods still use the same live-mode guard.
+The raw API command is useful when a curated command does not exist yet. Non-read methods still use the same live-mode guard and are limited to reviewed WooPayments/WooCommerce paths unless `--allow-unsafe-path` is passed explicitly.
 
 ### Work with agents
 
@@ -107,7 +107,7 @@ wcpay mcp
 
 ## Authentication and storage
 
-`wcpay login` uses WooCommerce REST API consumer keys/secrets. Secrets are stored in the OS keychain when available:
+`wcpay login` uses browser authorization where available, then stores WooCommerce REST API consumer keys/secrets. Secrets are stored in the OS keychain when available:
 
 - macOS: Keychain via `security`
 - Linux: Secret Service via `secret-tool`
