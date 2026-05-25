@@ -31,6 +31,18 @@ wcpay completions bash
 wcpay completions zsh
 ```
 
+## Documentation site
+
+The Markdown docs can be rendered locally with VitePress:
+
+```bash
+npm run site:dev
+npm run site:build
+npm run site:preview
+```
+
+The GitHub Pages workflow deploys the built site from `docs/.vitepress/dist` on pushes to `main`.
+
 ## Package contents
 
 `npm run pack:dry-run` shows the files included in the package. The package includes built `dist` files, Markdown documentation, `README.md`, `LICENSE`, and `package.json`.

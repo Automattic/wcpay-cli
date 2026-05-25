@@ -55,7 +55,7 @@ Every write-capable command supports:
 
 Dry runs validate auth, resolve the request, check mode, print what would happen, and send no write request. Dry-run output redacts auth query parameters and authorization headers.
 
-<img src="assets/dry-run.png" alt="WooPayments CLI dry-run output" width="760">
+<img src="./assets/dry-run.png" alt="WooPayments CLI dry-run output" width="760">
 
 ## Non-interactive confirmation
 
