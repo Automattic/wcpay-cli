@@ -23,7 +23,13 @@ The login flow uses browser-based WooPayments authorization when the store suppo
 
 ## Start here
 
-Install and link the CLI from this checkout:
+Install the latest tagged version directly from GitHub:
+
+```bash
+npm install -g github:Automattic/wcpay-cli#v0.2.0
+```
+
+Or install and link the CLI from this checkout:
 
 ```bash
 npm install
