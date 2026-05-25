@@ -2,6 +2,10 @@
 
 All notable changes to `@automattic/wcpay-cli` are documented in this file.
 
+## 0.2.1
+
+- Document direct installation from the latest tagged GitHub version.
+
 ## 0.2.0
 
 - Add browser-based WooPayments login with manual API-key fallback.
