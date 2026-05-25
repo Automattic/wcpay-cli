@@ -123,6 +123,8 @@ If the OS keychain is unavailable, the CLI fails with instructions instead of si
 
 ## Documentation
 
+A rendered docs site is available at <https://automattic.github.io/wcpay-cli/>.
+
 - [Getting started](docs/getting-started.md)
 - [Authentication](docs/auth.md)
 - [Safety model](docs/safety.md)

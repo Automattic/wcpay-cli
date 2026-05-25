@@ -33,7 +33,7 @@ wcpay login --site localhost:8082 --scope read_write
 
 If a default profile is already configured, interactive `wcpay login` asks for confirmation before continuing. Pass `--yes` to skip that confirmation in scripts or repeat setup flows.
 
-<img src="assets/login-wizard.png" alt="WooPayments CLI login wizard" width="760">
+<img src="./assets/login-wizard.png" alt="WooPayments CLI login wizard" width="760">
 
 In non-interactive environments, pass credentials explicitly or set environment variables:
 

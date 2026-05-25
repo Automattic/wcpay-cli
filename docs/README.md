@@ -19,11 +19,11 @@
 
 ## Screenshots
 
-Reusable screenshots live in [`assets/`](assets/):
+Reusable screenshots live under `docs/assets/`:
 
-- [`welcome.png`](assets/welcome.png) — first-run welcome screen.
-- [`login-wizard.png`](assets/login-wizard.png) — guided login flow.
-- [`dry-run.png`](assets/dry-run.png) — redacted write dry-run output.
+- [`welcome.png`](./assets/welcome.png) — first-run welcome screen.
+- [`login-wizard.png`](./assets/login-wizard.png) — guided login flow.
+- [`dry-run.png`](./assets/dry-run.png) — redacted write dry-run output.
 
 ## Documentation standards
 

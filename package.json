@@ -33,10 +33,13 @@
 		"docs:generate": "tsx scripts/generate-command-reference.ts",
 		"docs:assets": "tsx scripts/render-doc-assets.ts",
 		"docs:check": "tsx scripts/generate-command-reference.ts --check",
+		"site:dev": "vitepress dev docs",
+		"site:build": "vitepress build docs",
+		"site:preview": "vitepress preview docs",
 		"release:check": "tsx scripts/check-release-docs.ts",
 		"test": "vitest run",
 		"test:watch": "vitest",
-		"check": "npm run lint && npm run docs:check && npm run release:check && npm run test && npm run build",
+		"check": "npm run lint && npm run docs:check && npm run release:check && npm run test && npm run site:build && npm run build",
 		"prepare": "husky",
 		"pack:dry-run": "npm pack --dry-run",
 		"format": "prettier --write ."
@@ -71,6 +74,7 @@
 		"prettier": "^3.4.2",
 		"tsx": "^4.19.2",
 		"typescript": "^5.7.2",
+		"vitepress": "1.6.4",
 		"vitest": "4.1.7"
 	}
 }
