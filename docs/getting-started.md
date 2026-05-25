@@ -28,7 +28,7 @@ npm install -g @automattic/wcpay-cli
 
 ## 2. Connect a store
 
-`wcpay` uses WooCommerce REST API keys. On WooPayments 10.9 or later, the guided login flow opens your browser so an administrator can authorize the CLI and send generated credentials back to a temporary localhost callback. On older WooPayments versions, it automatically falls back to the manual API key flow. In both cases, credentials are verified and stored in the OS keychain. If you already have a default profile, it asks before continuing:
+`wcpay` uses WooCommerce REST API keys. On WooPayments 10.9 or later, the guided login flow opens your browser so an administrator can authorize the CLI and send generated credentials back to a temporary localhost callback. Browser login creates a read-only key by default; use `--scope read_write` only for write-capable test/dev workflows. On older WooPayments versions, it automatically falls back to the manual API key flow. In both cases, credentials are verified and stored in the OS keychain. If you already have a default profile, it asks before continuing:
 
 ```bash
 wcpay login --site store.example --name staging

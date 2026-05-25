@@ -2,6 +2,12 @@
 
 `wcpay` is designed for developers and agents, so safety is enforced by code, not only by documentation.
 
+## Credential handling
+
+Prefer browser login or interactive prompts over passing secrets as command-line arguments. Shell history, terminal scrollback, and local process listings can expose values passed with `--consumer-secret`.
+
+Browser login creates read-only WooCommerce REST API keys by default. Use `wcpay login --scope read_write` only when you need write-capable test/dev workflows.
+
 ## Live-mode rule
 
 Live-mode stores are read-only.
@@ -34,6 +40,10 @@ Writes are allowed only when one of these mode flags indicates test/dev mode:
 - `is_test_mode_enabled`
 - `is_test_mode_onboarding`
 - `is_dev_mode_enabled`
+
+## Raw API writes
+
+`wcpay api` is intentionally available as an escape hatch, but raw writes are restricted to reviewed WooPayments paths and `/wc/v3/orders`. Use `--allow-unsafe-path` only for deliberate maintenance/debugging work outside those paths.
 
 ## Dry runs
 

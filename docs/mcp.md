@@ -36,4 +36,6 @@ MCP tools return the same JSON envelope shape used by the CLI, serialized as tex
 
 Agents can be affected by prompt injection and tool misuse. The MCP server exposes read-only tools and uses the same local profile/auth configuration as the CLI.
 
+MCP tools can still read financial, customer, transaction, deposit, dispute, and account data from the selected store. Only run `wcpay mcp` for trusted local agents and trusted sessions, and disconnect it when you are done.
+
 Live-mode write blocking is part of the shared CLI safety model. If write-capable MCP tools are added later, they must reuse the same mode guard and require explicit structured confirmation.

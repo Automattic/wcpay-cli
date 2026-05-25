@@ -11,6 +11,7 @@ describe('runBrowserAuth', () => {
 
 		const result = await runBrowserAuth({
 			siteUrl: 'https://example.com',
+			scope: 'read_write',
 			fetch: async (url, init) => {
 				if (String(url).endsWith('/wp-json/wc/v3/payments/cli/token')) {
 					const body = JSON.parse(String(init?.body));
@@ -26,6 +27,7 @@ describe('runBrowserAuth', () => {
 				}
 
 				const body = JSON.parse(String(init?.body));
+				expect(body.scope).toBe('read_write');
 				callbackUrl = body.callback_url;
 				state = body.state;
 				return new Response(
@@ -55,6 +57,23 @@ describe('runBrowserAuth', () => {
 			credentials: { consumerKey: 'ck_browser', consumerSecret: 'cs_browser' },
 			keyId: '123',
 		});
+	});
+
+	it('rejects authorize URLs on a different origin', async () => {
+		await expect(
+			runBrowserAuth({
+				siteUrl: 'https://example.com',
+				fetch: async () =>
+					new Response(
+						JSON.stringify({ authorize_url: 'https://evil.example/authorize' }),
+						{
+							status: 200,
+							headers: { 'Content-Type': 'application/json' },
+						}
+					),
+				openBrowser: async () => undefined,
+			})
+		).rejects.toMatchObject({ code: 'browser_auth_authorize_url_origin_mismatch' });
 	});
 
 	it('reports browser auth as unavailable when the store lacks the endpoint', async () => {

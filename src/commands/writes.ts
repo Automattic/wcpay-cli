@@ -43,74 +43,87 @@ interface TestPaymentCreateOptions {
 	json?: boolean;
 }
 
-export function registerWriteCommands( program: Command ): void {
-	const refunds = program.command( 'refunds' ).description( 'Create and inspect refunds.' );
+export function registerWriteCommands(program: Command): void {
+	const refunds = program.command('refunds').description('Create and inspect refunds.');
 	refunds
-		.command( 'create' )
-		.description( 'Create a test/dev-mode refund.' )
-		.option( '--order <order-id>', 'WooCommerce order ID.' )
-		.option( '--charge <charge-id>', 'WooPayments/Stripe charge ID.' )
-		.requiredOption( '--amount <minor-units>', 'Refund amount in minor currency units.' )
-		.option( '--reason <reason>', 'Refund reason.', 'Requested by WooPayments CLI.' )
-		.option( '--dry-run', 'Print the request without sending it.' )
-		.option( '--yes', 'Confirm the test/dev-mode write.' )
-		.option( '--json', 'Emit JSON output.' )
-		.action( async ( options: RefundCreateOptions ) => {
-			const json = isJson( program, options );
-			await runWriteAction( { json }, async () => {
-				if ( ! options.order && ! options.charge ) {
-					throw new CliError( {
+		.command('create')
+		.description('Create a test/dev-mode refund.')
+		.option('--order <order-id>', 'WooCommerce order ID.')
+		.option('--charge <charge-id>', 'WooPayments/Stripe charge ID.')
+		.requiredOption('--amount <minor-units>', 'Refund amount in minor currency units.')
+		.option(
+			'--reason <reason>',
+			'Refund reason: requested_by_customer, duplicate, or fraudulent.',
+			'requested_by_customer'
+		)
+		.option('--dry-run', 'Print the request without sending it.')
+		.option('--yes', 'Confirm the test/dev-mode write.')
+		.option('--json', 'Emit JSON output.')
+		.action(async (options: RefundCreateOptions) => {
+			const json = isJson(program, options);
+			await runWriteAction({ json }, async () => {
+				if (!options.order && !options.charge) {
+					throw new CliError({
 						code: 'missing_refund_target',
 						message: 'Pass either --order <order-id> or --charge <charge-id>.',
 						status: 2,
-					} );
+					});
 				}
-				await sendGuardedWrite( program, {
+				await sendGuardedWrite(program, {
 					path: '/wc/v3/payments/refund',
 					body: {
-						...( options.order ? { order_id: parsePositiveInteger( options.order, '--order' ) } : {} ),
-						...( options.charge ? { charge_id: options.charge } : {} ),
-						amount: parsePositiveInteger( options.amount, '--amount' ),
+						...(options.order
+							? { order_id: parsePositiveInteger(options.order, '--order') }
+							: {}),
+						...(options.charge ? { charge_id: options.charge } : {}),
+						amount: parsePositiveInteger(options.amount, '--amount'),
 						reason: options.reason,
 					},
-					dryRun: Boolean( options.dryRun || ( program.opts() as { dryRun?: boolean } ).dryRun ),
-					yes: Boolean( options.yes || ( program.opts() as { yes?: boolean } ).yes ),
+					dryRun: Boolean(
+						options.dryRun || (program.opts() as { dryRun?: boolean }).dryRun
+					),
+					yes: Boolean(options.yes || (program.opts() as { yes?: boolean }).yes),
 					json,
-				} );
-			} );
-		} );
+				});
+			});
+		});
 
-	const authorizations = program.command( 'authorizations' ).description( 'Capture or cancel test/dev-mode authorizations.' );
-	registerAuthorizationCommand( program, authorizations, 'capture', 'capture_authorization' );
-	registerAuthorizationCommand( program, authorizations, 'cancel', 'cancel_authorization' );
+	const authorizations = program
+		.command('authorizations')
+		.description('Capture or cancel test/dev-mode authorizations.');
+	registerAuthorizationCommand(program, authorizations, 'capture', 'capture_authorization');
+	registerAuthorizationCommand(program, authorizations, 'cancel', 'cancel_authorization');
 
-	registerTestCommands( program );
+	registerTestCommands(program);
 }
 
-function registerTestCommands( program: Command ): void {
-	const test = program.command( 'test' ).description( 'Run test/dev-mode WooPayments workflows.' );
-	const order = test.command( 'order' ).description( 'Test order workflows.' );
+function registerTestCommands(program: Command): void {
+	const test = program.command('test').description('Run test/dev-mode WooPayments workflows.');
+	const order = test.command('order').description('Test order workflows.');
 	order
-		.command( 'create' )
-		.description( 'Create a test order from an existing product.' )
-		.requiredOption( '--product <product-id>', 'Existing WooCommerce product ID.' )
-		.option( '--quantity <quantity>', 'Quantity.', '1' )
-		.option( '--email <email>', 'Billing email for the order.', 'wcpay-cli-test@example.com' )
-		.option( '--dry-run', 'Print the request without sending it.' )
-		.option( '--yes', 'Confirm the test/dev-mode write.' )
-		.option( '--json', 'Emit JSON output.' )
-		.action( async ( options: TestOrderCreateOptions ) => {
-			const json = isJson( program, options );
-			await runWriteAction( { json }, async () => {
-				await sendGuardedWrite( program, {
+		.command('create')
+		.description('Create a test order from an existing product.')
+		.requiredOption('--product <product-id>', 'Existing WooCommerce product ID.')
+		.option('--quantity <quantity>', 'Quantity.', '1')
+		.option('--email <email>', 'Billing email for the order.', 'wcpay-cli-test@example.com')
+		.option('--dry-run', 'Print the request without sending it.')
+		.option('--yes', 'Confirm the test/dev-mode write.')
+		.option('--json', 'Emit JSON output.')
+		.action(async (options: TestOrderCreateOptions) => {
+			const json = isJson(program, options);
+			await runWriteAction({ json }, async () => {
+				await sendGuardedWrite(program, {
 					path: '/wc/v3/orders',
 					body: {
 						status: 'pending',
 						billing: { email: options.email },
 						line_items: [
 							{
-								product_id: parsePositiveInteger( options.product, '--product' ),
-								quantity: parsePositiveInteger( options.quantity ?? '1', '--quantity' ),
+								product_id: parsePositiveInteger(options.product, '--product'),
+								quantity: parsePositiveInteger(
+									options.quantity ?? '1',
+									'--quantity'
+								),
 							},
 						],
 						meta_data: [
@@ -118,59 +131,68 @@ function registerTestCommands( program: Command ): void {
 							{ key: '_wcpay_cli_created_at', value: new Date().toISOString() },
 						],
 					},
-					dryRun: Boolean( options.dryRun || ( program.opts() as { dryRun?: boolean } ).dryRun ),
-					yes: Boolean( options.yes || ( program.opts() as { yes?: boolean } ).yes ),
+					dryRun: Boolean(
+						options.dryRun || (program.opts() as { dryRun?: boolean }).dryRun
+					),
+					yes: Boolean(options.yes || (program.opts() as { yes?: boolean }).yes),
 					json,
-				} );
-			} );
-		} );
+				});
+			});
+		});
 
-	const payment = test.command( 'payment' ).description( 'Test payment workflows.' );
+	const payment = test.command('payment').description('Test payment workflows.');
 	payment
-		.command( 'scenarios' )
-		.description( 'List built-in test payment scenarios.' )
-		.option( '--json', 'Emit JSON output.' )
-		.action( ( options: { json?: boolean } ) => {
+		.command('scenarios')
+		.description('List built-in test payment scenarios.')
+		.option('--json', 'Emit JSON output.')
+		.action((options: { json?: boolean }) => {
 			const scenarios = listTestPaymentScenarios();
-			printSuccess( { scenarios }, {
-				json: isJson( program, options ),
-				human: scenarios.map( ( scenario ) => `${ scenario.alias }\t${ scenario.paymentMethod }\t${ scenario.description }` ).join( '\n' ),
-			} );
-		} );
+			printSuccess(
+				{ scenarios },
+				{
+					json: isJson(program, options),
+					human: scenarios
+						.map(
+							(scenario) =>
+								`${scenario.alias}\t${scenario.paymentMethod}\t${scenario.description}`
+						)
+						.join('\n'),
+				}
+			);
+		});
 	payment
-		.command( 'create' )
-		.description( 'Create a test payment using a built-in scenario alias.' )
-		.requiredOption( '--order <order-id>', 'WooCommerce order ID.' )
-		.option( '--scenario <scenario>', 'Built-in scenario alias.', 'success' )
-		.option( '--payment-method <payment-method-id>', 'Override the scenario payment method ID.' )
-		.option( '--dry-run', 'Print the request without sending it.' )
-		.option( '--yes', 'Confirm the test/dev-mode write.' )
-		.option( '--json', 'Emit JSON output.' )
-		.action( async ( options: TestPaymentCreateOptions ) => {
-			const json = isJson( program, options );
-			await runWriteAction( { json }, async () => {
-				const scenario = getTestPaymentScenario( options.scenario ?? 'success' );
-				if ( ! scenario && ! options.paymentMethod ) {
-					throw new CliError( {
+		.command('create')
+		.description('Create a test payment using a built-in scenario alias.')
+		.requiredOption('--order <order-id>', 'WooCommerce order ID.')
+		.option('--scenario <scenario>', 'Built-in scenario alias.', 'success')
+		.option('--payment-method <payment-method-id>', 'Override the scenario payment method ID.')
+		.option('--dry-run', 'Print the request without sending it.')
+		.option('--yes', 'Confirm the test/dev-mode write.')
+		.option('--json', 'Emit JSON output.')
+		.action(async (options: TestPaymentCreateOptions) => {
+			const json = isJson(program, options);
+			await runWriteAction({ json }, async () => {
+				const scenario = getTestPaymentScenario(options.scenario ?? 'success');
+				if (!scenario && !options.paymentMethod) {
+					throw new CliError({
 						code: 'unknown_test_payment_scenario',
-						message: `Unknown test payment scenario: ${ options.scenario }. Run \`wcpay test payment scenarios\` for supported aliases.`,
+						message: `Unknown test payment scenario: ${options.scenario}. Run \`wcpay test payment scenarios\` for supported aliases.`,
 						status: 2,
-					} );
+					});
 				}
 
-				await sendGuardedWrite( program, {
-					path: '/wc/v3/payments/payment_intents',
-					body: {
-						order_id: parsePositiveInteger( options.order, '--order' ),
-						payment_method: options.paymentMethod ?? scenario!.paymentMethod,
-						_wcpay_cli_scenario: options.scenario ?? scenario!.alias,
-					},
-					dryRun: Boolean( options.dryRun || ( program.opts() as { dryRun?: boolean } ).dryRun ),
-					yes: Boolean( options.yes || ( program.opts() as { yes?: boolean } ).yes ),
+				await sendTestPaymentCreate(program, {
+					orderId: parsePositiveInteger(options.order, '--order'),
+					paymentMethod: options.paymentMethod ?? scenario!.paymentMethod,
+					scenario: options.scenario ?? scenario!.alias,
+					dryRun: Boolean(
+						options.dryRun || (program.opts() as { dryRun?: boolean }).dryRun
+					),
+					yes: Boolean(options.yes || (program.opts() as { yes?: boolean }).yes),
 					json,
-				} );
-			} );
-		} );
+				});
+			});
+		});
 }
 
 function registerAuthorizationCommand(
@@ -180,69 +202,184 @@ function registerAuthorizationCommand(
 	endpointAction: 'capture_authorization' | 'cancel_authorization'
 ): void {
 	authorizations
-		.command( name )
-		.description( `${ name === 'capture' ? 'Capture' : 'Cancel' } a test/dev-mode authorization.` )
-		.requiredOption( '--order <order-id>', 'WooCommerce order ID.' )
-		.requiredOption( '--intent <payment-intent-id>', 'Payment intent ID.' )
-		.option( '--dry-run', 'Print the request without sending it.' )
-		.option( '--yes', 'Confirm the test/dev-mode write.' )
-		.option( '--json', 'Emit JSON output.' )
-		.action( async ( options: AuthorizationOptions ) => {
-			const json = isJson( program, options );
-			await runWriteAction( { json }, async () => {
-				const orderId = parsePositiveInteger( options.order, '--order' );
-				await sendGuardedWrite( program, {
-					path: `/wc/v3/payments/orders/${ orderId }/${ endpointAction }`,
+		.command(name)
+		.description(`${name === 'capture' ? 'Capture' : 'Cancel'} a test/dev-mode authorization.`)
+		.requiredOption('--order <order-id>', 'WooCommerce order ID.')
+		.requiredOption('--intent <payment-intent-id>', 'Payment intent ID.')
+		.option('--dry-run', 'Print the request without sending it.')
+		.option('--yes', 'Confirm the test/dev-mode write.')
+		.option('--json', 'Emit JSON output.')
+		.action(async (options: AuthorizationOptions) => {
+			const json = isJson(program, options);
+			await runWriteAction({ json }, async () => {
+				const orderId = parsePositiveInteger(options.order, '--order');
+				await sendGuardedWrite(program, {
+					path: `/wc/v3/payments/orders/${orderId}/${endpointAction}`,
 					body: { payment_intent_id: options.intent },
-					dryRun: Boolean( options.dryRun || ( program.opts() as { dryRun?: boolean } ).dryRun ),
-					yes: Boolean( options.yes || ( program.opts() as { yes?: boolean } ).yes ),
+					dryRun: Boolean(
+						options.dryRun || (program.opts() as { dryRun?: boolean }).dryRun
+					),
+					yes: Boolean(options.yes || (program.opts() as { yes?: boolean }).yes),
 					json,
-				} );
-			} );
-		} );
+				});
+			});
+		});
+}
+
+async function sendTestPaymentCreate(
+	program: Command,
+	input: {
+		orderId: number;
+		paymentMethod: string;
+		scenario: string;
+		dryRun: boolean;
+		yes: boolean;
+		json: boolean;
+	}
+): Promise<void> {
+	if (!input.dryRun && !input.yes) {
+		throw new CliError({
+			code: 'confirmation_required',
+			message: 'Write commands require --yes or --dry-run.',
+			status: 2,
+		});
+	}
+
+	const context = await createContext({
+		profile: (program.opts() as { profile?: string }).profile,
+	});
+	const modeService = new ModeService(context.client);
+	const customerPath = `/wc/v3/payments/orders/${input.orderId}/create_customer`;
+	const paymentPath = '/wc/v3/payments/payment_intents';
+	await modeService.assertWriteAllowed('POST', paymentPath);
+
+	if (input.dryRun) {
+		const customerRequest = context.client.resolve({
+			method: 'POST',
+			path: customerPath,
+			body: {},
+		});
+		const paymentRequest = context.client.resolve({
+			method: 'POST',
+			path: paymentPath,
+			body: {
+				order_id: input.orderId,
+				payment_method: input.paymentMethod,
+				customer: '<created-customer-id>',
+				_wcpay_cli_scenario: input.scenario,
+			},
+		});
+		printSuccess(
+			{
+				requests: [
+					{
+						method: customerRequest.method,
+						url: redactUrl(customerRequest.url),
+						headers: redactHeaders(customerRequest.headers),
+						body: {},
+					},
+					{
+						method: paymentRequest.method,
+						url: redactUrl(paymentRequest.url),
+						headers: redactHeaders(paymentRequest.headers),
+						body: {
+							order_id: input.orderId,
+							payment_method: input.paymentMethod,
+							customer: '<created-customer-id>',
+							_wcpay_cli_scenario: input.scenario,
+						},
+					},
+				],
+			},
+			{
+				json: input.json,
+				human: `${customerRequest.method} ${redactUrl(customerRequest.url)}\n${paymentRequest.method} ${redactUrl(paymentRequest.url)}`,
+			}
+		);
+		return;
+	}
+
+	const customer = await context.client.request<{ id?: unknown }>({
+		method: 'POST',
+		path: customerPath,
+		body: {},
+	});
+	if (typeof customer.id !== 'string' || customer.id.length === 0) {
+		throw new CliError({
+			code: 'test_payment_customer_creation_failed',
+			message: 'WooPayments did not return a customer ID for the test payment.',
+			status: 500,
+		});
+	}
+
+	const data = await context.client.request({
+		method: 'POST',
+		path: paymentPath,
+		body: {
+			order_id: input.orderId,
+			payment_method: input.paymentMethod,
+			customer: customer.id,
+			_wcpay_cli_scenario: input.scenario,
+		},
+	});
+	printSuccess(data, { json: input.json });
 }
 
 async function sendGuardedWrite(
 	program: Command,
-	input: { path: string; body: Record<string, unknown>; dryRun: boolean; yes: boolean; json: boolean }
+	input: {
+		path: string;
+		body: Record<string, unknown>;
+		dryRun: boolean;
+		yes: boolean;
+		json: boolean;
+	}
 ): Promise<void> {
-	if ( ! input.dryRun && ! input.yes ) {
-		throw new CliError( {
+	if (!input.dryRun && !input.yes) {
+		throw new CliError({
 			code: 'confirmation_required',
 			message: 'Write commands require --yes or --dry-run.',
 			status: 2,
-		} );
+		});
 	}
 
-	const context = await createContext( { profile: ( program.opts() as { profile?: string } ).profile } );
-	const modeService = new ModeService( context.client );
-	await modeService.assertWriteAllowed( 'POST', input.path );
+	const context = await createContext({
+		profile: (program.opts() as { profile?: string }).profile,
+	});
+	const modeService = new ModeService(context.client);
+	await modeService.assertWriteAllowed('POST', input.path);
 
 	const request = { method: 'POST' as const, path: input.path, body: input.body };
-	if ( input.dryRun ) {
-		const resolved = context.client.resolve( request );
-		printSuccess( {
-			method: resolved.method,
-			url: redactUrl( resolved.url ),
-			headers: redactHeaders( resolved.headers ),
-			body: input.body,
-		}, { json: input.json, human: `${ resolved.method } ${ redactUrl( resolved.url ) }` } );
+	if (input.dryRun) {
+		const resolved = context.client.resolve(request);
+		printSuccess(
+			{
+				method: resolved.method,
+				url: redactUrl(resolved.url),
+				headers: redactHeaders(resolved.headers),
+				body: input.body,
+			},
+			{ json: input.json, human: `${resolved.method} ${redactUrl(resolved.url)}` }
+		);
 		return;
 	}
 
-	const data = await context.client.request( request );
-	printSuccess( data, { json: input.json } );
+	const data = await context.client.request(request);
+	printSuccess(data, { json: input.json });
 }
 
-function isJson( program: Command, options: { json?: boolean } ): boolean {
-	return Boolean( options.json || ( program.opts() as { json?: boolean } ).json );
+function isJson(program: Command, options: { json?: boolean }): boolean {
+	return Boolean(options.json || (program.opts() as { json?: boolean }).json);
 }
 
-async function runWriteAction( options: { json?: boolean }, action: () => Promise<void> ): Promise<void> {
+async function runWriteAction(
+	options: { json?: boolean },
+	action: () => Promise<void>
+): Promise<void> {
 	try {
 		await action();
-	} catch ( error ) {
-		printError( error, { json: options.json } );
+	} catch (error) {
+		printError(error, { json: options.json });
 		process.exitCode = 1;
 	}
 }

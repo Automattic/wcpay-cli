@@ -55,6 +55,8 @@ All non-read methods use the live-mode write guard. Use `--dry-run` to inspect a
 
 `--dry-run` still checks WooPayments mode before printing a write request. If the store is live, the command fails before resolving/sending the write.
 
+Raw write requests are limited to reviewed WooPayments paths and `/wc/v3/orders`. For unusual maintenance work outside those paths, pass `--allow-unsafe-path` explicitly. Treat that flag as dangerous: it can send write requests to arbitrary WordPress/WooCommerce REST endpoints using the selected profile's credentials.
+
 ## Current implementation notes
 
 - HTTPS stores use Basic Auth with WooCommerce consumer key/secret.
@@ -62,3 +64,4 @@ All non-read methods use the live-mode write guard. Use `--dry-run` to inspect a
 - `Authorization` and OAuth signatures are redacted from dry-run output.
 - For GET/DELETE, inline fields become query parameters.
 - For POST/PUT/PATCH, inline fields become a JSON body.
+- Raw writes outside reviewed paths require `--allow-unsafe-path`.

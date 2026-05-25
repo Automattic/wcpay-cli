@@ -32,6 +32,7 @@ Curated read commands prefer WooPayments abilities when available and fall back 
 | GET    | `/wc/v3/payments/settings`                                | Settings and mode flags     | `allowlisted-read`       | Used for mode guard.                                       |
 | POST   | `/wc/v3/payments/cli/authorize`                           | Browser login bootstrap     | `future-auth`            | Expected in WooPayments 10.9+. CLI falls back when absent. |
 | POST   | `/wc/v3/payments/cli/token`                               | Browser login code exchange | `future-auth`            | Exchanges a short-lived browser login code for API keys.   |
+| POST   | `/wc/v3/payments/cli/revoke`                              | Browser-created key revoke  | `future-auth`            | Revokes a key using exact key ID/key/secret proof.         |
 | GET    | `/wc/v3/payments/accounts`                                | Account status              | `allowlisted-read`       | Used by `account status`.                                  |
 | GET    | `/wc/v3/payments/transactions`                            | List transactions           | `allowlisted-read`       | Implemented; uses `page`, `pagesize`, date filters.        |
 | GET    | `/wc/v3/payments/deposits`                                | List deposits               | `allowlisted-read`       | Implemented.                                               |
