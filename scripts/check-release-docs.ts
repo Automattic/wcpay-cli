@@ -7,10 +7,13 @@ interface PackageJson {
 const packageJson = JSON.parse(readFileSync('package.json', 'utf8')) as PackageJson;
 const version = packageJson.version;
 const tag = `v${version}`;
+const releaseAssetName = `automattic-wcpay-cli-${version}.tgz`;
+const releaseAssetUrl = `https://github.com/Automattic/wcpay-cli/releases/download/${tag}/${releaseAssetName}`;
 const changelog = readFileSync('CHANGELOG.md', 'utf8');
 const versionSource = readFileSync('src/core/version.ts', 'utf8');
 const githubInstallFiles = ['README.md', 'docs/index.md', 'docs/packaging.md'];
-const githubInstallPattern = /github:Automattic\/wcpay-cli#v\d+\.\d+\.\d+/g;
+const githubReleaseAssetPattern =
+	/https:\/\/github\.com\/Automattic\/wcpay-cli\/releases\/download\/v\d+\.\d+\.\d+\/automattic-wcpay-cli-\d+\.\d+\.\d+\.tgz/g;
 
 const checks: Array<{ name: string; ok: boolean; message: string }> = [
 	{
@@ -27,13 +30,11 @@ const checks: Array<{ name: string; ok: boolean; message: string }> = [
 
 for (const file of githubInstallFiles) {
 	const contents = readFileSync(file, 'utf8');
-	const matches = contents.match(githubInstallPattern) ?? [];
+	const matches = contents.match(githubReleaseAssetPattern) ?? [];
 	checks.push({
-		name: `${file} GitHub install tag`,
-		ok:
-			matches.length > 0 &&
-			matches.every((match) => match === `github:Automattic/wcpay-cli#${tag}`),
-		message: `${file} must point GitHub install commands at ${tag}.`,
+		name: `${file} GitHub release asset URL`,
+		ok: matches.length > 0 && matches.every((match) => match === releaseAssetUrl),
+		message: `${file} must point GitHub install commands at ${releaseAssetUrl}.`,
 	});
 }
 

@@ -37,15 +37,15 @@ npm run pack:dry-run
 
 ## Git hooks and repository hygiene
 
-`npm install` runs the `prepare` script and installs Husky hooks:
+The repository includes Husky hooks:
 
 - pre-commit: `npm run lint` and `npm run docs:check`
 - pre-push: `npm run check`
 
-If hooks are not installed, run:
+If hooks are not installed locally and you want to enable them, run:
 
 ```bash
-npm run prepare
+npx husky
 ```
 
 The GitHub `main` branch is protected. Changes should go through pull requests with the `test` status check passing before merge.
