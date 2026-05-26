@@ -1,5 +1,4 @@
 import { Command } from 'commander';
-import { registerAbilitiesCommands } from './commands/abilities.js';
 import { registerApiCommand } from './commands/api.js';
 import {
 	registerAuthCommands,
@@ -51,7 +50,6 @@ export function buildProgram(): Command {
 	registerProfileCommands(program);
 	registerWhoamiCommand(program);
 	registerApiCommand(program);
-	registerAbilitiesCommands(program);
 	registerReadCommands(program);
 	registerResourceCommands(program);
 	registerWriteCommands(program);

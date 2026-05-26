@@ -93,26 +93,6 @@ Options:
 - `--dry-run` — Print the request without sending it.
 - `--allow-unsafe-path` — Allow raw write requests outside reviewed WooPayments/WooCommerce paths.
 
-## `abilities [command]`
-
-Discover and run WooPayments Abilities API actions when available.
-
-## `abilities list [options]`
-
-List WooPayments abilities exposed by the selected store.
-
-Options:
-
-- `--json` — Emit JSON output.
-
-## `abilities run <ability> [fields...]`
-
-Run a discovered read-only WooPayments ability.
-
-Options:
-
-- `--json` — Emit JSON output.
-
 ## `mode [options]`
 
 Show WooPayments mode for the selected profile.
