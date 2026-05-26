@@ -17,7 +17,7 @@ Running `wcpay` without a command gives a short, terminal-native starting point:
 
 <img src="docs/assets/welcome.png" alt="WooPayments CLI welcome screen" width="760">
 
-The login flow uses browser-based WooPayments authorization when the store supports it, falls back to manual WooCommerce REST API key entry for older stores, verifies the connection, and suggests useful next commands:
+The login flow guides you through WooCommerce REST API key entry, verifies the connection, and suggests useful next commands:
 
 <img src="docs/assets/login-wizard.png" alt="WooPayments CLI login wizard" width="760">
 
@@ -44,7 +44,7 @@ Connect a store with the guided login flow:
 wcpay login --site https://store.example --name staging
 ```
 
-The wizard saves credentials in your OS keychain when available. Browser login creates read-only WooCommerce REST API keys by default; pass `--scope read_write` only for write-capable test/dev workflows.
+The wizard saves credentials in your OS keychain when available. Create a WooCommerce REST API key for a user with `manage_woocommerce` capability; use read-only keys for read-only inspection and read/write keys only for write-capable test/dev workflows.
 
 Then check that the CLI can talk to WooPayments:
 
@@ -114,7 +114,7 @@ wcpay mcp
 
 ## Authentication and storage
 
-`wcpay login` uses browser authorization where available, then stores WooCommerce REST API consumer keys/secrets. Secrets are stored in the OS keychain when available:
+`wcpay login` stores WooCommerce REST API consumer keys/secrets. Secrets are stored in the OS keychain when available:
 
 - macOS: Keychain via `security`
 - Linux: Secret Service via `secret-tool`

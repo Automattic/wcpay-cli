@@ -60,7 +60,6 @@ export function registerReadCommands(program: Command): void {
 				);
 
 				await addAccountCheck(checks, context);
-				await addBrowserLoginCheck(checks, context);
 
 				const summary = summarizeChecks(checks);
 				printSuccess(
@@ -120,11 +119,10 @@ interface DoctorCheck {
 	details?: unknown;
 }
 
-type DoctorGroup = 'setup' | 'connection' | 'woopayments';
+type DoctorGroup = 'setup' | 'woopayments';
 
 const DOCTOR_GROUPS: Array<{ key: DoctorGroup; label: string }> = [
 	{ key: 'setup', label: 'Local setup' },
-	{ key: 'connection', label: 'Connection' },
 	{ key: 'woopayments', label: 'WooPayments' },
 ];
 
@@ -132,8 +130,7 @@ const DOCTOR_GROUP_BY_CHECK: Record<string, DoctorGroup> = {
 	profile: 'setup',
 	site_url: 'setup',
 	credentials_storage: 'setup',
-	auth: 'connection',
-	browser_login: 'connection',
+	auth: 'setup',
 	mode: 'woopayments',
 	payments_enabled: 'woopayments',
 	account: 'woopayments',
@@ -197,18 +194,6 @@ async function addAccountCheck(
 	}
 }
 
-async function addBrowserLoginCheck(
-	checks: DoctorCheck[],
-	context: Awaited<ReturnType<typeof createContext>>
-): Promise<void> {
-	try {
-		await context.client.request({ method: 'OPTIONS', path: '/wc/v3/payments/cli/authorize' });
-		checks.push(pass('browser_login', 'Browser login endpoint is available'));
-	} catch (error) {
-		checks.push(warn('browser_login', 'Browser login endpoint is not available; manual API key login will be used', errorDetails(error)));
-	}
-}
-
 function summarizeChecks(checks: DoctorCheck[]): Record<DoctorStatus, number> {
 	return {
 		pass: checks.filter((check) => check.status === 'pass').length,
@@ -266,9 +251,6 @@ function getDoctorNextSteps(checks: DoctorCheck[]): string[] {
 	const steps: string[] = [];
 	if (checks.some((checkItem) => checkItem.status === 'fail')) {
 		steps.push(`Run ${formatCommand('wcpay doctor --json')} for structured error details.`);
-	}
-	if (checks.some((checkItem) => checkItem.name === 'browser_login' && checkItem.status === 'warn')) {
-		steps.push(`Use ${formatCommand('wcpay login --no-browser')} if browser login is not supported by this store.`);
 	}
 	if (checks.some((checkItem) => checkItem.name === 'mode' && checkItem.status === 'warn')) {
 		steps.push('Live-mode stores are read-only in wcpay; switch WooPayments to test/dev mode before write commands.');
