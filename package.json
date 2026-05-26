@@ -28,7 +28,6 @@
 	"scripts": {
 		"clean": "node -e \"require('node:fs').rmSync('dist', { recursive: true, force: true })\"",
 		"build": "npm run clean && tsc -p tsconfig.build.json && node -e \"require('node:fs').chmodSync('dist/cli.js', 0o755)\"",
-		"build:prepare": "node scripts/build-prepare.cjs",
 		"dev": "tsx src/cli.ts",
 		"lint": "tsc -p tsconfig.json --noEmit",
 		"docs:generate": "tsx scripts/generate-command-reference.ts",
@@ -38,11 +37,12 @@
 		"site:build": "vitepress build docs",
 		"site:preview": "vitepress preview docs",
 		"release:check": "tsx scripts/check-release-docs.ts",
+		"dist:check": "npm run build && git diff --exit-code -- dist",
 		"install:smoke": "node scripts/smoke-github-install.cjs file:$PWD $npm_package_version",
+		"install:smoke:github": "node scripts/smoke-github-install.cjs https://github.com/Automattic/wcpay-cli/archive/refs/tags/v$npm_package_version.tar.gz $npm_package_version",
 		"test": "vitest run",
 		"test:watch": "vitest",
-		"check": "npm run lint && npm run docs:check && npm run release:check && npm run test && npm run site:build && npm run build && npm run install:smoke",
-		"prepare": "npm run build:prepare && node scripts/install-husky-if-git.cjs",
+		"check": "npm run lint && npm run docs:check && npm run release:check && npm run test && npm run site:build && npm run dist:check && npm run install:smoke",
 		"pack:dry-run": "npm pack --dry-run",
 		"format": "prettier --write ."
 	},

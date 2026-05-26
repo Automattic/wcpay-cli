@@ -10,7 +10,8 @@ const tag = `v${version}`;
 const changelog = readFileSync('CHANGELOG.md', 'utf8');
 const versionSource = readFileSync('src/core/version.ts', 'utf8');
 const githubInstallFiles = ['README.md', 'docs/index.md', 'docs/packaging.md'];
-const githubInstallPattern = /github:Automattic\/wcpay-cli#v\d+\.\d+\.\d+/g;
+const githubInstallPattern =
+	/https:\/\/github\.com\/Automattic\/wcpay-cli\/archive\/refs\/tags\/v\d+\.\d+\.\d+\.tar\.gz/g;
 
 const checks: Array<{ name: string; ok: boolean; message: string }> = [
 	{
@@ -29,11 +30,15 @@ for (const file of githubInstallFiles) {
 	const contents = readFileSync(file, 'utf8');
 	const matches = contents.match(githubInstallPattern) ?? [];
 	checks.push({
-		name: `${file} GitHub install tag`,
+		name: `${file} GitHub archive install URL`,
 		ok:
 			matches.length > 0 &&
-			matches.every((match) => match === `github:Automattic/wcpay-cli#${tag}`),
-		message: `${file} must point GitHub install commands at ${tag}.`,
+			matches.every(
+				(match) =>
+					match ===
+					`https://github.com/Automattic/wcpay-cli/archive/refs/tags/${tag}.tar.gz`
+			),
+		message: `${file} must point GitHub archive install commands at ${tag}.`,
 	});
 }
 

@@ -1,0 +1,215 @@
+import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
+import { z } from 'zod';
+import { listReadOnlyWcpayAbilities, runAbility } from '../core/abilities.js';
+import { normalizeRestPath } from '../core/api.js';
+import { createContext } from '../core/context.js';
+import { CliError } from '../core/errors.js';
+import { classifyMode, ModeService } from '../core/mode.js';
+const optionalProfile = { profile: z.string().optional() };
+const listArgs = {
+    ...optionalProfile,
+    page: z.number().int().optional(),
+    limit: z.number().int().optional(),
+};
+const readOnlyAnnotations = {
+    readOnlyHint: true,
+    destructiveHint: false,
+    idempotentHint: true,
+    openWorldHint: true,
+};
+export async function runMcpServer() {
+    const server = createMcpServer();
+    await server.connect(new StdioServerTransport());
+}
+export function createMcpServer() {
+    const server = new McpServer({
+        name: 'wcpay-cli',
+        version: '0.0.0',
+    });
+    server.registerTool('wcpay_get_mode', {
+        description: 'Read WooPayments mode flags and classify the store as live, test, or dev.',
+        inputSchema: optionalProfile,
+        annotations: readOnlyAnnotations,
+    }, async (args) => textResult(await getMode(args.profile)));
+    server.registerTool('wcpay_get_account_status', {
+        description: 'Read WooPayments account status for the selected profile.',
+        inputSchema: optionalProfile,
+        annotations: readOnlyAnnotations,
+    }, async (args) => textResult(await getEndpoint(args.profile, '/wc/v3/payments/accounts')));
+    server.registerTool('wcpay_get_settings', {
+        description: 'Read WooPayments settings and mode flags.',
+        inputSchema: optionalProfile,
+        annotations: readOnlyAnnotations,
+    }, async (args) => textResult(await getEndpoint(args.profile, '/wc/v3/payments/settings')));
+    server.registerTool('wcpay_list_transactions', {
+        description: 'List WooPayments transactions.',
+        inputSchema: listArgs,
+        annotations: readOnlyAnnotations,
+    }, async (args) => textResult(await getEndpoint(args.profile, '/wc/v3/payments/transactions', buildListQuery(args))));
+    server.registerTool('wcpay_list_deposits', {
+        description: 'List WooPayments deposits.',
+        inputSchema: listArgs,
+        annotations: readOnlyAnnotations,
+    }, async (args) => textResult(await getEndpoint(args.profile, '/wc/v3/payments/deposits', buildListQuery(args))));
+    server.registerTool('wcpay_list_disputes', {
+        description: 'List WooPayments disputes.',
+        inputSchema: listArgs,
+        annotations: readOnlyAnnotations,
+    }, async (args) => textResult(await getEndpoint(args.profile, '/wc/v3/payments/disputes', buildListQuery(args))));
+    server.registerTool('wcpay_abilities_list', {
+        description: 'Discover read-only WooPayments abilities exposed by the selected store.',
+        inputSchema: optionalProfile,
+        annotations: readOnlyAnnotations,
+    }, async (args) => textResult(await listMcpAbilities(args.profile)));
+    server.registerTool('wcpay_ability_run', {
+        description: 'Run a discovered read-only WooPayments ability by name.',
+        inputSchema: {
+            ...optionalProfile,
+            ability: z.string(),
+            input: z.record(z.unknown()).optional(),
+        },
+        annotations: readOnlyAnnotations,
+    }, async (args) => textResult(await runMcpAbility(args.profile, args.ability, args.input ?? {})));
+    server.registerTool('wcpay_api_get', {
+        description: 'Make an authenticated GET request to a store REST API path.',
+        inputSchema: {
+            ...optionalProfile,
+            path: z.string(),
+        },
+        annotations: readOnlyAnnotations,
+    }, async (args) => textResult(await getMcpApiEndpoint(args.profile, args.path)));
+    server.registerTool('wcpay_doctor', {
+        description: 'Run WooPayments CLI diagnostics for the selected profile.',
+        inputSchema: optionalProfile,
+        annotations: readOnlyAnnotations,
+    }, async (args) => textResult(await doctor(args.profile)));
+    return server;
+}
+async function listMcpAbilities(profile) {
+    try {
+        const context = await createContext({ profile });
+        const abilities = await listReadOnlyWcpayAbilities(context.client);
+        return { ok: true, data: { abilities }, meta: { profile: context.profile.name, site: context.profile.siteUrl } };
+    }
+    catch (error) {
+        return errorEnvelope(error);
+    }
+}
+async function runMcpAbility(profile, ability, input) {
+    try {
+        const context = await createContext({ profile });
+        const abilities = await listReadOnlyWcpayAbilities(context.client);
+        if (!abilities.some((item) => item.name === ability)) {
+            throw new CliError({
+                code: 'ability_not_exposed',
+                message: `Read-only WooPayments ability is not exposed by this store: ${ability}`,
+                status: 2,
+            });
+        }
+        const data = await runAbility(context.client, ability, input);
+        return { ok: true, data, meta: { profile: context.profile.name, site: context.profile.siteUrl } };
+    }
+    catch (error) {
+        return errorEnvelope(error);
+    }
+}
+async function getMode(profile) {
+    try {
+        const context = await createContext({ profile });
+        const modeService = new ModeService(context.client);
+        const settings = await modeService.getSettings();
+        return { ok: true, data: { mode: classifyMode(settings), settings } };
+    }
+    catch (error) {
+        return errorEnvelope(error);
+    }
+}
+async function getMcpApiEndpoint(profile, path) {
+    try {
+        return await getEndpoint(profile, normalizeMcpApiGetPath(path));
+    }
+    catch (error) {
+        return errorEnvelope(error);
+    }
+}
+async function getEndpoint(profile, path, query = {}) {
+    try {
+        const context = await createContext({ profile });
+        const data = await context.client.request({ method: 'GET', path, query });
+        return { ok: true, data, meta: { profile: context.profile.name, site: context.profile.siteUrl } };
+    }
+    catch (error) {
+        return errorEnvelope(error);
+    }
+}
+async function doctor(profile) {
+    try {
+        const context = await createContext({ profile });
+        const settings = await context.client.request({ method: 'GET', path: '/wc/v3/payments/settings' });
+        const mode = classifyMode(settings);
+        return {
+            ok: true,
+            data: {
+                profile: context.profile.name,
+                mode,
+                checks: [
+                    { name: 'profile', status: 'pass', message: context.profile.name },
+                    { name: 'site_url', status: 'pass', message: context.profile.siteUrl },
+                    { name: 'auth', status: 'pass', message: 'Credentials accepted.' },
+                    { name: 'mode', status: 'pass', message: mode },
+                ],
+            },
+        };
+    }
+    catch (error) {
+        return errorEnvelope(error);
+    }
+}
+function buildListQuery(args) {
+    return {
+        ...(args.page ? { page: args.page } : {}),
+        ...(args.limit ? { pagesize: args.limit } : {}),
+    };
+}
+function normalizeMcpApiGetPath(path) {
+    const normalized = normalizeRestPath(path);
+    if (!normalized.startsWith('/wc/v3/payments')) {
+        throw new CliError({
+            code: 'mcp_path_not_allowed',
+            message: 'MCP api_get is limited to WooPayments REST paths under /wc/v3/payments.',
+            status: 2,
+        });
+    }
+    return normalized;
+}
+function textResult(envelope) {
+    return {
+        content: [
+            {
+                type: 'text',
+                text: JSON.stringify(envelope, null, 2),
+            },
+        ],
+    };
+}
+function errorEnvelope(error) {
+    if (error && typeof error === 'object' && 'code' in error && 'message' in error) {
+        return {
+            ok: false,
+            error: {
+                code: String(error.code),
+                message: String(error.message),
+                ...('status' in error && typeof error.status === 'number' ? { status: error.status } : {}),
+            },
+        };
+    }
+    return {
+        ok: false,
+        error: {
+            code: 'unexpected_error',
+            message: error instanceof Error ? error.message : String(error),
+        },
+    };
+}
+//# sourceMappingURL=server.js.map
