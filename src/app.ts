@@ -15,6 +15,7 @@ import { registerToolsCommands } from './commands/tools.js';
 import { registerWriteCommands } from './commands/writes.js';
 import { printSuccess } from './core/output.js';
 import { printWelcome } from './core/ux.js';
+import { VERSION } from './core/version.js';
 
 export function buildProgram(): Command {
 	const program = new Command();
@@ -22,7 +23,7 @@ export function buildProgram(): Command {
 	program
 		.name('wcpay')
 		.description('Standalone WooPayments CLI for developers, agents, and test-mode workflows.')
-		.version('0.0.0')
+		.version(VERSION)
 		.option('--profile <name>', 'Use a specific site profile.')
 		.option('--json', 'Emit JSON output.')
 		.option('--dry-run', 'Resolve and validate without sending write requests.')

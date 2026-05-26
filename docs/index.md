@@ -30,7 +30,7 @@ features:
 Install the latest tagged version directly from GitHub:
 
 ```bash
-npm install -g github:Automattic/wcpay-cli#v0.2.1
+npm install -g github:Automattic/wcpay-cli#v0.2.2
 ```
 
 Then connect a store:
