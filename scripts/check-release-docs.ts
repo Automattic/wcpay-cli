@@ -8,6 +8,7 @@ const packageJson = JSON.parse(readFileSync('package.json', 'utf8')) as PackageJ
 const version = packageJson.version;
 const tag = `v${version}`;
 const changelog = readFileSync('CHANGELOG.md', 'utf8');
+const versionSource = readFileSync('src/core/version.ts', 'utf8');
 const githubInstallFiles = ['README.md', 'docs/index.md', 'docs/packaging.md'];
 const githubInstallPattern = /github:Automattic\/wcpay-cli#v\d+\.\d+\.\d+/g;
 
@@ -16,6 +17,11 @@ const checks: Array<{ name: string; ok: boolean; message: string }> = [
 		name: 'CHANGELOG release heading',
 		ok: changelog.includes(`## ${version}`),
 		message: `CHANGELOG.md must include a ## ${version} heading.`,
+	},
+	{
+		name: 'CLI version constant',
+		ok: versionSource.includes(`VERSION = '${version}'`),
+		message: `src/core/version.ts must export VERSION = '${version}'.`,
 	},
 ];
 

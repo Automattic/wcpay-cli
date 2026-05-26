@@ -60,5 +60,5 @@ npm install -g @automattic/wcpay-cli
 Before npm publication, install the latest tagged version from GitHub. Keep this tag aligned with `package.json` during every release; `npm run release:check` enforces that the README command points at the current package version.
 
 ```bash
-npm install -g github:Automattic/wcpay-cli#v0.2.1
+npm install -g github:Automattic/wcpay-cli#v0.2.2
 ```

@@ -2,6 +2,11 @@
 
 All notable changes to `@automattic/wcpay-cli` are documented in this file.
 
+## 0.2.2
+
+- Fix direct GitHub installs by building `dist/` during npm `prepare`.
+- Add an install smoke test to verify the global install path in release checks.
+
 ## 0.2.1
 
 - Document direct installation from the latest tagged GitHub version.

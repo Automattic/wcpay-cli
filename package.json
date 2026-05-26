@@ -1,6 +1,6 @@
 {
 	"name": "@automattic/wcpay-cli",
-	"version": "0.2.1",
+	"version": "0.2.2",
 	"description": "Standalone WooPayments CLI for developers, agents, and test-mode workflows.",
 	"homepage": "https://github.com/Automattic/wcpay-cli#readme",
 	"repository": {
@@ -37,10 +37,11 @@
 		"site:build": "vitepress build docs",
 		"site:preview": "vitepress preview docs",
 		"release:check": "tsx scripts/check-release-docs.ts",
+		"install:smoke": "node scripts/smoke-github-install.cjs file:$PWD $npm_package_version",
 		"test": "vitest run",
 		"test:watch": "vitest",
-		"check": "npm run lint && npm run docs:check && npm run release:check && npm run test && npm run site:build && npm run build",
-		"prepare": "husky",
+		"check": "npm run lint && npm run docs:check && npm run release:check && npm run test && npm run site:build && npm run build && npm run install:smoke",
+		"prepare": "npm run build && node scripts/install-husky-if-git.cjs",
 		"pack:dry-run": "npm pack --dry-run",
 		"format": "prettier --write ."
 	},
