@@ -26,7 +26,7 @@ The login flow guides you through WooCommerce REST API key entry, verifies the c
 Install the latest packaged release from GitHub:
 
 ```bash
-npm install -g https://github.com/Automattic/wcpay-cli/releases/download/v0.2.2/automattic-wcpay-cli-0.2.2.tgz
+npm install -g https://github.com/Automattic/wcpay-cli/releases/download/v0.2.3/automattic-wcpay-cli-0.2.3.tgz
 ```
 
 Or, clone the repo and build it manually:

@@ -1,6 +1,6 @@
 {
 	"name": "@automattic/wcpay-cli",
-	"version": "0.2.2",
+	"version": "0.2.3",
 	"description": "Standalone WooPayments CLI for developers, agents, and test-mode workflows.",
 	"homepage": "https://github.com/Automattic/wcpay-cli#readme",
 	"repository": {
