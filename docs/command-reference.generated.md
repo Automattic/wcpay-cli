@@ -8,14 +8,11 @@ Authenticate with a WooPayments store.
 
 Options:
 
-- `--browser` — Use the browser-based WooPayments connection flow when available.
-- `--no-browser` — Use manual WooCommerce REST API key auth without opening a browser.
 - `--site <url>` — Store site URL.
 - `--name <name>` — Profile name. Defaults to the site hostname.
 - `--consumer-key <key>` — WooCommerce consumer key. Defaults to WCPAY_CONSUMER_KEY.
 - `--consumer-secret <secret>` — WooCommerce consumer secret. Defaults to WCPAY_CONSUMER_SECRET.
 - `--allow-insecure-local` — Allow HTTP for local development stores.
-- `--scope <scope>` — Browser login key scope: read, write, or read_write.
 - `--no-verify` — Save credentials without verifying them first.
 - `--yes` — Continue even if a profile is already configured.
 - `--json` — Emit JSON output.
@@ -52,7 +49,6 @@ Remove a site profile.
 
 Options:
 
-- `--revoke` — Revoke the WooCommerce REST API key before removing local credentials.
 - `--json` — Emit JSON output.
 
 ## `auth test [profile]`

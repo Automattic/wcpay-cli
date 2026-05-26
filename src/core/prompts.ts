@@ -21,7 +21,7 @@ function ensureInteractive(): void {
 		throw new CliError({
 			code: 'interactive_auth_required',
 			message:
-				'No-browser auth needs credentials. Pass --consumer-key/--consumer-secret or set WCPAY_CONSUMER_KEY/WCPAY_CONSUMER_SECRET.',
+				'Interactive auth needs credentials. Pass --consumer-key/--consumer-secret or set WCPAY_CONSUMER_KEY/WCPAY_CONSUMER_SECRET.',
 			status: 2,
 		});
 	}

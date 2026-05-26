@@ -29,7 +29,7 @@ wcpay settings get
 
 `doctor --json --redact` is the safest output to attach to an issue or support conversation. It keeps the structured response shape while avoiding sensitive values.
 
-`doctor` checks the active profile, credential storage, REST authentication, WooPayments mode, account status, and browser-login endpoint availability.
+`doctor` checks the active profile, credential storage, REST authentication, WooPayments mode, and account status.
 
 ## Inspect transactions, deposits, disputes, and charges
 

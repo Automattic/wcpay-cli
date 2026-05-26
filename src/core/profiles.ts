@@ -15,7 +15,6 @@ export interface Profile {
 	auth: {
 		type: 'woocommerce_api_key';
 		secretRef: string;
-		keyId?: string;
 	};
 	createdAt: string;
 	updatedAt: string;
@@ -155,7 +154,6 @@ export class ProfileStore {
 		name: string;
 		siteUrl: string;
 		allowInsecureLocal?: boolean;
-		keyId?: string;
 	}): Promise<Profile> {
 		const now = new Date().toISOString();
 		const file = await this.readProfilesFile();
@@ -170,10 +168,7 @@ export class ProfileStore {
 				allowInsecureLocal: input.allowInsecureLocal,
 			}),
 			allowInsecureLocal: Boolean(input.allowInsecureLocal),
-			auth: {
-				...auth,
-				...(input.keyId ? { keyId: input.keyId } : {}),
-			},
+			auth,
 			createdAt: existing?.createdAt ?? now,
 			updatedAt: now,
 		};

@@ -4,9 +4,9 @@
 
 ## Credential handling
 
-Prefer browser login or interactive prompts over passing secrets as command-line arguments. Shell history, terminal scrollback, and local process listings can expose values passed with `--consumer-secret`.
+Prefer interactive prompts over passing secrets as command-line arguments. Shell history, terminal scrollback, and local process listings can expose values passed with `--consumer-secret`.
 
-Browser login creates read-only WooCommerce REST API keys by default. Use `wcpay login --scope read_write` only when you need write-capable test/dev workflows.
+Use read-only WooCommerce REST API keys for inspection. Use read/write keys only when you need write-capable test/dev workflows.
 
 ## Live-mode rule
 

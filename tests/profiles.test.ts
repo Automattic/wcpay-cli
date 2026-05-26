@@ -75,18 +75,6 @@ describe('ProfileStore', () => {
 		expect((await store.get()).name).toBe('local');
 	});
 
-	it('stores browser-created WooCommerce key IDs for revocation', async () => {
-		const env = await testEnv();
-		const store = new ProfileStore(env);
-		const profile = await store.upsert({
-			name: 'local',
-			siteUrl: 'http://localhost:8082',
-			keyId: '123',
-		});
-
-		expect(profile.auth.keyId).toBe('123');
-		expect((await store.get('local')).auth.keyId).toBe('123');
-	});
 });
 
 describe('FileSecretStore', () => {
