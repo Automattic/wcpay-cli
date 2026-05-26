@@ -1,9 +1,4 @@
 import { Command } from 'commander';
-import {
-	WCPAY_ABILITIES,
-	listAbilities,
-	runReadAbilityWithRestFallback,
-} from '../core/abilities.js';
 import { createContext } from '../core/context.js';
 import { classifyMode, ModeService } from '../core/mode.js';
 import { formatKeyValue } from '../core/format.js';
@@ -66,7 +61,6 @@ export function registerReadCommands(program: Command): void {
 
 				await addAccountCheck(checks, context);
 				await addBrowserLoginCheck(checks, context);
-				await addAbilitiesCheck(checks, context);
 
 				const summary = summarizeChecks(checks);
 				printSuccess(
@@ -90,13 +84,7 @@ export function registerReadCommands(program: Command): void {
 			const json = isJson(program, options);
 			await runReadAction({ json }, async () => {
 				const context = await createContext({ profile: program.opts().profile });
-				const data = await runReadAbilityWithRestFallback(
-					context.client,
-					WCPAY_ABILITIES.getAccount,
-					{},
-					() =>
-						context.client.request({ method: 'GET', path: '/wc/v3/payments/accounts' })
-				);
+				const data = await context.client.request({ method: 'GET', path: '/wc/v3/payments/accounts' });
 				printSuccess(data, {
 					json,
 					human: formatAccountStatus(data, context.profile.siteUrl),
@@ -132,13 +120,12 @@ interface DoctorCheck {
 	details?: unknown;
 }
 
-type DoctorGroup = 'setup' | 'connection' | 'woopayments' | 'capabilities';
+type DoctorGroup = 'setup' | 'connection' | 'woopayments';
 
 const DOCTOR_GROUPS: Array<{ key: DoctorGroup; label: string }> = [
 	{ key: 'setup', label: 'Local setup' },
 	{ key: 'connection', label: 'Connection' },
 	{ key: 'woopayments', label: 'WooPayments' },
-	{ key: 'capabilities', label: 'Capabilities' },
 ];
 
 const DOCTOR_GROUP_BY_CHECK: Record<string, DoctorGroup> = {
@@ -150,7 +137,6 @@ const DOCTOR_GROUP_BY_CHECK: Record<string, DoctorGroup> = {
 	mode: 'woopayments',
 	payments_enabled: 'woopayments',
 	account: 'woopayments',
-	abilities: 'capabilities',
 };
 
 function pass(name: string, message: string, details?: unknown): DoctorCheck {
@@ -185,12 +171,7 @@ async function addAccountCheck(
 	context: Awaited<ReturnType<typeof createContext>>
 ): Promise<void> {
 	try {
-		const account = await runReadAbilityWithRestFallback(
-			context.client,
-			WCPAY_ABILITIES.getAccount,
-			{},
-			() => context.client.request({ method: 'GET', path: '/wc/v3/payments/accounts' })
-		);
+		const account = await context.client.request({ method: 'GET', path: '/wc/v3/payments/accounts' });
 		if (account === false) {
 			checks.push(warn('account', 'WooPayments account is not connected or unavailable'));
 			return;
@@ -225,22 +206,6 @@ async function addBrowserLoginCheck(
 		checks.push(pass('browser_login', 'Browser login endpoint is available'));
 	} catch (error) {
 		checks.push(warn('browser_login', 'Browser login endpoint is not available; manual API key login will be used', errorDetails(error)));
-	}
-}
-
-async function addAbilitiesCheck(
-	checks: DoctorCheck[],
-	context: Awaited<ReturnType<typeof createContext>>
-): Promise<void> {
-	try {
-		const abilities = await listAbilities(context.client);
-		if (abilities.length === 0) {
-			checks.push(warn('abilities', 'No WooPayments abilities are exposed; REST fallbacks will be used'));
-			return;
-		}
-		checks.push(pass('abilities', `${abilities.length} WooPayments abilities exposed`));
-	} catch (error) {
-		checks.push(warn('abilities', 'Could not inspect WooPayments abilities; REST fallbacks will be used', errorDetails(error)));
 	}
 }
 
@@ -304,9 +269,6 @@ function getDoctorNextSteps(checks: DoctorCheck[]): string[] {
 	}
 	if (checks.some((checkItem) => checkItem.name === 'browser_login' && checkItem.status === 'warn')) {
 		steps.push(`Use ${formatCommand('wcpay login --no-browser')} if browser login is not supported by this store.`);
-	}
-	if (checks.some((checkItem) => checkItem.name === 'abilities' && checkItem.status === 'warn')) {
-		steps.push('Abilities are optional; curated commands will continue to use REST fallbacks.');
 	}
 	if (checks.some((checkItem) => checkItem.name === 'mode' && checkItem.status === 'warn')) {
 		steps.push('Live-mode stores are read-only in wcpay; switch WooPayments to test/dev mode before write commands.');

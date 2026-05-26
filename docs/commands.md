@@ -29,7 +29,7 @@ wcpay settings get
 
 `doctor --json --redact` is the safest output to attach to an issue or support conversation. It keeps the structured response shape while avoiding sensitive values.
 
-`doctor` checks the active profile, credential storage, REST authentication, WooPayments mode, account status, browser-login endpoint availability, and WooPayments Abilities API availability. Warnings do not necessarily mean the CLI is unusable; for example, older stores may warn that browser login or abilities are unavailable while REST fallbacks continue to work.
+`doctor` checks the active profile, credential storage, REST authentication, WooPayments mode, account status, and browser-login endpoint availability.
 
 ## Inspect transactions, deposits, disputes, and charges
 
@@ -106,8 +106,6 @@ Supported payment scenarios: `success`, `decline`, `3ds`, `dispute`, `fraudulent
 ## Use agent tooling
 
 ```bash
-wcpay abilities list
-wcpay abilities run woocommerce-payments/get-account
 wcpay tools describe
 wcpay tools schema
 wcpay mcp

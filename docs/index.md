@@ -22,7 +22,7 @@ features:
   - title: Safe by default
     details: Live-mode stores are read-only, write commands require explicit confirmation or dry runs, and secrets are stored keychain-first.
   - title: Human and agent ready
-    details: Polished terminal output, stable JSON, command metadata, Abilities support, and a read-only MCP server.
+    details: Polished terminal output, stable JSON, command metadata, REST-backed read commands, and a read-only MCP server.
 ---
 
 ## Install
