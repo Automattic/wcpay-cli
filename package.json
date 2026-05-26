@@ -28,6 +28,7 @@
 	"scripts": {
 		"clean": "node -e \"require('node:fs').rmSync('dist', { recursive: true, force: true })\"",
 		"build": "npm run clean && tsc -p tsconfig.build.json && node -e \"require('node:fs').chmodSync('dist/cli.js', 0o755)\"",
+		"build:prepare": "npm run clean && npm exec --yes --package typescript -- tsc -p tsconfig.build.json && node -e \"require('node:fs').chmodSync('dist/cli.js', 0o755)\"",
 		"dev": "tsx src/cli.ts",
 		"lint": "tsc -p tsconfig.json --noEmit",
 		"docs:generate": "tsx scripts/generate-command-reference.ts",
@@ -41,7 +42,7 @@
 		"test": "vitest run",
 		"test:watch": "vitest",
 		"check": "npm run lint && npm run docs:check && npm run release:check && npm run test && npm run site:build && npm run build && npm run install:smoke",
-		"prepare": "npm run build && node scripts/install-husky-if-git.cjs",
+		"prepare": "npm run build:prepare && node scripts/install-husky-if-git.cjs",
 		"pack:dry-run": "npm pack --dry-run",
 		"format": "prettier --write ."
 	},
