@@ -2,6 +2,13 @@
 
 All notable changes to `@automattic/wcpay-cli` are documented in this file.
 
+## 0.2.3
+
+- Remove browser-based login support; `wcpay login` now guides manual WooCommerce REST API key setup.
+- Remove WooPayments Abilities API support and use reviewed WooPayments REST endpoints directly.
+- Split CI into focused Typecheck, Docs, Unit tests, and Package smoke jobs.
+- Use GitHub release tarballs for direct GitHub installs.
+
 ## 0.2.2
 
 - Fix direct GitHub installs by building `dist/` during npm `prepare`.
