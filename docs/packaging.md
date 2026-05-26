@@ -13,7 +13,7 @@ npm run check
 npm run pack:dry-run
 ```
 
-`npm run check` includes `npm run release:check`, which verifies release docs stay in sync with `package.json`, including the README GitHub install tag and the changelog heading.
+`npm run check` includes `npm run release:check`, which verifies release docs stay in sync with `package.json`, including the README GitHub release asset URL and the changelog heading.
 
 ## Development install
 
@@ -57,8 +57,8 @@ Once published to npm:
 npm install -g @automattic/wcpay-cli
 ```
 
-Before npm publication, install the latest tagged version from GitHub. Keep this tag aligned with `package.json` during every release; `npm run release:check` enforces that the README command points at the current package version.
+Before npm publication, build and upload the package tarball to the GitHub release, then install that release asset. Keep this URL aligned with `package.json` during every release; `npm run release:check` enforces that the documented release asset URL points at the current package version.
 
 ```bash
-npm install -g github:Automattic/wcpay-cli#v0.2.2
+npm install -g https://github.com/Automattic/wcpay-cli/releases/download/v0.2.2/automattic-wcpay-cli-0.2.2.tgz
 ```
