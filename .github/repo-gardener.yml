@@ -1,0 +1,48 @@
+enabled: true
+mode: report-only
+
+product:
+  slug: wcpay-cli
+  name: WooPayments CLI
+
+model:
+  provider: pi
+  name: gpt-5.5
+
+code:
+  checkout: true
+  branch: main
+
+issues:
+  enabled: false
+  comments:
+    enabled: false
+
+report:
+  enabled: false
+
+actions:
+  issueComments: true
+
+investigation:
+  enabled: true
+  defaultRecipe: docs-release-check
+  recipes:
+    docs-release-check:
+      description: Verify generated command docs and release metadata stay in sync.
+      timeoutSeconds: 300
+      maxOutputChars: 20000
+      commands:
+        - npm ci
+        - npm run docs:check
+        - npm run release:check
+
+prReviews:
+  enabled: false
+  liveMode: false
+
+controls:
+  ignoreLabels:
+    - repo-gardener-ignore
+  protectedLabels:
+    - security
