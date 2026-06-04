@@ -24,6 +24,11 @@ report:
 actions:
   issueComments: true
 
+fixes:
+  enabled: true
+  branchPrefix: repo-gardener
+  draft: true
+
 investigation:
   enabled: true
   defaultRecipe: docs-release-check
