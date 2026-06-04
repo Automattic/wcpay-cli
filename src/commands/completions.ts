@@ -1,5 +1,6 @@
 import { Command } from 'commander';
-import { printSuccess } from '../core/output.js';
+import { CliError } from '../core/errors.js';
+import { printError, printSuccess } from '../core/output.js';
 
 export function registerCompletionsCommand( program: Command ): void {
 	program
@@ -7,8 +8,15 @@ export function registerCompletionsCommand( program: Command ): void {
 		.description( 'Print shell completion script for bash or zsh.' )
 		.option( '--json', 'Emit JSON output.' )
 		.action( ( shell: string, options: { json?: boolean } ) => {
-			const script = getCompletionScript( shell );
-			printSuccess( { shell, script }, { json: options.json, human: script } );
+			const json = isJson( program, options );
+
+			try {
+				const script = getCompletionScript( shell );
+				printSuccess( { shell, script }, { json, human: script } );
+			} catch ( error ) {
+				printError( error, { json } );
+				process.exitCode = 1;
+			}
 		} );
 }
 
@@ -22,5 +30,13 @@ function getCompletionScript( shell: string ): string {
     'doctor:Run diagnostics'\n    'mode:Show mode'\n    'mcp:Run MCP server'\n    'tools:Inspect tool metadata'\n  )\n  _describe 'command' commands\n}\ncompdef _wcpay wcpay\n`;
 	}
 
-	throw new Error( `Unsupported shell: ${ shell }. Supported shells: bash, zsh.` );
+	throw new CliError( {
+		code: 'unsupported_shell',
+		message: `Unsupported shell: ${ shell }. Supported shells: bash, zsh.`,
+		status: 1,
+	} );
+}
+
+function isJson( program: Command, options: { json?: boolean } ): boolean {
+	return Boolean( options.json || ( program.opts() as { json?: boolean } ).json );
 }
