@@ -37,6 +37,15 @@ investigation:
         - npm run docs:check
         - npm run release:check
 
+    cli-error-handling:
+      description: Build the CLI and exercise unsupported completion shell error handling.
+      timeoutSeconds: 300
+      maxOutputChars: 30000
+      commands:
+        - npm ci
+        - npm run build
+        - node dist/cli.js completions fish --json
+
 prReviews:
   enabled: false
   liveMode: false
