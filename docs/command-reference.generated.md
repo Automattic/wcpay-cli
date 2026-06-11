@@ -146,6 +146,7 @@ Options:
 - `--since <date>` — Filter after this date.
 - `--until <date>` — Filter before this date.
 - `--status <status>` — Filter status.
+- `--all` — Fetch all pages (up to 10 pages of 100 records).
 
 ## `deposits get <id>`
 
@@ -179,6 +180,7 @@ Options:
 - `--since <date>` — Filter after this date.
 - `--until <date>` — Filter before this date.
 - `--status <status>` — Filter status.
+- `--all` — Fetch all pages (up to 10 pages of 100 records).
 
 ## `disputes get <id>`
 
@@ -222,6 +224,7 @@ Options:
 - `--since <date>` — Filter after this date.
 - `--until <date>` — Filter before this date.
 - `--currency <code>` — Filter store currency.
+- `--all` — Fetch all pages (up to 10 pages of 100 records).
 
 ## `transactions summary [options]`
 
@@ -290,6 +293,7 @@ Options:
 - `--json` — Emit JSON output.
 - `--page <page>` — Page number.
 - `--limit <limit>` — Page size.
+- `--all` — Fetch all pages (up to 10 pages of 100 records).
 
 ## `authorizations get <payment-intent-id>`
 

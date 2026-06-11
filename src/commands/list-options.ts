@@ -1,3 +1,4 @@
+import { CliError } from '../core/errors.js';
 import { parseOptionalPositiveInteger } from '../core/validation.js';
 
 export interface ListOptions {
@@ -8,6 +9,17 @@ export interface ListOptions {
 	until?: string;
 	status?: string;
 	currency?: string;
+	all?: boolean;
+}
+
+export function assertAllFlagUsage(options: ListOptions): void {
+	if (options.all && (options.page || options.limit)) {
+		throw new CliError({
+			code: 'invalid_pagination_flags',
+			message: 'Use either --all or --page/--limit, not both.',
+			status: 2,
+		});
+	}
 }
 
 export function buildListQuery(

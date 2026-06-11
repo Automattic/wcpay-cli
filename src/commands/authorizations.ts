@@ -5,7 +5,8 @@ import { printSuccess } from '../core/output.js';
 import { parsePositiveInteger } from '../core/validation.js';
 import { isJsonOutput, runCommandAction } from './common.js';
 import { sendGuardedWrite } from './guarded-write.js';
-import { buildListQuery, type ListOptions } from './list-options.js';
+import { assertAllFlagUsage, buildListQuery, type ListOptions } from './list-options.js';
+import { collectAllPages } from './resources.js';
 
 interface AuthorizationWriteOptions {
 	order?: string;
@@ -26,15 +27,20 @@ export function registerAuthorizationCommands(program: Command): void {
 		.option('--json', 'Emit JSON output.')
 		.option('--page <page>', 'Page number.')
 		.option('--limit <limit>', 'Page size.')
+		.option('--all', 'Fetch all pages (up to 10 pages of 100 records).')
 		.action(async (options: ListOptions) => {
 			const json = isJsonOutput(program, options);
 			await runCommandAction({ json }, async () => {
+				assertAllFlagUsage(options);
 				const context = await createContext({ profile: program.opts().profile });
-				const data = await context.client.request({
-					method: 'GET',
-					path: '/wc/v3/payments/authorizations',
-					query: buildListQuery(options, { defaultSort: 'created' }),
-				});
+				const query = buildListQuery(options, { defaultSort: 'created' });
+				const data = options.all
+					? await collectAllPages(context, '/wc/v3/payments/authorizations', query)
+					: await context.client.request({
+							method: 'GET',
+							path: '/wc/v3/payments/authorizations',
+							query,
+						});
 				printSuccess(data, {
 					json,
 					human: formatList(

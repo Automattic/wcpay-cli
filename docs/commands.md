@@ -60,6 +60,8 @@ Typical flow:
 Use `wcpay timeline get <payment-intent-id>` to see the full event history (authorization,
 capture, fees, deposit) for one payment.
 
+Pass `--all` to a list command to fetch every page (capped at 1,000 records) instead of one page.
+
 ## Make a direct REST API request
 
 Use `wcpay api` when a specific curated command does not exist or you need to reproduce a raw endpoint call:

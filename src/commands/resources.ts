@@ -2,9 +2,11 @@ import { Command } from 'commander';
 import { createContext } from '../core/context.js';
 import { amountColumn, formatKeyValue, formatList } from '../core/format.js';
 import { printSuccess } from '../core/output.js';
+import type { RestClient } from '../core/api.js';
+import { fetchAllPages } from '../core/pagination.js';
 import { isJsonOutput, runCommandAction } from './common.js';
 import { sendGuardedWrite } from './guarded-write.js';
-import { buildListQuery, type ListOptions } from './list-options.js';
+import { assertAllFlagUsage, buildListQuery, type ListOptions } from './list-options.js';
 
 export function registerResourceCommands(program: Command): void {
 	const deposits = registerListGetResource(program, {
@@ -96,14 +98,19 @@ export function registerResourceCommands(program: Command): void {
 		.option('--since <date>', 'Filter after this date.')
 		.option('--until <date>', 'Filter before this date.')
 		.option('--currency <code>', 'Filter store currency.')
+		.option('--all', 'Fetch all pages (up to 10 pages of 100 records).')
 		.action(async (options: ListOptions) => {
 			await runCommandAction({ json: isJsonOutput(program, options) }, async () => {
+				assertAllFlagUsage(options);
 				const context = await createContext({ profile: program.opts().profile });
-				const data = await context.client.request({
-					method: 'GET',
-					path: '/wc/v3/payments/transactions',
-					query: buildListQuery(options, { currencyParam: 'store_currency_is' }),
-				});
+				const query = buildListQuery(options, { currencyParam: 'store_currency_is' });
+				const data = options.all
+					? await collectAllPages(context, '/wc/v3/payments/transactions', query)
+					: await context.client.request({
+							method: 'GET',
+							path: '/wc/v3/payments/transactions',
+							query,
+						});
 				printSuccess(data, {
 					json: isJsonOutput(program, options),
 					human: formatList(data, ['id', 'date', 'type', 'amount', 'currency'], {
@@ -236,14 +243,19 @@ function registerListGetResource(
 		.option('--since <date>', 'Filter after this date.')
 		.option('--until <date>', 'Filter before this date.')
 		.option('--status <status>', 'Filter status.')
+		.option('--all', 'Fetch all pages (up to 10 pages of 100 records).')
 		.action(async (options: ListOptions) => {
 			await runCommandAction({ json: isJsonOutput(program, options) }, async () => {
+				assertAllFlagUsage(options);
 				const context = await createContext({ profile: program.opts().profile });
-				const data = await context.client.request({
-					method: 'GET',
-					path: resource.basePath,
-					query: buildListQuery(options, { defaultSort: resource.listDefaultSort }),
-				});
+				const query = buildListQuery(options, { defaultSort: resource.listDefaultSort });
+				const data = options.all
+					? await collectAllPages(context, resource.basePath, query)
+					: await context.client.request({
+							method: 'GET',
+							path: resource.basePath,
+							query,
+						});
 				printSuccess(data, {
 					json: isJsonOutput(program, options),
 					human: formatList(data, columnsForResource(resource.name), {
@@ -269,6 +281,20 @@ function registerListGetResource(
 		});
 
 	return command;
+}
+
+export async function collectAllPages(
+	context: { client: RestClient },
+	path: string,
+	query: Record<string, string | number>
+): Promise<{ data: Array<Record<string, unknown>> }> {
+	const result = await fetchAllPages(context.client, path, query);
+	if (result.truncated) {
+		process.stderr.write(
+			`Stopped after ${result.pages} pages (${result.data.length} records). Refine filters to see the rest.\n`
+		);
+	}
+	return { data: result.data };
 }
 
 function columnsForResource(resourceName: string): string[] {
