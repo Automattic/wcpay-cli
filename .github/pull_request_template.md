@@ -1,6 +1,14 @@
-## What and why
+## Proposed Changes
 
-<!-- Context → problem → solution. Link issues with Closes #NNN. -->
+-
+
+## Why are these changes being made?
+
+-
+
+## Testing instructions
+
+-
 
 ## Checklist
 
