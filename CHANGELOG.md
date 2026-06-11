@@ -2,6 +2,19 @@
 
 All notable changes to `@automattic/wcpay-cli` are documented in this file.
 
+## 0.2.4
+
+- Add curated read commands for WooPayments endpoints: `timeline get`, `authorizations list/get/summary`, `transactions summary`, `deposits overview`, `disputes summary`, `payment-intents get`, and `orders get` with WooPayments order metadata.
+- Add `disputes close` as a guarded test/dev-mode write.
+- Add REST client robustness: 30s request timeouts (`WCPAY_TIMEOUT`/`--timeout`), automatic retries for idempotent reads, structured transport errors, and `--verbose` redacted debug logging.
+- Add categorical exit codes: 2 usage, 3 auth, 4 API failure, 5 live-mode write blocked.
+- Add profile-less environment auth via `WCPAY_SITE_URL` for CI and containers.
+- Format amounts as currency in human list output and add `--all` pagination to list commands.
+- Generate bash/zsh/fish shell completions from the live command tree.
+- Fix the empty `id` column in `transactions list` (the field is `transaction_id`).
+- Report the package version in the User-Agent header and MCP server info, register the missing deposit/dispute/charge MCP tools, and share doctor checks between the CLI and MCP server.
+- Add repo tooling: ESLint, prettier enforcement, vitest coverage, Node 20/macOS CI matrix, a tag-driven release workflow, Dependabot, and community/contributor docs.
+
 ## 0.2.3
 
 - Remove browser-based login support; `wcpay login` now guides manual WooCommerce REST API key setup.
