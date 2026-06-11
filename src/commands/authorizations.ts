@@ -1,6 +1,6 @@
 import { Command } from 'commander';
 import { createContext } from '../core/context.js';
-import { formatKeyValue, formatList } from '../core/format.js';
+import { amountColumn, formatKeyValue, formatList } from '../core/format.js';
 import { printSuccess } from '../core/output.js';
 import { parsePositiveInteger } from '../core/validation.js';
 import { isJsonOutput, runCommandAction } from './common.js';
@@ -37,13 +37,11 @@ export function registerAuthorizationCommands(program: Command): void {
 				});
 				printSuccess(data, {
 					json,
-					human: formatList(data, [
-						'payment_intent_id',
-						'created',
-						'amount',
-						'currency',
-						'order_id',
-					]),
+					human: formatList(
+						data,
+						['payment_intent_id', 'created', 'amount', 'currency', 'order_id'],
+						{ amount: amountColumn }
+					),
 				});
 			});
 		});

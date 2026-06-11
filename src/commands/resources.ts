@@ -1,6 +1,6 @@
 import { Command } from 'commander';
 import { createContext } from '../core/context.js';
-import { formatKeyValue, formatList } from '../core/format.js';
+import { amountColumn, formatKeyValue, formatList } from '../core/format.js';
 import { printSuccess } from '../core/output.js';
 import { isJsonOutput, runCommandAction } from './common.js';
 import { sendGuardedWrite } from './guarded-write.js';
@@ -106,7 +106,9 @@ export function registerResourceCommands(program: Command): void {
 				});
 				printSuccess(data, {
 					json: isJsonOutput(program, options),
-					human: formatList(data, ['id', 'date', 'type', 'amount', 'currency']),
+					human: formatList(data, ['id', 'date', 'type', 'amount', 'currency'], {
+						amount: amountColumn,
+					}),
 				});
 			});
 		});
@@ -244,7 +246,9 @@ function registerListGetResource(
 				});
 				printSuccess(data, {
 					json: isJsonOutput(program, options),
-					human: formatList(data, columnsForResource(resource.name)),
+					human: formatList(data, columnsForResource(resource.name), {
+						amount: amountColumn,
+					}),
 				});
 			});
 		});
