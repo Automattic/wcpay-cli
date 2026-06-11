@@ -1,6 +1,7 @@
 import { createHmac, randomBytes } from 'node:crypto';
 import { CliError } from './errors.js';
 import type { Profile } from './profiles.js';
+import { redactUrl } from './redact.js';
 import type { WooCommerceApiCredentials } from './secrets.js';
 import { VERSION } from './version.js';
 
@@ -22,16 +23,20 @@ export interface ResolvedRestRequest {
 	body?: string;
 }
 
+export const DEFAULT_TIMEOUT_MS = 30_000;
+
 export interface RestClientOptions {
 	fetch?: typeof fetch;
 	nonce?: () => string;
 	timestamp?: () => number;
+	timeoutMs?: number;
 }
 
 export class RestClient {
 	private readonly fetchImpl: typeof fetch;
 	private readonly nonce: () => string;
 	private readonly timestamp: () => number;
+	private readonly timeoutMs: number;
 
 	public constructor(
 		private readonly profile: Profile,
@@ -41,6 +46,7 @@ export class RestClient {
 		this.fetchImpl = options.fetch ?? fetch;
 		this.nonce = options.nonce ?? (() => randomBytes(16).toString('hex'));
 		this.timestamp = options.timestamp ?? (() => Math.floor(Date.now() / 1000));
+		this.timeoutMs = options.timeoutMs ?? DEFAULT_TIMEOUT_MS;
 	}
 
 	public resolve(request: RestRequest): ResolvedRestRequest {
@@ -71,11 +77,17 @@ export class RestClient {
 
 	public async request<T = unknown>(request: RestRequest): Promise<T> {
 		const resolved = this.resolve(request);
-		const response = await this.fetchImpl(resolved.url, {
-			method: resolved.method,
-			headers: resolved.headers,
-			body: resolved.body,
-		});
+		let response: Response;
+		try {
+			response = await this.fetchImpl(resolved.url, {
+				method: resolved.method,
+				headers: resolved.headers,
+				body: resolved.body,
+				signal: AbortSignal.timeout(this.timeoutMs),
+			});
+		} catch (error) {
+			throw toTransportError(error, resolved, this.timeoutMs);
+		}
 
 		const text = await response.text();
 		const data = parseResponseBody(text);
@@ -91,6 +103,27 @@ export class RestClient {
 
 		return data as T;
 	}
+}
+
+function toTransportError(
+	error: unknown,
+	resolved: ResolvedRestRequest,
+	timeoutMs: number
+): CliError {
+	if (error instanceof DOMException && error.name === 'TimeoutError') {
+		return new CliError({
+			code: 'request_timeout',
+			message: `${resolved.method} ${redactUrl(resolved.url)} timed out after ${timeoutMs}ms. Set WCPAY_TIMEOUT (seconds) or pass --timeout to wait longer.`,
+			status: 408,
+		});
+	}
+	return new CliError({
+		code: 'network_error',
+		message: `${resolved.method} ${redactUrl(resolved.url)} failed: ${
+			error instanceof Error ? error.message : String(error)
+		}`,
+		status: 503,
+	});
 }
 
 export function normalizeMethod(method: string): HttpMethod {

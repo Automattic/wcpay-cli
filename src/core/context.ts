@@ -1,4 +1,4 @@
-import { ENV_CONSUMER_KEY, ENV_CONSUMER_SECRET } from './config.js';
+import { ENV_CONSUMER_KEY, ENV_CONSUMER_SECRET, ENV_TIMEOUT } from './config.js';
 import { CliError } from './errors.js';
 import { ProfileStore, type Profile } from './profiles.js';
 import {
@@ -7,7 +7,8 @@ import {
 	type SecretStore,
 	type WooCommerceApiCredentials,
 } from './secrets.js';
-import { RestClient } from './api.js';
+import { RestClient, type RestClientOptions } from './api.js';
+import { parseOptionalPositiveInteger } from './validation.js';
 
 export interface ResolveProfileOptions {
 	profile?: string;
@@ -29,9 +30,18 @@ export async function createContext(
 	const secretStore = createSecretStore(env);
 	const profile = await profileStore.get(options.profile ?? env.WCPAY_PROFILE);
 	const credentials = await resolveCredentials(profile, secretStore, env);
-	const client = new RestClient(profile, credentials);
+	const client = new RestClient(profile, credentials, clientOptionsFromEnv(env));
 
 	return { profile, credentials, client, profileStore, secretStore };
+}
+
+export function clientOptionsFromEnv(env: NodeJS.ProcessEnv = process.env): RestClientOptions {
+	const options: RestClientOptions = {};
+	const timeoutSeconds = parseOptionalPositiveInteger(env[ENV_TIMEOUT], ENV_TIMEOUT);
+	if (timeoutSeconds !== undefined) {
+		options.timeoutMs = timeoutSeconds * 1000;
+	}
+	return options;
 }
 
 export async function resolveCredentials(

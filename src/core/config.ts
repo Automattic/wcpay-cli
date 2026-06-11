@@ -6,6 +6,7 @@ export const ENV_PROFILE = 'WCPAY_PROFILE';
 export const ENV_CONSUMER_KEY = 'WCPAY_CONSUMER_KEY';
 export const ENV_CONSUMER_SECRET = 'WCPAY_CONSUMER_SECRET';
 export const ENV_KEYRING = 'WCPAY_KEYRING';
+export const ENV_TIMEOUT = 'WCPAY_TIMEOUT';
 
 export function getConfigDir(env: NodeJS.ProcessEnv = process.env): string {
 	if (env[ENV_HOME]) {
