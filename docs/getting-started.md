@@ -94,6 +94,15 @@ Read commands are safe to run against live stores:
 wcpay transactions list --limit 25
 wcpay deposits list
 wcpay disputes list
+wcpay authorizations list
+```
+
+Roll-up summaries answer the common totals questions without paging through lists:
+
+```bash
+wcpay transactions summary
+wcpay deposits overview
+wcpay disputes summary
 ```
 
 Use IDs from list output to inspect individual records:
@@ -102,6 +111,13 @@ Use IDs from list output to inspect individual records:
 wcpay deposits get po_...
 wcpay disputes get dp_...
 wcpay charges get ch_...
+wcpay orders get 123
+```
+
+For the full event history of a single payment (authorization, capture, fees, deposit), use the timeline:
+
+```bash
+wcpay timeline get pi_...
 ```
 
 ## 5. Preview a write without sending it
@@ -125,7 +141,9 @@ wcpay transactions list --limit 10 --json
 wcpay api get /wc/v3/payments/accounts --json
 ```
 
-JSON responses use a stable envelope with `ok`, `data`, `error`, and `meta` fields.
+JSON responses use a stable envelope with `ok`, `data`, `error`, and `meta` fields. Commands also exit with category codes (`2` usage, `3` auth, `4` API failure, `5` live-mode write blocked) so scripts can branch on failure type — see the [command guide](commands.md#exit-codes).
+
+For CI or containers, you can skip profiles entirely by setting `WCPAY_SITE_URL`, `WCPAY_CONSUMER_KEY`, and `WCPAY_CONSUMER_SECRET` — see [Authentication](auth.md).
 
 ## Safety reminder
 

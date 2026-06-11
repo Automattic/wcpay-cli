@@ -59,6 +59,9 @@ Raw write requests are limited to reviewed WooPayments paths and `/wc/v3/orders`
 
 - HTTPS stores use Basic Auth with WooCommerce consumer key/secret.
 - HTTP local stores use WooCommerce OAuth 1.0 query parameters with `HMAC-SHA256`.
+- Requests time out after 30 seconds by default; override with `WCPAY_TIMEOUT` (seconds) or the global `--timeout` flag.
+- Read requests (GET/HEAD/OPTIONS) are retried up to twice on 429/502/503/504 and transport failures; writes are never retried.
+- Pass the global `--verbose` flag (or set `WCPAY_DEBUG=1`) to print redacted request/response lines to stderr.
 - `Authorization` and OAuth signatures are redacted from dry-run output.
 - For GET/DELETE, inline fields become query parameters.
 - For POST/PUT/PATCH, inline fields become a JSON body.
