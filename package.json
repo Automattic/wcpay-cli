@@ -41,6 +41,7 @@
 		"install:smoke:release": "node scripts/smoke-github-install.cjs https://github.com/Automattic/wcpay-cli/releases/download/v$npm_package_version/automattic-wcpay-cli-$npm_package_version.tgz $npm_package_version",
 		"test": "vitest run",
 		"test:watch": "vitest",
+		"test:coverage": "vitest run --coverage",
 		"check": "npm run lint && npm run format:check && npm run docs:check && npm run release:check && npm run test && npm run site:build && npm run build && npm run install:smoke",
 		"pack:release": "npm run build && npm pack",
 		"pack:dry-run": "npm pack --dry-run",
@@ -74,6 +75,7 @@
 	"devDependencies": {
 		"@eslint/js": "9.39.4",
 		"@types/node": "^22.10.2",
+		"@vitest/coverage-v8": "4.1.7",
 		"eslint": "9.39.4",
 		"globals": "17.6.0",
 		"husky": "9.1.7",
