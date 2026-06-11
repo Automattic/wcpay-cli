@@ -4,6 +4,7 @@ import { join } from 'node:path';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { InMemoryTransport } from '@modelcontextprotocol/sdk/inMemory.js';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { VERSION } from '../src/core/version.js';
 import { createMcpServer } from '../src/mcp/server.js';
 
 describe('createMcpServer', () => {
@@ -18,6 +19,13 @@ describe('createMcpServer', () => {
 	it('creates an MCP server instance', () => {
 		const server = createMcpServer();
 		expect(server.isConnected()).toBe(false);
+	});
+
+	it('reports the CLI version as the MCP server version', async () => {
+		const { client, server } = await connectTestClient();
+		expect(client.getServerVersion()?.version).toBe(VERSION);
+		await client.close();
+		await server.close();
 	});
 
 	it('lists registered read tools', async () => {

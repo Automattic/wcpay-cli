@@ -6,6 +6,7 @@ import { createContext } from '../core/context.js';
 import { CliError } from '../core/errors.js';
 import { classifyMode, ModeService } from '../core/mode.js';
 import type { CliEnvelope } from '../core/types.js';
+import { VERSION } from '../core/version.js';
 
 const optionalProfile = { profile: z.string().optional() };
 const listArgs = {
@@ -29,7 +30,7 @@ export async function runMcpServer(): Promise<void> {
 export function createMcpServer(): McpServer {
 	const server = new McpServer({
 		name: 'wcpay-cli',
-		version: '0.0.0',
+		version: VERSION,
 	});
 
 	server.registerTool(

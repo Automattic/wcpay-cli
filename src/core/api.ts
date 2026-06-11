@@ -2,6 +2,7 @@ import { createHmac, randomBytes } from 'node:crypto';
 import { CliError } from './errors.js';
 import type { Profile } from './profiles.js';
 import type { WooCommerceApiCredentials } from './secrets.js';
+import { VERSION } from './version.js';
 
 export type HttpMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE' | 'HEAD' | 'OPTIONS';
 
@@ -47,7 +48,7 @@ export class RestClient {
 		const url = buildRestUrl(this.profile.siteUrl, request.path, request.query);
 		const headers: Record<string, string> = {
 			Accept: 'application/json',
-			'User-Agent': 'wcpay-cli/0.0.0',
+			'User-Agent': `wcpay-cli/${VERSION}`,
 			...request.headers,
 		};
 

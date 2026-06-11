@@ -8,6 +8,7 @@ import {
 } from '../src/core/api.js';
 import { parseApiFields, parseAssignment, parseAssignments } from '../src/core/fields.js';
 import type { Profile } from '../src/core/profiles.js';
+import { VERSION } from '../src/core/version.js';
 
 const profile: Profile = {
 	name: 'local',
@@ -90,6 +91,16 @@ describe('RestClient', () => {
 		const request = client.resolve({ method: 'GET', path: '/wc/v3/payments/accounts' });
 		expect(request.url).toBe('https://example.com/wp-json/wc/v3/payments/accounts');
 		expect(request.headers.Authorization).toMatch(/^Basic /);
+	});
+
+	it('sends a versioned User-Agent header', () => {
+		const client = new RestClient(
+			{ ...profile, siteUrl: 'https://example.com' },
+			{ consumerKey: 'ck_test', consumerSecret: 'cs_test' }
+		);
+
+		const request = client.resolve({ method: 'GET', path: '/wc/v3/payments/accounts' });
+		expect(request.headers['User-Agent']).toBe(`wcpay-cli/${VERSION}`);
 	});
 
 	it('uses OAuth query parameters for HTTP sites', () => {
