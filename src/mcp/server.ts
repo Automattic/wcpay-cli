@@ -14,6 +14,10 @@ const listArgs = {
 	page: z.number().int().optional(),
 	limit: z.number().int().optional(),
 };
+const idArgs = {
+	...optionalProfile,
+	id: z.string(),
+};
 
 const readOnlyAnnotations = {
 	readOnlyHint: true,
@@ -104,6 +108,54 @@ export function createMcpServer(): McpServer {
 		async (args) =>
 			textResult(
 				await getEndpoint(args.profile, '/wc/v3/payments/disputes', buildListQuery(args))
+			)
+	);
+
+	server.registerTool(
+		'wcpay_get_deposit',
+		{
+			description: 'Get a WooPayments deposit by ID.',
+			inputSchema: idArgs,
+			annotations: readOnlyAnnotations,
+		},
+		async (args) =>
+			textResult(
+				await getEndpoint(
+					args.profile,
+					`/wc/v3/payments/deposits/${encodeURIComponent(args.id)}`
+				)
+			)
+	);
+
+	server.registerTool(
+		'wcpay_get_dispute',
+		{
+			description: 'Get a WooPayments dispute by ID.',
+			inputSchema: idArgs,
+			annotations: readOnlyAnnotations,
+		},
+		async (args) =>
+			textResult(
+				await getEndpoint(
+					args.profile,
+					`/wc/v3/payments/disputes/${encodeURIComponent(args.id)}`
+				)
+			)
+	);
+
+	server.registerTool(
+		'wcpay_get_charge',
+		{
+			description: 'Get a WooPayments charge by ID.',
+			inputSchema: idArgs,
+			annotations: readOnlyAnnotations,
+		},
+		async (args) =>
+			textResult(
+				await getEndpoint(
+					args.profile,
+					`/wc/v3/payments/charges/${encodeURIComponent(args.id)}`
+				)
 			)
 	);
 
