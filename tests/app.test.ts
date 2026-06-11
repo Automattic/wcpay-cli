@@ -40,6 +40,12 @@ describe('buildProgram', () => {
 		expect(names).toContain('timeline');
 	});
 
+	it('registers payment-intents and orders commands', () => {
+		const names = buildProgram().commands.map((command) => command.name());
+		expect(names).toContain('payment-intents');
+		expect(names).toContain('orders');
+	});
+
 	it('exposes global --verbose and --timeout options', () => {
 		const program = buildProgram();
 		const flags = program.options.map((option) => option.flags);

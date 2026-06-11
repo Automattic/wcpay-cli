@@ -46,6 +46,8 @@ wcpay timeline get <payment-intent-id>
 wcpay transactions summary
 wcpay deposits overview
 wcpay disputes summary
+wcpay payment-intents get <payment-intent-id>
+wcpay orders get <order-id>
 ```
 
 Typical flow:

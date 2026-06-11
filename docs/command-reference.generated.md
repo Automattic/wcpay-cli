@@ -243,6 +243,18 @@ Options:
 
 - `--json` — Emit JSON output.
 
+## `payment-intents [command]`
+
+Inspect WooPayments payment intents.
+
+## `payment-intents get <id>`
+
+Get a payment intent.
+
+Options:
+
+- `--json` — Emit JSON output.
+
 ## `timeline [command]`
 
 Inspect WooPayments payment timelines.
@@ -307,6 +319,18 @@ Options:
 - `--intent <payment-intent-id>` — Payment intent ID.
 - `--dry-run` — Print the request without sending it.
 - `--yes` — Confirm the test/dev-mode write.
+- `--json` — Emit JSON output.
+
+## `orders [command]`
+
+Inspect WooCommerce orders and their WooPayments metadata.
+
+## `orders get <order-id>`
+
+Get an order with its WooPayments payment metadata.
+
+Options:
+
 - `--json` — Emit JSON output.
 
 ## `refunds [command]`

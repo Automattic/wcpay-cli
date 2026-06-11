@@ -150,6 +150,25 @@ export function registerResourceCommands(program: Command): void {
 			});
 		});
 
+	const paymentIntents = program
+		.command('payment-intents')
+		.description('Inspect WooPayments payment intents.');
+	paymentIntents
+		.command('get <id>')
+		.description('Get a payment intent.')
+		.option('--json', 'Emit JSON output.')
+		.action(async (id: string, options: { json?: boolean }) => {
+			const json = isJsonOutput(program, options);
+			await runCommandAction({ json }, async () => {
+				const context = await createContext({ profile: program.opts().profile });
+				const data = await context.client.request({
+					method: 'GET',
+					path: `/wc/v3/payments/payment_intents/${encodeURIComponent(id)}`,
+				});
+				printSuccess(data, { json });
+			});
+		});
+
 	const timeline = program
 		.command('timeline')
 		.description('Inspect WooPayments payment timelines.');

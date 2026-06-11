@@ -9,6 +9,7 @@ import {
 } from './commands/auth.js';
 import { registerCompletionsCommand } from './commands/completions.js';
 import { registerMcpCommand } from './commands/mcp.js';
+import { registerOrderCommands } from './commands/orders.js';
 import { registerReadCommands } from './commands/read.js';
 import { registerResourceCommands } from './commands/resources.js';
 import { registerToolsCommands } from './commands/tools.js';
@@ -68,6 +69,7 @@ export function buildProgram(): Command {
 	registerReadCommands(program);
 	registerResourceCommands(program);
 	registerAuthorizationCommands(program);
+	registerOrderCommands(program);
 	registerWriteCommands(program);
 	registerMcpCommand(program);
 	registerCompletionsCommand(program);
