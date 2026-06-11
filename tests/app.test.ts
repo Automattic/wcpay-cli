@@ -11,6 +11,11 @@ describe('buildProgram', () => {
 		expect(program.commands.map((command) => command.name())).toContain('login');
 	});
 
+	it('registers the timeline command', () => {
+		const names = buildProgram().commands.map((command) => command.name());
+		expect(names).toContain('timeline');
+	});
+
 	it('exposes global --verbose and --timeout options', () => {
 		const program = buildProgram();
 		const flags = program.options.map((option) => option.flags);

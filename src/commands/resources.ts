@@ -96,6 +96,25 @@ export function registerResourceCommands(program: Command): void {
 				printSuccess(data, { json: isJsonOutput(program, options) });
 			});
 		});
+
+	const timeline = program
+		.command('timeline')
+		.description('Inspect WooPayments payment timelines.');
+	timeline
+		.command('get <intent-id>')
+		.description('Get the event timeline for a payment intent.')
+		.option('--json', 'Emit JSON output.')
+		.action(async (intentId: string, options: { json?: boolean }) => {
+			const json = isJsonOutput(program, options);
+			await runCommandAction({ json }, async () => {
+				const context = await createContext({ profile: program.opts().profile });
+				const data = await context.client.request({
+					method: 'GET',
+					path: `/wc/v3/payments/timeline/${encodeURIComponent(intentId)}`,
+				});
+				printSuccess(data, { json });
+			});
+		});
 }
 
 function registerListGetResource(

@@ -161,6 +161,22 @@ export function createMcpServer(): McpServer {
 	);
 
 	server.registerTool(
+		'wcpay_get_timeline',
+		{
+			description: 'Get the WooPayments event timeline for a payment intent.',
+			inputSchema: { ...optionalProfile, intentId: z.string() },
+			annotations: readOnlyAnnotations,
+		},
+		async (args) =>
+			textResult(
+				await getEndpoint(
+					args.profile,
+					`/wc/v3/payments/timeline/${encodeURIComponent(args.intentId)}`
+				)
+			)
+	);
+
+	server.registerTool(
 		'wcpay_api_get',
 		{
 			description: 'Make an authenticated GET request to a store REST API path.',

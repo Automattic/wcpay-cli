@@ -217,6 +217,18 @@ Options:
 
 - `--json` — Emit JSON output.
 
+## `timeline [command]`
+
+Inspect WooPayments payment timelines.
+
+## `timeline get <intent-id>`
+
+Get the event timeline for a payment intent.
+
+Options:
+
+- `--json` — Emit JSON output.
+
 ## `refunds [command]`
 
 Create and inspect refunds.

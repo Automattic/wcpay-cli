@@ -102,6 +102,15 @@ export const toolRegistry: ToolDescriptor[] = [
 		examples: ['wcpay charges get ch_123 --json'],
 	},
 	{
+		name: 'wcpay_get_timeline',
+		description: 'Get the WooPayments event timeline for a payment intent.',
+		command: 'wcpay timeline get <intent-id> --json',
+		safety: 'read',
+		mcp: true,
+		inputs: { intentId: { type: 'string' }, profile: { type: 'string', optional: true } },
+		examples: ['wcpay timeline get pi_123 --json'],
+	},
+	{
 		name: 'wcpay_api_get',
 		description: 'Make an authenticated GET request to a store REST API path.',
 		command: 'wcpay api get <path> --json',

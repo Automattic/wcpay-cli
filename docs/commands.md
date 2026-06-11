@@ -42,6 +42,7 @@ wcpay deposits get <id>
 wcpay disputes list
 wcpay disputes get <id>
 wcpay charges get <id>
+wcpay timeline get <payment-intent-id>
 ```
 
 Typical flow:
@@ -50,6 +51,9 @@ Typical flow:
 2. Copy the ID from the output.
 3. Use the matching `get` command for details.
 4. Add `--json` when piping the result into another tool.
+
+Use `wcpay timeline get <payment-intent-id>` to see the full event history (authorization,
+capture, fees, deposit) for one payment.
 
 ## Make a direct REST API request
 
