@@ -4,6 +4,7 @@ import { CliError } from '../core/errors.js';
 import { ModeService } from '../core/mode.js';
 import { printSuccess } from '../core/output.js';
 import { isJsonOutput, runCommandAction } from './common.js';
+import { sendGuardedWrite } from './guarded-write.js';
 import { redactHeaders, redactUrl } from '../core/redact.js';
 import { getTestPaymentScenario, listTestPaymentScenarios } from '../core/test-scenarios.js';
 import { parsePositiveInteger } from '../core/validation.js';
@@ -323,48 +324,5 @@ async function sendTestPaymentCreate(
 			_wcpay_cli_scenario: input.scenario,
 		},
 	});
-	printSuccess(data, { json: input.json });
-}
-
-async function sendGuardedWrite(
-	program: Command,
-	input: {
-		path: string;
-		body: Record<string, unknown>;
-		dryRun: boolean;
-		yes: boolean;
-		json: boolean;
-	}
-): Promise<void> {
-	if (!input.dryRun && !input.yes) {
-		throw new CliError({
-			code: 'confirmation_required',
-			message: 'Write commands require --yes or --dry-run.',
-			status: 2,
-		});
-	}
-
-	const context = await createContext({
-		profile: (program.opts() as { profile?: string }).profile,
-	});
-	const modeService = new ModeService(context.client);
-	await modeService.assertWriteAllowed('POST', input.path);
-
-	const request = { method: 'POST' as const, path: input.path, body: input.body };
-	if (input.dryRun) {
-		const resolved = context.client.resolve(request);
-		printSuccess(
-			{
-				method: resolved.method,
-				url: redactUrl(resolved.url),
-				headers: redactHeaders(resolved.headers),
-				body: input.body,
-			},
-			{ json: input.json, human: `${resolved.method} ${redactUrl(resolved.url)}` }
-		);
-		return;
-	}
-
-	const data = await context.client.request(request);
 	printSuccess(data, { json: input.json });
 }
