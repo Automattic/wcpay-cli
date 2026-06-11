@@ -1,5 +1,8 @@
+import { mkdtemp } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { clientOptionsFromEnv, resolveCredentials } from '../src/core/context.js';
+import { clientOptionsFromEnv, createContext, resolveCredentials } from '../src/core/context.js';
 import type { Profile } from '../src/core/profiles.js';
 import type { SecretStore } from '../src/core/secrets.js';
 
@@ -60,5 +63,46 @@ describe('clientOptionsFromEnv', () => {
 			'function'
 		);
 		expect(clientOptionsFromEnv({} as NodeJS.ProcessEnv).logger).toBeUndefined();
+	});
+});
+
+describe('createContext with WCPAY_SITE_URL', () => {
+	async function envHome(): Promise<string> {
+		return mkdtemp(join(tmpdir(), 'wcpay-cli-context-'));
+	}
+
+	it('builds an ephemeral env profile', async () => {
+		const context = await createContext({}, {
+			WCPAY_HOME: await envHome(),
+			WCPAY_KEYRING: '0',
+			WCPAY_SITE_URL: 'https://example.com',
+			WCPAY_CONSUMER_KEY: 'ck_test',
+			WCPAY_CONSUMER_SECRET: 'cs_test',
+		} as NodeJS.ProcessEnv);
+
+		expect(context.profile.name).toBe('env');
+		expect(context.profile.siteUrl).toBe('https://example.com');
+	});
+
+	it('requires consumer credentials alongside WCPAY_SITE_URL', async () => {
+		await expect(
+			createContext({}, {
+				WCPAY_HOME: await envHome(),
+				WCPAY_KEYRING: '0',
+				WCPAY_SITE_URL: 'https://example.com',
+			} as NodeJS.ProcessEnv)
+		).rejects.toMatchObject({ code: 'missing_env_credentials' });
+	});
+
+	it('prefers an explicitly requested profile', async () => {
+		await expect(
+			createContext({ profile: 'missing' }, {
+				WCPAY_HOME: await envHome(),
+				WCPAY_KEYRING: '0',
+				WCPAY_SITE_URL: 'https://example.com',
+				WCPAY_CONSUMER_KEY: 'ck_test',
+				WCPAY_CONSUMER_SECRET: 'cs_test',
+			} as NodeJS.ProcessEnv)
+		).rejects.toMatchObject({ code: 'profile_not_found' });
 	});
 });

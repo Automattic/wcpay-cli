@@ -1,6 +1,13 @@
-import { ENV_CONSUMER_KEY, ENV_CONSUMER_SECRET, ENV_DEBUG, ENV_TIMEOUT } from './config.js';
+import {
+	ENV_CONSUMER_KEY,
+	ENV_CONSUMER_SECRET,
+	ENV_DEBUG,
+	ENV_PROFILE,
+	ENV_SITE_URL,
+	ENV_TIMEOUT,
+} from './config.js';
 import { CliError } from './errors.js';
-import { ProfileStore, type Profile } from './profiles.js';
+import { normalizeSiteUrl, ProfileStore, type Profile } from './profiles.js';
 import {
 	createSecretStore,
 	validateCredentials,
@@ -28,7 +35,7 @@ export async function createContext(
 ): Promise<CliContext> {
 	const profileStore = new ProfileStore(env);
 	const secretStore = createSecretStore(env);
-	const profile = await profileStore.get(options.profile ?? env.WCPAY_PROFILE);
+	const profile = await resolveContextProfile(options, profileStore, env);
 	const credentials = await resolveCredentials(profile, secretStore, env);
 	const client = new RestClient(profile, credentials, clientOptionsFromEnv(env));
 
@@ -47,6 +54,29 @@ export function clientOptionsFromEnv(env: NodeJS.ProcessEnv = process.env): Rest
 	return options;
 }
 
+const ENV_PROFILE_NAME = 'env';
+const ENV_SECRET_REF = 'env';
+
+async function resolveContextProfile(
+	options: ResolveProfileOptions,
+	profileStore: ProfileStore,
+	env: NodeJS.ProcessEnv
+): Promise<Profile> {
+	const requested = options.profile ?? env[ENV_PROFILE];
+	if (!requested && env[ENV_SITE_URL]) {
+		const now = new Date().toISOString();
+		return {
+			name: ENV_PROFILE_NAME,
+			siteUrl: normalizeSiteUrl(env[ENV_SITE_URL]),
+			allowInsecureLocal: false,
+			auth: { type: 'woocommerce_api_key', secretRef: ENV_SECRET_REF },
+			createdAt: now,
+			updatedAt: now,
+		};
+	}
+	return profileStore.get(requested);
+}
+
 export async function resolveCredentials(
 	profile: Profile,
 	secretStore: SecretStore,
@@ -59,6 +89,14 @@ export async function resolveCredentials(
 		};
 		validateCredentials(credentials);
 		return credentials;
+	}
+
+	if (profile.auth.secretRef === ENV_SECRET_REF) {
+		throw new CliError({
+			code: 'missing_env_credentials',
+			message: `${ENV_SITE_URL} is set but ${ENV_CONSUMER_KEY} and ${ENV_CONSUMER_SECRET} are missing. Set both to use environment-based auth.`,
+			status: 2,
+		});
 	}
 
 	const credentials = await secretStore.get(profile.auth.secretRef);
