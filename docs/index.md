@@ -2,27 +2,27 @@
 layout: home
 
 hero:
-  name: WooPayments CLI
-  text: Terminal-native WooPayments diagnostics and test-mode workflows.
-  tagline: Inspect, debug, and safely exercise WooPayments stores from local terminals, scripts, CI, and agent tooling.
-  actions:
-    - theme: brand
-      text: Get started
-      link: /getting-started
-    - theme: alt
-      text: Command reference
-      link: /command-reference.generated
-    - theme: alt
-      text: GitHub
-      link: https://github.com/Automattic/wcpay-cli
+    name: WooPayments CLI
+    text: Terminal-native WooPayments diagnostics and test-mode workflows.
+    tagline: Inspect, debug, and safely exercise WooPayments stores from local terminals, scripts, CI, and agent tooling.
+    actions:
+        - theme: brand
+          text: Get started
+          link: /getting-started
+        - theme: alt
+          text: Command reference
+          link: /command-reference.generated
+        - theme: alt
+          text: GitHub
+          link: https://github.com/Automattic/wcpay-cli
 
 features:
-  - title: Remote-first workflows
-    details: Connect to local or remote stores over WooCommerce REST APIs without shell access to the WordPress runtime.
-  - title: Safe by default
-    details: Live-mode stores are read-only, write commands require explicit confirmation or dry runs, and secrets are stored keychain-first.
-  - title: Human and agent ready
-    details: Polished terminal output, stable JSON, command metadata, REST-backed read commands, and a read-only MCP server.
+    - title: Remote-first workflows
+      details: Connect to local or remote stores over WooCommerce REST APIs without shell access to the WordPress runtime.
+    - title: Safe by default
+      details: Live-mode stores are read-only, write commands require explicit confirmation or dry runs, and secrets are stored keychain-first.
+    - title: Human and agent ready
+      details: Polished terminal output, stable JSON, command metadata, REST-backed read commands, and a read-only MCP server.
 ---
 
 ## Install

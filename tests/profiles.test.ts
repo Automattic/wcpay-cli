@@ -74,7 +74,6 @@ describe('ProfileStore', () => {
 		expect((await store.setDefault('local')).siteUrl).toBe('http://localhost:8082');
 		expect((await store.get()).name).toBe('local');
 	});
-
 });
 
 describe('FileSecretStore', () => {

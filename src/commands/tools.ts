@@ -2,37 +2,39 @@ import { Command } from 'commander';
 import { getToolRegistry } from '../tools/registry.js';
 import { printSuccess } from '../core/output.js';
 
-export function registerToolsCommands( program: Command ): void {
-	const tools = program.command( 'tools' ).description( 'Inspect agent/tool metadata.' );
+export function registerToolsCommands(program: Command): void {
+	const tools = program.command('tools').description('Inspect agent/tool metadata.');
 
 	tools
-		.command( 'describe' )
-		.description( 'Print machine-readable command/tool descriptions.' )
-		.option( '--json', 'Emit JSON output.', true )
-		.action( ( options: { json?: boolean } ) => {
+		.command('describe')
+		.description('Print machine-readable command/tool descriptions.')
+		.option('--json', 'Emit JSON output.', true)
+		.action((options: { json?: boolean }) => {
 			const data = { tools: getToolRegistry() };
-			printSuccess( data, {
+			printSuccess(data, {
 				json: options.json !== false,
-				human: getToolRegistry().map( ( tool ) => `${ tool.name }\t${ tool.command }` ).join( '\n' ),
-			} );
-		} );
+				human: getToolRegistry()
+					.map((tool) => `${tool.name}\t${tool.command}`)
+					.join('\n'),
+			});
+		});
 
 	tools
-		.command( 'schema' )
-		.description( 'Print JSON schemas for standard CLI envelopes.' )
-		.option( '--json', 'Emit JSON output.', true )
-		.action( ( options: { json?: boolean } ) => {
+		.command('schema')
+		.description('Print JSON schemas for standard CLI envelopes.')
+		.option('--json', 'Emit JSON output.', true)
+		.action((options: { json?: boolean }) => {
 			const data = {
 				schemas: {
 					envelope: {
 						type: 'object',
-						required: [ 'ok' ],
+						required: ['ok'],
 						properties: {
 							ok: { type: 'boolean' },
 							data: {},
 							error: {
 								type: 'object',
-								required: [ 'code', 'message' ],
+								required: ['code', 'message'],
 								properties: {
 									code: { type: 'string' },
 									message: { type: 'string' },
@@ -46,9 +48,9 @@ export function registerToolsCommands( program: Command ): void {
 				},
 			};
 
-			printSuccess( data, {
+			printSuccess(data, {
 				json: options.json !== false,
-				human: JSON.stringify( data, null, 2 ),
-			} );
-		} );
+				human: JSON.stringify(data, null, 2),
+			});
+		});
 }

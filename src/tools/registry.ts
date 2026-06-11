@@ -8,7 +8,7 @@ export const toolRegistry: ToolDescriptor[] = [
 		safety: 'read',
 		mcp: true,
 		inputs: { profile: { type: 'string', optional: true } },
-		examples: [ 'wcpay doctor', 'wcpay doctor --json --redact' ],
+		examples: ['wcpay doctor', 'wcpay doctor --json --redact'],
 	},
 	{
 		name: 'wcpay_get_mode',
@@ -17,7 +17,7 @@ export const toolRegistry: ToolDescriptor[] = [
 		safety: 'read',
 		mcp: true,
 		inputs: { profile: { type: 'string', optional: true } },
-		examples: [ 'wcpay mode', 'wcpay mode --json' ],
+		examples: ['wcpay mode', 'wcpay mode --json'],
 	},
 	{
 		name: 'wcpay_get_account_status',
@@ -26,7 +26,7 @@ export const toolRegistry: ToolDescriptor[] = [
 		safety: 'read',
 		mcp: true,
 		inputs: { profile: { type: 'string', optional: true } },
-		examples: [ 'wcpay account status' ],
+		examples: ['wcpay account status'],
 	},
 	{
 		name: 'wcpay_get_settings',
@@ -35,7 +35,7 @@ export const toolRegistry: ToolDescriptor[] = [
 		safety: 'read',
 		mcp: true,
 		inputs: { profile: { type: 'string', optional: true } },
-		examples: [ 'wcpay settings get' ],
+		examples: ['wcpay settings get'],
 	},
 	{
 		name: 'wcpay_list_transactions',
@@ -48,7 +48,7 @@ export const toolRegistry: ToolDescriptor[] = [
 			page: { type: 'number', optional: true },
 			limit: { type: 'number', optional: true },
 		},
-		examples: [ 'wcpay transactions list --limit 25 --json' ],
+		examples: ['wcpay transactions list --limit 25 --json'],
 	},
 	{
 		name: 'wcpay_list_deposits',
@@ -56,8 +56,11 @@ export const toolRegistry: ToolDescriptor[] = [
 		command: 'wcpay deposits list --json',
 		safety: 'read',
 		mcp: true,
-		inputs: { profile: { type: 'string', optional: true }, page: { type: 'number', optional: true } },
-		examples: [ 'wcpay deposits list --json' ],
+		inputs: {
+			profile: { type: 'string', optional: true },
+			page: { type: 'number', optional: true },
+		},
+		examples: ['wcpay deposits list --json'],
 	},
 	{
 		name: 'wcpay_get_deposit',
@@ -66,7 +69,7 @@ export const toolRegistry: ToolDescriptor[] = [
 		safety: 'read',
 		mcp: true,
 		inputs: { id: { type: 'string' }, profile: { type: 'string', optional: true } },
-		examples: [ 'wcpay deposits get po_123 --json' ],
+		examples: ['wcpay deposits get po_123 --json'],
 	},
 	{
 		name: 'wcpay_list_disputes',
@@ -74,8 +77,11 @@ export const toolRegistry: ToolDescriptor[] = [
 		command: 'wcpay disputes list --json',
 		safety: 'read',
 		mcp: true,
-		inputs: { profile: { type: 'string', optional: true }, page: { type: 'number', optional: true } },
-		examples: [ 'wcpay disputes list --json' ],
+		inputs: {
+			profile: { type: 'string', optional: true },
+			page: { type: 'number', optional: true },
+		},
+		examples: ['wcpay disputes list --json'],
 	},
 	{
 		name: 'wcpay_get_dispute',
@@ -84,7 +90,7 @@ export const toolRegistry: ToolDescriptor[] = [
 		safety: 'read',
 		mcp: true,
 		inputs: { id: { type: 'string' }, profile: { type: 'string', optional: true } },
-		examples: [ 'wcpay disputes get dp_123 --json' ],
+		examples: ['wcpay disputes get dp_123 --json'],
 	},
 	{
 		name: 'wcpay_get_charge',
@@ -93,7 +99,7 @@ export const toolRegistry: ToolDescriptor[] = [
 		safety: 'read',
 		mcp: true,
 		inputs: { id: { type: 'string' }, profile: { type: 'string', optional: true } },
-		examples: [ 'wcpay charges get ch_123 --json' ],
+		examples: ['wcpay charges get ch_123 --json'],
 	},
 	{
 		name: 'wcpay_api_get',
@@ -102,7 +108,7 @@ export const toolRegistry: ToolDescriptor[] = [
 		safety: 'read',
 		mcp: true,
 		inputs: { path: { type: 'string' }, profile: { type: 'string', optional: true } },
-		examples: [ 'wcpay api get /wc/v3/payments/accounts --json' ],
+		examples: ['wcpay api get /wc/v3/payments/accounts --json'],
 	},
 	{
 		name: 'wcpay_create_refund',
@@ -118,11 +124,12 @@ export const toolRegistry: ToolDescriptor[] = [
 			confirm: { type: 'boolean' },
 			dryRun: { type: 'boolean', optional: true },
 		},
-		examples: [ 'wcpay refunds create --order 123 --amount 500 --dry-run --json' ],
+		examples: ['wcpay refunds create --order 123 --amount 500 --dry-run --json'],
 	},
 	{
 		name: 'wcpay_create_test_order',
-		description: 'Create a WooCommerce test order from an existing product in WooPayments test/dev mode.',
+		description:
+			'Create a WooCommerce test order from an existing product in WooPayments test/dev mode.',
 		command: 'wcpay test order create --product <id> --quantity <n> --yes --json',
 		safety: 'test_mode_write',
 		mcp: false,
@@ -133,7 +140,7 @@ export const toolRegistry: ToolDescriptor[] = [
 			confirm: { type: 'boolean' },
 			dryRun: { type: 'boolean', optional: true },
 		},
-		examples: [ 'wcpay test order create --product 123 --quantity 1 --dry-run --json' ],
+		examples: ['wcpay test order create --product 123 --quantity 1 --dry-run --json'],
 	},
 ];
 

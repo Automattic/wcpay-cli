@@ -6,7 +6,9 @@ const { spawnSync } = require('node:child_process');
 const spec = process.argv[2];
 const expectedVersion = process.argv[3];
 if (!spec) {
-	process.stderr.write('Usage: node scripts/smoke-github-install.cjs <npm-install-spec> [expected-version]\n');
+	process.stderr.write(
+		'Usage: node scripts/smoke-github-install.cjs <npm-install-spec> [expected-version]\n'
+	);
 	process.exit(2);
 }
 
@@ -20,7 +22,8 @@ try {
 		process.exit(result.status ?? 1);
 	}
 
-	const bin = process.platform === 'win32' ? join(prefix, 'wcpay.cmd') : join(prefix, 'bin', 'wcpay');
+	const bin =
+		process.platform === 'win32' ? join(prefix, 'wcpay.cmd') : join(prefix, 'bin', 'wcpay');
 	result = spawnSync(bin, ['--version'], {
 		encoding: 'utf8',
 		stdio: ['ignore', 'pipe', 'inherit'],

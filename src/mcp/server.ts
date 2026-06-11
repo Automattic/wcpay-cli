@@ -23,23 +23,24 @@ const readOnlyAnnotations = {
 
 export async function runMcpServer(): Promise<void> {
 	const server = createMcpServer();
-	await server.connect( new StdioServerTransport() );
+	await server.connect(new StdioServerTransport());
 }
 
 export function createMcpServer(): McpServer {
-	const server = new McpServer( {
+	const server = new McpServer({
 		name: 'wcpay-cli',
 		version: '0.0.0',
-	} );
+	});
 
 	server.registerTool(
 		'wcpay_get_mode',
 		{
-			description: 'Read WooPayments mode flags and classify the store as live, test, or dev.',
+			description:
+				'Read WooPayments mode flags and classify the store as live, test, or dev.',
 			inputSchema: optionalProfile,
 			annotations: readOnlyAnnotations,
 		},
-		async ( args ) => textResult( await getMode( args.profile ) )
+		async (args) => textResult(await getMode(args.profile))
 	);
 
 	server.registerTool(
@@ -49,7 +50,7 @@ export function createMcpServer(): McpServer {
 			inputSchema: optionalProfile,
 			annotations: readOnlyAnnotations,
 		},
-		async ( args ) => textResult( await getEndpoint( args.profile, '/wc/v3/payments/accounts' ) )
+		async (args) => textResult(await getEndpoint(args.profile, '/wc/v3/payments/accounts'))
 	);
 
 	server.registerTool(
@@ -59,7 +60,7 @@ export function createMcpServer(): McpServer {
 			inputSchema: optionalProfile,
 			annotations: readOnlyAnnotations,
 		},
-		async ( args ) => textResult( await getEndpoint( args.profile, '/wc/v3/payments/settings' ) )
+		async (args) => textResult(await getEndpoint(args.profile, '/wc/v3/payments/settings'))
 	);
 
 	server.registerTool(
@@ -69,9 +70,13 @@ export function createMcpServer(): McpServer {
 			inputSchema: listArgs,
 			annotations: readOnlyAnnotations,
 		},
-		async ( args ) =>
+		async (args) =>
 			textResult(
-				await getEndpoint( args.profile, '/wc/v3/payments/transactions', buildListQuery( args ) )
+				await getEndpoint(
+					args.profile,
+					'/wc/v3/payments/transactions',
+					buildListQuery(args)
+				)
 			)
 	);
 
@@ -82,8 +87,10 @@ export function createMcpServer(): McpServer {
 			inputSchema: listArgs,
 			annotations: readOnlyAnnotations,
 		},
-		async ( args ) =>
-			textResult( await getEndpoint( args.profile, '/wc/v3/payments/deposits', buildListQuery( args ) ) )
+		async (args) =>
+			textResult(
+				await getEndpoint(args.profile, '/wc/v3/payments/deposits', buildListQuery(args))
+			)
 	);
 
 	server.registerTool(
@@ -93,8 +100,10 @@ export function createMcpServer(): McpServer {
 			inputSchema: listArgs,
 			annotations: readOnlyAnnotations,
 		},
-		async ( args ) =>
-			textResult( await getEndpoint( args.profile, '/wc/v3/payments/disputes', buildListQuery( args ) ) )
+		async (args) =>
+			textResult(
+				await getEndpoint(args.profile, '/wc/v3/payments/disputes', buildListQuery(args))
+			)
 	);
 
 	server.registerTool(
@@ -107,7 +116,7 @@ export function createMcpServer(): McpServer {
 			},
 			annotations: readOnlyAnnotations,
 		},
-		async ( args ) => textResult( await getMcpApiEndpoint( args.profile, args.path ) )
+		async (args) => textResult(await getMcpApiEndpoint(args.profile, args.path))
 	);
 
 	server.registerTool(
@@ -117,28 +126,28 @@ export function createMcpServer(): McpServer {
 			inputSchema: optionalProfile,
 			annotations: readOnlyAnnotations,
 		},
-		async ( args ) => textResult( await doctor( args.profile ) )
+		async (args) => textResult(await doctor(args.profile))
 	);
 
 	return server;
 }
 
-async function getMode( profile?: string ): Promise<CliEnvelope> {
+async function getMode(profile?: string): Promise<CliEnvelope> {
 	try {
-		const context = await createContext( { profile } );
-		const modeService = new ModeService( context.client );
+		const context = await createContext({ profile });
+		const modeService = new ModeService(context.client);
 		const settings = await modeService.getSettings();
-		return { ok: true, data: { mode: classifyMode( settings ), settings } };
-	} catch ( error ) {
-		return errorEnvelope( error );
+		return { ok: true, data: { mode: classifyMode(settings), settings } };
+	} catch (error) {
+		return errorEnvelope(error);
 	}
 }
 
-async function getMcpApiEndpoint( profile: string | undefined, path: string ): Promise<CliEnvelope> {
+async function getMcpApiEndpoint(profile: string | undefined, path: string): Promise<CliEnvelope> {
 	try {
-		return await getEndpoint( profile, normalizeMcpApiGetPath( path ) );
-	} catch ( error ) {
-		return errorEnvelope( error );
+		return await getEndpoint(profile, normalizeMcpApiGetPath(path));
+	} catch (error) {
+		return errorEnvelope(error);
 	}
 }
 
@@ -148,19 +157,26 @@ async function getEndpoint(
 	query: Record<string, unknown> = {}
 ): Promise<CliEnvelope> {
 	try {
-		const context = await createContext( { profile } );
-		const data = await context.client.request( { method: 'GET', path, query } );
-		return { ok: true, data, meta: { profile: context.profile.name, site: context.profile.siteUrl } };
-	} catch ( error ) {
-		return errorEnvelope( error );
+		const context = await createContext({ profile });
+		const data = await context.client.request({ method: 'GET', path, query });
+		return {
+			ok: true,
+			data,
+			meta: { profile: context.profile.name, site: context.profile.siteUrl },
+		};
+	} catch (error) {
+		return errorEnvelope(error);
 	}
 }
 
-async function doctor( profile?: string ): Promise<CliEnvelope> {
+async function doctor(profile?: string): Promise<CliEnvelope> {
 	try {
-		const context = await createContext( { profile } );
-		const settings = await context.client.request( { method: 'GET', path: '/wc/v3/payments/settings' } );
-		const mode = classifyMode( settings as Record<string, unknown> );
+		const context = await createContext({ profile });
+		const settings = await context.client.request({
+			method: 'GET',
+			path: '/wc/v3/payments/settings',
+		});
+		const mode = classifyMode(settings as Record<string, unknown>);
 		return {
 			ok: true,
 			data: {
@@ -174,49 +190,51 @@ async function doctor( profile?: string ): Promise<CliEnvelope> {
 				],
 			},
 		};
-	} catch ( error ) {
-		return errorEnvelope( error );
+	} catch (error) {
+		return errorEnvelope(error);
 	}
 }
 
-function buildListQuery( args: { page?: number; limit?: number } ): Record<string, number> {
+function buildListQuery(args: { page?: number; limit?: number }): Record<string, number> {
 	return {
-		...( args.page ? { page: args.page } : {} ),
-		...( args.limit ? { pagesize: args.limit } : {} ),
+		...(args.page ? { page: args.page } : {}),
+		...(args.limit ? { pagesize: args.limit } : {}),
 	};
 }
 
-function normalizeMcpApiGetPath( path: string ): string {
-	const normalized = normalizeRestPath( path );
-	if ( ! normalized.startsWith( '/wc/v3/payments' ) ) {
-		throw new CliError( {
+function normalizeMcpApiGetPath(path: string): string {
+	const normalized = normalizeRestPath(path);
+	if (!normalized.startsWith('/wc/v3/payments')) {
+		throw new CliError({
 			code: 'mcp_path_not_allowed',
 			message: 'MCP api_get is limited to WooPayments REST paths under /wc/v3/payments.',
 			status: 2,
-		} );
+		});
 	}
 	return normalized;
 }
 
-function textResult( envelope: CliEnvelope ) {
+function textResult(envelope: CliEnvelope) {
 	return {
 		content: [
 			{
 				type: 'text' as const,
-				text: JSON.stringify( envelope, null, 2 ),
+				text: JSON.stringify(envelope, null, 2),
 			},
 		],
 	};
 }
 
-function errorEnvelope( error: unknown ): CliEnvelope {
-	if ( error && typeof error === 'object' && 'code' in error && 'message' in error ) {
+function errorEnvelope(error: unknown): CliEnvelope {
+	if (error && typeof error === 'object' && 'code' in error && 'message' in error) {
 		return {
 			ok: false,
 			error: {
-				code: String( error.code ),
-				message: String( error.message ),
-				...( 'status' in error && typeof error.status === 'number' ? { status: error.status } : {} ),
+				code: String(error.code),
+				message: String(error.message),
+				...('status' in error && typeof error.status === 'number'
+					? { status: error.status }
+					: {}),
 			},
 		};
 	}
@@ -225,7 +243,7 @@ function errorEnvelope( error: unknown ): CliEnvelope {
 		ok: false,
 		error: {
 			code: 'unexpected_error',
-			message: error instanceof Error ? error.message : String( error ),
+			message: error instanceof Error ? error.message : String(error),
 		},
 	};
 }

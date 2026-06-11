@@ -63,7 +63,13 @@ export function registerReadCommands(program: Command): void {
 
 				const summary = summarizeChecks(checks);
 				printSuccess(
-					{ profile: context.profile.name, site: context.profile.siteUrl, mode, summary, checks },
+					{
+						profile: context.profile.name,
+						site: context.profile.siteUrl,
+						mode,
+						summary,
+						checks,
+					},
 					{
 						json,
 						human: formatDoctorChecks(checks, summary),
@@ -83,7 +89,10 @@ export function registerReadCommands(program: Command): void {
 			const json = isJson(program, options);
 			await runReadAction({ json }, async () => {
 				const context = await createContext({ profile: program.opts().profile });
-				const data = await context.client.request({ method: 'GET', path: '/wc/v3/payments/accounts' });
+				const data = await context.client.request({
+					method: 'GET',
+					path: '/wc/v3/payments/accounts',
+				});
 				printSuccess(data, {
 					json,
 					human: formatAccountStatus(data, context.profile.siteUrl),
@@ -168,7 +177,10 @@ async function addAccountCheck(
 	context: Awaited<ReturnType<typeof createContext>>
 ): Promise<void> {
 	try {
-		const account = await context.client.request({ method: 'GET', path: '/wc/v3/payments/accounts' });
+		const account = await context.client.request({
+			method: 'GET',
+			path: '/wc/v3/payments/accounts',
+		});
 		if (account === false) {
 			checks.push(warn('account', 'WooPayments account is not connected or unavailable'));
 			return;
@@ -176,15 +188,11 @@ async function addAccountCheck(
 		if (account && typeof account === 'object') {
 			const accountRecord = account as Record<string, unknown>;
 			checks.push(
-				pass(
-					'account',
-					`status: ${String(accountRecord.status ?? 'unknown')}`,
-					{
-						country: accountRecord.country,
-						is_live: accountRecord.is_live,
-						payments_enabled: accountRecord.payments_enabled,
-					}
-				)
+				pass('account', `status: ${String(accountRecord.status ?? 'unknown')}`, {
+					country: accountRecord.country,
+					is_live: accountRecord.is_live,
+					payments_enabled: accountRecord.payments_enabled,
+				})
 			);
 			return;
 		}
@@ -216,7 +224,9 @@ function formatDoctorChecks(checks: DoctorCheck[], summary: Record<DoctorStatus,
 		}
 		lines.push(group.label);
 		for (const check of groupChecks) {
-			lines.push(`  ${doctorIcon(check.status)} ${formatDoctorName(check.name)} ${formatMuted(check.message)}`);
+			lines.push(
+				`  ${doctorIcon(check.status)} ${formatDoctorName(check.name)} ${formatMuted(check.message)}`
+			);
 		}
 		lines.push('');
 	}
@@ -253,7 +263,9 @@ function getDoctorNextSteps(checks: DoctorCheck[]): string[] {
 		steps.push(`Run ${formatCommand('wcpay doctor --json')} for structured error details.`);
 	}
 	if (checks.some((checkItem) => checkItem.name === 'mode' && checkItem.status === 'warn')) {
-		steps.push('Live-mode stores are read-only in wcpay; switch WooPayments to test/dev mode before write commands.');
+		steps.push(
+			'Live-mode stores are read-only in wcpay; switch WooPayments to test/dev mode before write commands.'
+		);
 	}
 	return steps;
 }
@@ -266,7 +278,9 @@ function errorDetails(error: unknown): unknown {
 	return error && typeof error === 'object' && 'code' in error
 		? {
 				code: String(error.code),
-				...('status' in error && typeof error.status === 'number' ? { status: error.status } : {}),
+				...('status' in error && typeof error.status === 'number'
+					? { status: error.status }
+					: {}),
 			}
 		: undefined;
 }

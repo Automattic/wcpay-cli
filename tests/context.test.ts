@@ -18,22 +18,22 @@ const emptyStore: SecretStore = {
 	delete: async () => undefined,
 };
 
-describe( 'resolveCredentials', () => {
-	it( 'validates credentials from environment variables', async () => {
+describe('resolveCredentials', () => {
+	it('validates credentials from environment variables', async () => {
 		await expect(
-			resolveCredentials( profile, emptyStore, {
+			resolveCredentials(profile, emptyStore, {
 				WCPAY_CONSUMER_KEY: 'not-a-key',
 				WCPAY_CONSUMER_SECRET: 'cs_test',
-			} as NodeJS.ProcessEnv )
-		).rejects.toMatchObject( { code: 'invalid_consumer_key' } );
-	} );
+			} as NodeJS.ProcessEnv)
+		).rejects.toMatchObject({ code: 'invalid_consumer_key' });
+	});
 
-	it( 'returns credentials from environment variables before reading the secret store', async () => {
+	it('returns credentials from environment variables before reading the secret store', async () => {
 		await expect(
-			resolveCredentials( profile, emptyStore, {
+			resolveCredentials(profile, emptyStore, {
 				WCPAY_CONSUMER_KEY: 'ck_test',
 				WCPAY_CONSUMER_SECRET: 'cs_test',
-			} as NodeJS.ProcessEnv )
-		).resolves.toEqual( { consumerKey: 'ck_test', consumerSecret: 'cs_test' } );
-	} );
-} );
+			} as NodeJS.ProcessEnv)
+		).resolves.toEqual({ consumerKey: 'ck_test', consumerSecret: 'cs_test' });
+	});
+});

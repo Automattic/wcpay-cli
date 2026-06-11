@@ -5,8 +5,8 @@ export class CliError extends Error {
 	public readonly status?: number;
 	public readonly details?: unknown;
 
-	public constructor( error: CliErrorShape ) {
-		super( error.message );
+	public constructor(error: CliErrorShape) {
+		super(error.message);
 		this.name = 'CliError';
 		this.code = error.code;
 		this.status = error.status;
@@ -17,8 +17,8 @@ export class CliError extends Error {
 		return {
 			code: this.code,
 			message: this.message,
-			...( this.status ? { status: this.status } : {} ),
-			...( this.details !== undefined ? { details: this.details } : {} ),
+			...(this.status ? { status: this.status } : {}),
+			...(this.details !== undefined ? { details: this.details } : {}),
 		};
 	}
 }

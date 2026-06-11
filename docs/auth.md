@@ -63,10 +63,10 @@ This does not revoke the WooCommerce REST API key on the store. Remove unused AP
 
 ## Environment variables
 
-| Variable                | Purpose                                      |
-| ----------------------- | -------------------------------------------- |
+| Variable                | Purpose                                         |
+| ----------------------- | ----------------------------------------------- |
 | `WCPAY_PROFILE`         | Override default profile for one shell/session. |
-| `WCPAY_CONSUMER_KEY`    | Consumer key used by `auth add` or `login`.  |
-| `WCPAY_CONSUMER_SECRET` | Consumer secret used by `auth add` or `login`. |
-| `WCPAY_HOME`            | Override config directory.                   |
-| `WCPAY_KEYRING=0`       | Use file-backed secret storage.              |
+| `WCPAY_CONSUMER_KEY`    | Consumer key used by `auth add` or `login`.     |
+| `WCPAY_CONSUMER_SECRET` | Consumer secret used by `auth add` or `login`.  |
+| `WCPAY_HOME`            | Override config directory.                      |
+| `WCPAY_KEYRING=0`       | Use file-backed secret storage.                 |
