@@ -60,8 +60,20 @@ Once published to npm:
 npm install -g @automattic/wcpay-cli
 ```
 
-Before npm publication, build and upload the package tarball to the GitHub release, then install that release asset. Keep this URL aligned with `package.json` during every release; `npm run release:check` enforces that the documented release asset URL points at the current package version.
+Before npm publication, the GitHub release tarball is the install source. Keep this URL aligned with `package.json` during every release; `npm run release:check` enforces that the documented release asset URL points at the current package version.
 
 ```bash
 npm install -g https://github.com/Automattic/wcpay-cli/releases/download/v0.2.3/automattic-wcpay-cli-0.2.3.tgz
 ```
+
+## Releasing
+
+1. Bump the version in `package.json`, `src/core/version.ts`, the README install URL, and add a `CHANGELOG.md` heading. `npm run release:check` verifies the docs; the version test verifies `version.ts`.
+2. Land the release PR, then tag and push:
+
+    ```bash
+    git tag v<version>
+    git push origin v<version>
+    ```
+
+3. The Release workflow runs the full `check` suite, packs the tarball, and creates the GitHub release with the tarball attached — the URL documented in the README.
