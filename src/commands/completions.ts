@@ -1,42 +1,148 @@
 import { Command } from 'commander';
 import { CliError } from '../core/errors.js';
-import { printError, printSuccess } from '../core/output.js';
+import { printSuccess } from '../core/output.js';
+import { isJsonOutput, runCommandAction } from './common.js';
+
+interface CommandSummary {
+	name: string;
+	description: string;
+	subcommands: CommandSummary[];
+}
 
 export function registerCompletionsCommand(program: Command): void {
 	program
 		.command('completions <shell>')
-		.description('Print shell completion script for bash or zsh.')
+		.description('Print shell completion script for bash, zsh, or fish.')
 		.option('--json', 'Emit JSON output.')
-		.action((shell: string, options: { json?: boolean }) => {
-			const json = isJson(program, options);
-
-			try {
-				const script = getCompletionScript(shell);
+		.action(async (shell: string, options: { json?: boolean }) => {
+			const json = isJsonOutput(program, options);
+			await runCommandAction({ json }, async () => {
+				const script = getCompletionScript(program, shell);
 				printSuccess({ shell, script }, { json, human: script });
-			} catch (error) {
-				printError(error, { json });
-				process.exitCode = 1;
-			}
+			});
 		});
 }
 
-function getCompletionScript(shell: string): string {
+export function getCompletionScript(program: Command, shell: string): string {
+	const commands = summarizeCommands(program);
 	if (shell === 'bash') {
-		return `# Add to ~/.bashrc:\n# eval "$(wcpay completions bash)"\n_complete_wcpay() {\n  local cur prev commands\n  COMPREPLY=()\n  cur="${'${COMP_WORDS[COMP_CWORD]}'}"\n  prev="${'${COMP_WORDS[COMP_CWORD-1]}'}"\n  commands="login auth profile whoami api account settings transactions deposits disputes charges refunds authorizations test mcp tools completions doctor mode help"\n  if [[ ${'${COMP_CWORD}'} == 1 ]]; then\n    COMPREPLY=( $(compgen -W "$commands" -- "$cur") )\n  fi\n}\ncomplete -F _complete_wcpay wcpay\n`;
+		return bashScript(commands);
 	}
-
 	if (shell === 'zsh') {
-		return `# Add to ~/.zshrc:\n# eval "$(wcpay completions zsh)"\n#compdef wcpay\n_wcpay() {\n  local -a commands\n  commands=(\n    'login:Authenticate with a WooPayments store'\n    'auth:Manage credentials'\n    'profile:Manage active profile'\n    'api:Make REST API requests'
-    'doctor:Run diagnostics'\n    'mode:Show mode'\n    'mcp:Run MCP server'\n    'tools:Inspect tool metadata'\n  )\n  _describe 'command' commands\n}\ncompdef _wcpay wcpay\n`;
+		return zshScript(commands);
 	}
-
+	if (shell === 'fish') {
+		return fishScript(commands);
+	}
 	throw new CliError({
-		code: 'unsupported_shell',
-		message: `Unsupported shell: ${shell}. Supported shells: bash, zsh.`,
-		status: 1,
+		code: 'unsupported_completion_shell',
+		message: `Unsupported shell: ${shell}. Supported shells: bash, zsh, fish.`,
+		status: 2,
 	});
 }
 
-function isJson(program: Command, options: { json?: boolean }): boolean {
-	return Boolean(options.json || (program.opts() as { json?: boolean }).json);
+function summarizeCommands(command: Command): CommandSummary[] {
+	return command.commands
+		.filter((child) => child.name() !== 'help')
+		.map((child) => ({
+			name: child.name(),
+			description: sanitizeDescription(child.description()),
+			subcommands: summarizeCommands(child),
+		}));
+}
+
+function sanitizeDescription(description: string): string {
+	return description.replace(/'/g, '').replace(/\s+/g, ' ').trim().replace(/\.$/, '');
+}
+
+function bashScript(commands: CommandSummary[]): string {
+	const topLevel = commands.map((command) => command.name).join(' ');
+	const cases = commands
+		.filter((command) => command.subcommands.length > 0)
+		.map(
+			(command) =>
+				`    ${command.name}) COMPREPLY=( $(compgen -W "${command.subcommands
+					.map((sub) => sub.name)
+					.join(' ')}" -- "$cur") ) ;;`
+		)
+		.join('\n');
+	return [
+		'# Add to ~/.bashrc:',
+		'# eval "$(wcpay completions bash)"',
+		'_complete_wcpay() {',
+		'  local cur',
+		'  COMPREPLY=()',
+		'  cur="${COMP_WORDS[COMP_CWORD]}"',
+		'  if [[ ${COMP_CWORD} == 1 ]]; then',
+		`    COMPREPLY=( $(compgen -W "${topLevel}" -- "$cur") )`,
+		'    return',
+		'  fi',
+		'  case "${COMP_WORDS[1]}" in',
+		cases,
+		'  esac',
+		'}',
+		'complete -F _complete_wcpay wcpay',
+		'',
+	].join('\n');
+}
+
+function zshScript(commands: CommandSummary[]): string {
+	const topLevel = commands
+		.map((command) => `    '${command.name}:${command.description}'`)
+		.join('\n');
+	const cases = commands
+		.filter((command) => command.subcommands.length > 0)
+		.map((command) =>
+			[
+				`    ${command.name})`,
+				'      subcommands=(',
+				command.subcommands
+					.map((sub) => `        '${sub.name}:${sub.description}'`)
+					.join('\n'),
+				'      )',
+				"      _describe 'subcommand' subcommands",
+				'      ;;',
+			].join('\n')
+		)
+		.join('\n');
+	return [
+		'# Add to ~/.zshrc:',
+		'# eval "$(wcpay completions zsh)"',
+		'#compdef wcpay',
+		'_wcpay() {',
+		'  local -a commands subcommands',
+		'  if (( CURRENT == 2 )); then',
+		'    commands=(',
+		topLevel,
+		'    )',
+		"    _describe 'command' commands",
+		'    return',
+		'  fi',
+		'  case "${words[2]}" in',
+		cases,
+		'  esac',
+		'}',
+		'compdef _wcpay wcpay',
+		'',
+	].join('\n');
+}
+
+function fishScript(commands: CommandSummary[]): string {
+	const lines = [
+		'# Save as ~/.config/fish/completions/wcpay.fish, or run:',
+		'# wcpay completions fish | source',
+		'complete -c wcpay -f',
+	];
+	for (const command of commands) {
+		lines.push(
+			`complete -c wcpay -n '__fish_use_subcommand' -a ${command.name} -d '${command.description}'`
+		);
+		for (const sub of command.subcommands) {
+			lines.push(
+				`complete -c wcpay -n '__fish_seen_subcommand_from ${command.name}' -a ${sub.name} -d '${sub.description}'`
+			);
+		}
+	}
+	lines.push('');
+	return lines.join('\n');
 }

@@ -26,9 +26,12 @@ wcpay --help
 
 ## Shell completions
 
+Completions are generated from the live command tree, so new commands appear automatically:
+
 ```bash
 wcpay completions bash
 wcpay completions zsh
+wcpay completions fish
 ```
 
 ## Documentation site

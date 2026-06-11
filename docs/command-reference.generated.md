@@ -417,7 +417,7 @@ Run the WooPayments CLI MCP server over stdio.
 
 ## `completions <shell>`
 
-Print shell completion script for bash or zsh.
+Print shell completion script for bash, zsh, or fish.
 
 Options:
 
