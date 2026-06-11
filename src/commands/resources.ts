@@ -6,7 +6,7 @@ import { isJsonOutput, runCommandAction } from './common.js';
 import { buildListQuery, type ListOptions } from './list-options.js';
 
 export function registerResourceCommands(program: Command): void {
-	registerListGetResource(program, {
+	const deposits = registerListGetResource(program, {
 		name: 'deposits',
 		description: 'Inspect WooPayments deposits.',
 		basePath: '/wc/v3/payments/deposits',
@@ -14,7 +14,7 @@ export function registerResourceCommands(program: Command): void {
 		listDefaultSort: 'date',
 	});
 
-	registerListGetResource(program, {
+	const disputes = registerListGetResource(program, {
 		name: 'disputes',
 		description: 'Inspect WooPayments disputes.',
 		basePath: '/wc/v3/payments/disputes',
@@ -116,7 +116,7 @@ function registerListGetResource(
 		idName: string;
 		listDefaultSort?: string;
 	}
-): void {
+): Command {
 	const command = program.command(resource.name).description(resource.description);
 
 	command
@@ -157,6 +157,8 @@ function registerListGetResource(
 				printSuccess(data, { json: isJsonOutput(program, options) });
 			});
 		});
+
+	return command;
 }
 
 function columnsForResource(resourceName: string): string[] {
