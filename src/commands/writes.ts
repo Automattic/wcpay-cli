@@ -2,7 +2,9 @@ import { Command } from 'commander';
 import { createContext } from '../core/context.js';
 import { CliError } from '../core/errors.js';
 import { ModeService } from '../core/mode.js';
-import { printError, printSuccess } from '../core/output.js';
+import { printSuccess } from '../core/output.js';
+import { isJsonOutput, runCommandAction } from './common.js';
+import { sendGuardedWrite } from './guarded-write.js';
 import { redactHeaders, redactUrl } from '../core/redact.js';
 import { getTestPaymentScenario, listTestPaymentScenarios } from '../core/test-scenarios.js';
 import { parsePositiveInteger } from '../core/validation.js';
@@ -12,14 +14,6 @@ interface RefundCreateOptions {
 	charge?: string;
 	amount?: string;
 	reason?: string;
-	dryRun?: boolean;
-	yes?: boolean;
-	json?: boolean;
-}
-
-interface AuthorizationOptions {
-	order?: string;
-	intent?: string;
 	dryRun?: boolean;
 	yes?: boolean;
 	json?: boolean;
@@ -60,8 +54,8 @@ export function registerWriteCommands(program: Command): void {
 		.option('--yes', 'Confirm the test/dev-mode write.')
 		.option('--json', 'Emit JSON output.')
 		.action(async (options: RefundCreateOptions) => {
-			const json = isJson(program, options);
-			await runWriteAction({ json }, async () => {
+			const json = isJsonOutput(program, options);
+			await runCommandAction({ json }, async () => {
 				if (!options.order && !options.charge) {
 					throw new CliError({
 						code: 'missing_refund_target',
@@ -88,12 +82,6 @@ export function registerWriteCommands(program: Command): void {
 			});
 		});
 
-	const authorizations = program
-		.command('authorizations')
-		.description('Capture or cancel test/dev-mode authorizations.');
-	registerAuthorizationCommand(program, authorizations, 'capture', 'capture_authorization');
-	registerAuthorizationCommand(program, authorizations, 'cancel', 'cancel_authorization');
-
 	registerTestCommands(program);
 }
 
@@ -110,8 +98,8 @@ function registerTestCommands(program: Command): void {
 		.option('--yes', 'Confirm the test/dev-mode write.')
 		.option('--json', 'Emit JSON output.')
 		.action(async (options: TestOrderCreateOptions) => {
-			const json = isJson(program, options);
-			await runWriteAction({ json }, async () => {
+			const json = isJsonOutput(program, options);
+			await runCommandAction({ json }, async () => {
 				await sendGuardedWrite(program, {
 					path: '/wc/v3/orders',
 					body: {
@@ -150,7 +138,7 @@ function registerTestCommands(program: Command): void {
 			printSuccess(
 				{ scenarios },
 				{
-					json: isJson(program, options),
+					json: isJsonOutput(program, options),
 					human: scenarios
 						.map(
 							(scenario) =>
@@ -170,8 +158,8 @@ function registerTestCommands(program: Command): void {
 		.option('--yes', 'Confirm the test/dev-mode write.')
 		.option('--json', 'Emit JSON output.')
 		.action(async (options: TestPaymentCreateOptions) => {
-			const json = isJson(program, options);
-			await runWriteAction({ json }, async () => {
+			const json = isJsonOutput(program, options);
+			await runCommandAction({ json }, async () => {
 				const scenario = getTestPaymentScenario(options.scenario ?? 'success');
 				if (!scenario && !options.paymentMethod) {
 					throw new CliError({
@@ -185,37 +173,6 @@ function registerTestCommands(program: Command): void {
 					orderId: parsePositiveInteger(options.order, '--order'),
 					paymentMethod: options.paymentMethod ?? scenario!.paymentMethod,
 					scenario: options.scenario ?? scenario!.alias,
-					dryRun: Boolean(
-						options.dryRun || (program.opts() as { dryRun?: boolean }).dryRun
-					),
-					yes: Boolean(options.yes || (program.opts() as { yes?: boolean }).yes),
-					json,
-				});
-			});
-		});
-}
-
-function registerAuthorizationCommand(
-	program: Command,
-	authorizations: Command,
-	name: 'capture' | 'cancel',
-	endpointAction: 'capture_authorization' | 'cancel_authorization'
-): void {
-	authorizations
-		.command(name)
-		.description(`${name === 'capture' ? 'Capture' : 'Cancel'} a test/dev-mode authorization.`)
-		.requiredOption('--order <order-id>', 'WooCommerce order ID.')
-		.requiredOption('--intent <payment-intent-id>', 'Payment intent ID.')
-		.option('--dry-run', 'Print the request without sending it.')
-		.option('--yes', 'Confirm the test/dev-mode write.')
-		.option('--json', 'Emit JSON output.')
-		.action(async (options: AuthorizationOptions) => {
-			const json = isJson(program, options);
-			await runWriteAction({ json }, async () => {
-				const orderId = parsePositiveInteger(options.order, '--order');
-				await sendGuardedWrite(program, {
-					path: `/wc/v3/payments/orders/${orderId}/${endpointAction}`,
-					body: { payment_intent_id: options.intent },
 					dryRun: Boolean(
 						options.dryRun || (program.opts() as { dryRun?: boolean }).dryRun
 					),
@@ -323,63 +280,4 @@ async function sendTestPaymentCreate(
 		},
 	});
 	printSuccess(data, { json: input.json });
-}
-
-async function sendGuardedWrite(
-	program: Command,
-	input: {
-		path: string;
-		body: Record<string, unknown>;
-		dryRun: boolean;
-		yes: boolean;
-		json: boolean;
-	}
-): Promise<void> {
-	if (!input.dryRun && !input.yes) {
-		throw new CliError({
-			code: 'confirmation_required',
-			message: 'Write commands require --yes or --dry-run.',
-			status: 2,
-		});
-	}
-
-	const context = await createContext({
-		profile: (program.opts() as { profile?: string }).profile,
-	});
-	const modeService = new ModeService(context.client);
-	await modeService.assertWriteAllowed('POST', input.path);
-
-	const request = { method: 'POST' as const, path: input.path, body: input.body };
-	if (input.dryRun) {
-		const resolved = context.client.resolve(request);
-		printSuccess(
-			{
-				method: resolved.method,
-				url: redactUrl(resolved.url),
-				headers: redactHeaders(resolved.headers),
-				body: input.body,
-			},
-			{ json: input.json, human: `${resolved.method} ${redactUrl(resolved.url)}` }
-		);
-		return;
-	}
-
-	const data = await context.client.request(request);
-	printSuccess(data, { json: input.json });
-}
-
-function isJson(program: Command, options: { json?: boolean }): boolean {
-	return Boolean(options.json || (program.opts() as { json?: boolean }).json);
-}
-
-async function runWriteAction(
-	options: { json?: boolean },
-	action: () => Promise<void>
-): Promise<void> {
-	try {
-		await action();
-	} catch (error) {
-		printError(error, { json: options.json });
-		process.exitCode = 1;
-	}
 }

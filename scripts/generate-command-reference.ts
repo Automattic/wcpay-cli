@@ -2,27 +2,29 @@ import { readFile, writeFile } from 'node:fs/promises';
 import { Command } from 'commander';
 import { buildProgram } from '../src/app.js';
 
-const outputPath = new URL( '../docs/command-reference.generated.md', import.meta.url );
-const check = process.argv.includes( '--check' );
+const outputPath = new URL('../docs/command-reference.generated.md', import.meta.url);
+const check = process.argv.includes('--check');
 
-const content = generateCommandReference( buildProgram() );
+const content = generateCommandReference(buildProgram());
 
-if ( check ) {
+if (check) {
 	let existing = '';
 	try {
-		existing = await readFile( outputPath, 'utf8' );
+		existing = await readFile(outputPath, 'utf8');
 	} catch {
 		// Missing file is handled by mismatch below.
 	}
-	if ( existing !== content ) {
-		process.stderr.write( 'docs/command-reference.generated.md is out of date. Run `npm run docs:generate`.\n' );
-		process.exit( 1 );
+	if (existing !== content) {
+		process.stderr.write(
+			'docs/command-reference.generated.md is out of date. Run `npm run docs:generate`.\n'
+		);
+		process.exit(1);
 	}
 } else {
-	await writeFile( outputPath, content );
+	await writeFile(outputPath, content);
 }
 
-function generateCommandReference( program: Command ): string {
+function generateCommandReference(program: Command): string {
 	const lines = [
 		'# Generated Command Reference',
 		'',
@@ -30,33 +32,33 @@ function generateCommandReference( program: Command ): string {
 		'',
 	];
 
-	for ( const entry of flattenCommands( program ) ) {
+	for (const entry of flattenCommands(program)) {
 		const command = entry.command;
-		const usage = command.usage().replace( /\[options\] /, '' );
-		lines.push( `## \`${ entry.path.join( ' ' ) } ${ usage }\``.trim() );
-		lines.push( '' );
-		lines.push( command.description() || '_No description._' );
-		lines.push( '' );
-		const options = command.options.filter( ( option ) => ! option.hidden );
-		if ( options.length > 0 ) {
-			lines.push( 'Options:' );
-			lines.push( '' );
-			for ( const option of options ) {
-				lines.push( `- \`${ option.flags }\` — ${ option.description }` );
+		const usage = command.usage().replace(/\[options\] /, '');
+		lines.push(`## \`${entry.path.join(' ')} ${usage}\``.trim());
+		lines.push('');
+		lines.push(command.description() || '_No description._');
+		lines.push('');
+		const options = command.options.filter((option) => !option.hidden);
+		if (options.length > 0) {
+			lines.push('Options:');
+			lines.push('');
+			for (const option of options) {
+				lines.push(`- \`${option.flags}\` — ${option.description}`);
 			}
-			lines.push( '' );
+			lines.push('');
 		}
 	}
 
-	return `${ lines.join( '\n' ).replace( / +$/gm, '' ) }\n`;
+	return `${lines.join('\n').replace(/ +$/gm, '')}\n`;
 }
 
 function flattenCommands(
 	command: Command,
 	parentPath: string[] = []
 ): Array<{ command: Command; path: string[] }> {
-	return command.commands.flatMap( ( child ) => {
-		const path = [ ...parentPath, child.name() ];
-		return [ { command: child, path }, ...flattenCommands( child, path ) ];
-	} );
+	return command.commands.flatMap((child) => {
+		const path = [...parentPath, child.name()];
+		return [{ command: child, path }, ...flattenCommands(child, path)];
+	});
 }

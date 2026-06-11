@@ -6,23 +6,26 @@ export const ENV_PROFILE = 'WCPAY_PROFILE';
 export const ENV_CONSUMER_KEY = 'WCPAY_CONSUMER_KEY';
 export const ENV_CONSUMER_SECRET = 'WCPAY_CONSUMER_SECRET';
 export const ENV_KEYRING = 'WCPAY_KEYRING';
+export const ENV_TIMEOUT = 'WCPAY_TIMEOUT';
+export const ENV_DEBUG = 'WCPAY_DEBUG';
+export const ENV_SITE_URL = 'WCPAY_SITE_URL';
 
-export function getConfigDir( env: NodeJS.ProcessEnv = process.env ): string {
-	if ( env[ ENV_HOME ] ) {
-		return env[ ENV_HOME ];
+export function getConfigDir(env: NodeJS.ProcessEnv = process.env): string {
+	if (env[ENV_HOME]) {
+		return env[ENV_HOME];
 	}
 
-	if ( env.XDG_CONFIG_HOME ) {
-		return join( env.XDG_CONFIG_HOME, 'wcpay' );
+	if (env.XDG_CONFIG_HOME) {
+		return join(env.XDG_CONFIG_HOME, 'wcpay');
 	}
 
-	return join( homedir(), '.config', 'wcpay' );
+	return join(homedir(), '.config', 'wcpay');
 }
 
-export function getProfilesPath( env: NodeJS.ProcessEnv = process.env ): string {
-	return join( getConfigDir( env ), 'profiles.json' );
+export function getProfilesPath(env: NodeJS.ProcessEnv = process.env): string {
+	return join(getConfigDir(env), 'profiles.json');
 }
 
-export function getConfigPath( env: NodeJS.ProcessEnv = process.env ): string {
-	return join( getConfigDir( env ), 'config.json' );
+export function getConfigPath(env: NodeJS.ProcessEnv = process.env): string {
+	return join(getConfigDir(env), 'config.json');
 }

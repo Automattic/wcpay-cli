@@ -3,15 +3,21 @@ import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
 import { z } from 'zod';
 import { normalizeRestPath } from '../core/api.js';
 import { createContext } from '../core/context.js';
+import { runDoctorChecks } from '../core/doctor.js';
 import { CliError } from '../core/errors.js';
 import { classifyMode, ModeService } from '../core/mode.js';
 import type { CliEnvelope } from '../core/types.js';
+import { VERSION } from '../core/version.js';
 
 const optionalProfile = { profile: z.string().optional() };
 const listArgs = {
 	...optionalProfile,
 	page: z.number().int().optional(),
 	limit: z.number().int().optional(),
+};
+const idArgs = {
+	...optionalProfile,
+	id: z.string(),
 };
 
 const readOnlyAnnotations = {
@@ -23,23 +29,24 @@ const readOnlyAnnotations = {
 
 export async function runMcpServer(): Promise<void> {
 	const server = createMcpServer();
-	await server.connect( new StdioServerTransport() );
+	await server.connect(new StdioServerTransport());
 }
 
 export function createMcpServer(): McpServer {
-	const server = new McpServer( {
+	const server = new McpServer({
 		name: 'wcpay-cli',
-		version: '0.0.0',
-	} );
+		version: VERSION,
+	});
 
 	server.registerTool(
 		'wcpay_get_mode',
 		{
-			description: 'Read WooPayments mode flags and classify the store as live, test, or dev.',
+			description:
+				'Read WooPayments mode flags and classify the store as live, test, or dev.',
 			inputSchema: optionalProfile,
 			annotations: readOnlyAnnotations,
 		},
-		async ( args ) => textResult( await getMode( args.profile ) )
+		async (args) => textResult(await getMode(args.profile))
 	);
 
 	server.registerTool(
@@ -49,7 +56,7 @@ export function createMcpServer(): McpServer {
 			inputSchema: optionalProfile,
 			annotations: readOnlyAnnotations,
 		},
-		async ( args ) => textResult( await getEndpoint( args.profile, '/wc/v3/payments/accounts' ) )
+		async (args) => textResult(await getEndpoint(args.profile, '/wc/v3/payments/accounts'))
 	);
 
 	server.registerTool(
@@ -59,7 +66,7 @@ export function createMcpServer(): McpServer {
 			inputSchema: optionalProfile,
 			annotations: readOnlyAnnotations,
 		},
-		async ( args ) => textResult( await getEndpoint( args.profile, '/wc/v3/payments/settings' ) )
+		async (args) => textResult(await getEndpoint(args.profile, '/wc/v3/payments/settings'))
 	);
 
 	server.registerTool(
@@ -69,9 +76,13 @@ export function createMcpServer(): McpServer {
 			inputSchema: listArgs,
 			annotations: readOnlyAnnotations,
 		},
-		async ( args ) =>
+		async (args) =>
 			textResult(
-				await getEndpoint( args.profile, '/wc/v3/payments/transactions', buildListQuery( args ) )
+				await getEndpoint(
+					args.profile,
+					'/wc/v3/payments/transactions',
+					buildListQuery(args)
+				)
 			)
 	);
 
@@ -82,8 +93,10 @@ export function createMcpServer(): McpServer {
 			inputSchema: listArgs,
 			annotations: readOnlyAnnotations,
 		},
-		async ( args ) =>
-			textResult( await getEndpoint( args.profile, '/wc/v3/payments/deposits', buildListQuery( args ) ) )
+		async (args) =>
+			textResult(
+				await getEndpoint(args.profile, '/wc/v3/payments/deposits', buildListQuery(args))
+			)
 	);
 
 	server.registerTool(
@@ -93,8 +106,124 @@ export function createMcpServer(): McpServer {
 			inputSchema: listArgs,
 			annotations: readOnlyAnnotations,
 		},
-		async ( args ) =>
-			textResult( await getEndpoint( args.profile, '/wc/v3/payments/disputes', buildListQuery( args ) ) )
+		async (args) =>
+			textResult(
+				await getEndpoint(args.profile, '/wc/v3/payments/disputes', buildListQuery(args))
+			)
+	);
+
+	server.registerTool(
+		'wcpay_get_deposit',
+		{
+			description: 'Get a WooPayments deposit by ID.',
+			inputSchema: idArgs,
+			annotations: readOnlyAnnotations,
+		},
+		async (args) =>
+			textResult(
+				await getEndpoint(
+					args.profile,
+					`/wc/v3/payments/deposits/${encodeURIComponent(args.id)}`
+				)
+			)
+	);
+
+	server.registerTool(
+		'wcpay_get_dispute',
+		{
+			description: 'Get a WooPayments dispute by ID.',
+			inputSchema: idArgs,
+			annotations: readOnlyAnnotations,
+		},
+		async (args) =>
+			textResult(
+				await getEndpoint(
+					args.profile,
+					`/wc/v3/payments/disputes/${encodeURIComponent(args.id)}`
+				)
+			)
+	);
+
+	server.registerTool(
+		'wcpay_get_charge',
+		{
+			description: 'Get a WooPayments charge by ID.',
+			inputSchema: idArgs,
+			annotations: readOnlyAnnotations,
+		},
+		async (args) =>
+			textResult(
+				await getEndpoint(
+					args.profile,
+					`/wc/v3/payments/charges/${encodeURIComponent(args.id)}`
+				)
+			)
+	);
+
+	server.registerTool(
+		'wcpay_list_authorizations',
+		{
+			description: 'List uncaptured WooPayments authorizations.',
+			inputSchema: listArgs,
+			annotations: readOnlyAnnotations,
+		},
+		async (args) =>
+			textResult(
+				await getEndpoint(
+					args.profile,
+					'/wc/v3/payments/authorizations',
+					buildListQuery(args)
+				)
+			)
+	);
+
+	server.registerTool(
+		'wcpay_get_timeline',
+		{
+			description: 'Get the WooPayments event timeline for a payment intent.',
+			inputSchema: { ...optionalProfile, intentId: z.string() },
+			annotations: readOnlyAnnotations,
+		},
+		async (args) =>
+			textResult(
+				await getEndpoint(
+					args.profile,
+					`/wc/v3/payments/timeline/${encodeURIComponent(args.intentId)}`
+				)
+			)
+	);
+
+	server.registerTool(
+		'wcpay_get_transactions_summary',
+		{
+			description: 'Summarize WooPayments transactions (totals, fees, net).',
+			inputSchema: optionalProfile,
+			annotations: readOnlyAnnotations,
+		},
+		async (args) =>
+			textResult(await getEndpoint(args.profile, '/wc/v3/payments/transactions/summary'))
+	);
+
+	server.registerTool(
+		'wcpay_get_deposits_overview',
+		{
+			description: 'Show WooPayments deposit and balance overview across currencies.',
+			inputSchema: optionalProfile,
+			annotations: readOnlyAnnotations,
+		},
+		async (args) =>
+			textResult(await getEndpoint(args.profile, '/wc/v3/payments/deposits/overview-all'))
+	);
+
+	server.registerTool(
+		'wcpay_get_disputes_summary',
+		{
+			description: 'Show WooPayments dispute counts by status.',
+			inputSchema: optionalProfile,
+			annotations: readOnlyAnnotations,
+		},
+		async (args) =>
+			textResult(await getEndpoint(args.profile, '/wc/v3/payments/disputes/summary'))
 	);
 
 	server.registerTool(
@@ -107,7 +236,7 @@ export function createMcpServer(): McpServer {
 			},
 			annotations: readOnlyAnnotations,
 		},
-		async ( args ) => textResult( await getMcpApiEndpoint( args.profile, args.path ) )
+		async (args) => textResult(await getMcpApiEndpoint(args.profile, args.path))
 	);
 
 	server.registerTool(
@@ -117,28 +246,28 @@ export function createMcpServer(): McpServer {
 			inputSchema: optionalProfile,
 			annotations: readOnlyAnnotations,
 		},
-		async ( args ) => textResult( await doctor( args.profile ) )
+		async (args) => textResult(await doctor(args.profile))
 	);
 
 	return server;
 }
 
-async function getMode( profile?: string ): Promise<CliEnvelope> {
+async function getMode(profile?: string): Promise<CliEnvelope> {
 	try {
-		const context = await createContext( { profile } );
-		const modeService = new ModeService( context.client );
+		const context = await createContext({ profile });
+		const modeService = new ModeService(context.client);
 		const settings = await modeService.getSettings();
-		return { ok: true, data: { mode: classifyMode( settings ), settings } };
-	} catch ( error ) {
-		return errorEnvelope( error );
+		return { ok: true, data: { mode: classifyMode(settings), settings } };
+	} catch (error) {
+		return errorEnvelope(error);
 	}
 }
 
-async function getMcpApiEndpoint( profile: string | undefined, path: string ): Promise<CliEnvelope> {
+async function getMcpApiEndpoint(profile: string | undefined, path: string): Promise<CliEnvelope> {
 	try {
-		return await getEndpoint( profile, normalizeMcpApiGetPath( path ) );
-	} catch ( error ) {
-		return errorEnvelope( error );
+		return await getEndpoint(profile, normalizeMcpApiGetPath(path));
+	} catch (error) {
+		return errorEnvelope(error);
 	}
 }
 
@@ -148,75 +277,77 @@ async function getEndpoint(
 	query: Record<string, unknown> = {}
 ): Promise<CliEnvelope> {
 	try {
-		const context = await createContext( { profile } );
-		const data = await context.client.request( { method: 'GET', path, query } );
-		return { ok: true, data, meta: { profile: context.profile.name, site: context.profile.siteUrl } };
-	} catch ( error ) {
-		return errorEnvelope( error );
+		const context = await createContext({ profile });
+		const data = await context.client.request({ method: 'GET', path, query });
+		return {
+			ok: true,
+			data,
+			meta: { profile: context.profile.name, site: context.profile.siteUrl },
+		};
+	} catch (error) {
+		return errorEnvelope(error);
 	}
 }
 
-async function doctor( profile?: string ): Promise<CliEnvelope> {
+async function doctor(profile?: string): Promise<CliEnvelope> {
 	try {
-		const context = await createContext( { profile } );
-		const settings = await context.client.request( { method: 'GET', path: '/wc/v3/payments/settings' } );
-		const mode = classifyMode( settings as Record<string, unknown> );
+		const context = await createContext({ profile });
+		const result = await runDoctorChecks(context);
 		return {
 			ok: true,
 			data: {
 				profile: context.profile.name,
-				mode,
-				checks: [
-					{ name: 'profile', status: 'pass', message: context.profile.name },
-					{ name: 'site_url', status: 'pass', message: context.profile.siteUrl },
-					{ name: 'auth', status: 'pass', message: 'Credentials accepted.' },
-					{ name: 'mode', status: 'pass', message: mode },
-				],
+				site: context.profile.siteUrl,
+				mode: result.mode,
+				summary: result.summary,
+				checks: result.checks,
 			},
 		};
-	} catch ( error ) {
-		return errorEnvelope( error );
+	} catch (error) {
+		return errorEnvelope(error);
 	}
 }
 
-function buildListQuery( args: { page?: number; limit?: number } ): Record<string, number> {
+function buildListQuery(args: { page?: number; limit?: number }): Record<string, number> {
 	return {
-		...( args.page ? { page: args.page } : {} ),
-		...( args.limit ? { pagesize: args.limit } : {} ),
+		...(args.page ? { page: args.page } : {}),
+		...(args.limit ? { pagesize: args.limit } : {}),
 	};
 }
 
-function normalizeMcpApiGetPath( path: string ): string {
-	const normalized = normalizeRestPath( path );
-	if ( ! normalized.startsWith( '/wc/v3/payments' ) ) {
-		throw new CliError( {
+function normalizeMcpApiGetPath(path: string): string {
+	const normalized = normalizeRestPath(path);
+	if (!normalized.startsWith('/wc/v3/payments')) {
+		throw new CliError({
 			code: 'mcp_path_not_allowed',
 			message: 'MCP api_get is limited to WooPayments REST paths under /wc/v3/payments.',
 			status: 2,
-		} );
+		});
 	}
 	return normalized;
 }
 
-function textResult( envelope: CliEnvelope ) {
+function textResult(envelope: CliEnvelope) {
 	return {
 		content: [
 			{
 				type: 'text' as const,
-				text: JSON.stringify( envelope, null, 2 ),
+				text: JSON.stringify(envelope, null, 2),
 			},
 		],
 	};
 }
 
-function errorEnvelope( error: unknown ): CliEnvelope {
-	if ( error && typeof error === 'object' && 'code' in error && 'message' in error ) {
+function errorEnvelope(error: unknown): CliEnvelope {
+	if (error && typeof error === 'object' && 'code' in error && 'message' in error) {
 		return {
 			ok: false,
 			error: {
-				code: String( error.code ),
-				message: String( error.message ),
-				...( 'status' in error && typeof error.status === 'number' ? { status: error.status } : {} ),
+				code: String(error.code),
+				message: String(error.message),
+				...('status' in error && typeof error.status === 'number'
+					? { status: error.status }
+					: {}),
 			},
 		};
 	}
@@ -225,7 +356,7 @@ function errorEnvelope( error: unknown ): CliEnvelope {
 		ok: false,
 		error: {
 			code: 'unexpected_error',
-			message: error instanceof Error ? error.message : String( error ),
+			message: error instanceof Error ? error.message : String(error),
 		},
 	};
 }

@@ -3,27 +3,76 @@ import { buildProgram } from '../src/app.js';
 import { getConfigDir } from '../src/core/config.js';
 import { getToolRegistry } from '../src/tools/registry.js';
 
-describe( 'buildProgram', () => {
-	it( 'creates the wcpay command', () => {
+describe('buildProgram', () => {
+	it('creates the wcpay command', () => {
 		const program = buildProgram();
-		expect( program.name() ).toBe( 'wcpay' );
-		expect( program.commands.map( ( command ) => command.name() ) ).toContain( 'tools' );
-		expect( program.commands.map( ( command ) => command.name() ) ).toContain( 'login' );
-	} );
-} );
+		expect(program.name()).toBe('wcpay');
+		expect(program.commands.map((command) => command.name())).toContain('tools');
+		expect(program.commands.map((command) => command.name())).toContain('login');
+	});
 
-describe( 'config paths', () => {
-	it( 'uses WCPAY_HOME when provided', () => {
-		expect( getConfigDir( { WCPAY_HOME: '/tmp/wcpay-test' } as NodeJS.ProcessEnv ) ).toBe( '/tmp/wcpay-test' );
-	} );
-} );
+	it('registers read and write authorization subcommands', () => {
+		const authorizations = buildProgram().commands.find(
+			(command) => command.name() === 'authorizations'
+		);
+		expect(authorizations?.commands.map((command) => command.name()).sort()).toEqual([
+			'cancel',
+			'capture',
+			'get',
+			'list',
+			'summary',
+		]);
+	});
 
-describe( 'tool registry', () => {
-	it( 'contains MCP-ready read tools and classified write tools', () => {
+	it('registers summary and overview subcommands', () => {
+		const program = buildProgram();
+		const subcommands = (name: string) =>
+			program.commands
+				.find((command) => command.name() === name)
+				?.commands.map((command) => command.name());
+		expect(subcommands('transactions')).toContain('summary');
+		expect(subcommands('deposits')).toContain('overview');
+		expect(subcommands('disputes')).toContain('summary');
+	});
+
+	it('registers the timeline command', () => {
+		const names = buildProgram().commands.map((command) => command.name());
+		expect(names).toContain('timeline');
+	});
+
+	it('registers the disputes close write subcommand', () => {
+		const disputes = buildProgram().commands.find((command) => command.name() === 'disputes');
+		expect(disputes?.commands.map((command) => command.name())).toContain('close');
+	});
+
+	it('registers payment-intents and orders commands', () => {
+		const names = buildProgram().commands.map((command) => command.name());
+		expect(names).toContain('payment-intents');
+		expect(names).toContain('orders');
+	});
+
+	it('exposes global --verbose and --timeout options', () => {
+		const program = buildProgram();
+		const flags = program.options.map((option) => option.flags);
+		expect(flags).toContain('--verbose');
+		expect(flags).toContain('--timeout <seconds>');
+	});
+});
+
+describe('config paths', () => {
+	it('uses WCPAY_HOME when provided', () => {
+		expect(getConfigDir({ WCPAY_HOME: '/tmp/wcpay-test' } as NodeJS.ProcessEnv)).toBe(
+			'/tmp/wcpay-test'
+		);
+	});
+});
+
+describe('tool registry', () => {
+	it('contains MCP-ready read tools and classified write tools', () => {
 		const tools = getToolRegistry();
-		expect( tools.length ).toBeGreaterThan( 0 );
-		expect( tools.filter( ( tool ) => tool.mcp ).every( ( tool ) => tool.safety === 'read' ) ).toBe( true );
-		expect( tools.some( ( tool ) => tool.name === 'wcpay_get_mode' ) ).toBe( true );
-		expect( tools.some( ( tool ) => tool.safety === 'test_mode_write' ) ).toBe( true );
-	} );
-} );
+		expect(tools.length).toBeGreaterThan(0);
+		expect(tools.filter((tool) => tool.mcp).every((tool) => tool.safety === 'read')).toBe(true);
+		expect(tools.some((tool) => tool.name === 'wcpay_get_mode')).toBe(true);
+		expect(tools.some((tool) => tool.safety === 'test_mode_write')).toBe(true);
+	});
+});

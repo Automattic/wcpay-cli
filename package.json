@@ -29,7 +29,7 @@
 		"clean": "node -e \"require('node:fs').rmSync('dist', { recursive: true, force: true })\"",
 		"build": "npm run clean && tsc -p tsconfig.build.json && node -e \"require('node:fs').chmodSync('dist/cli.js', 0o755)\"",
 		"dev": "tsx src/cli.ts",
-		"lint": "tsc -p tsconfig.json --noEmit",
+		"lint": "tsc -p tsconfig.json --noEmit && eslint .",
 		"docs:generate": "tsx scripts/generate-command-reference.ts",
 		"docs:assets": "tsx scripts/render-doc-assets.ts",
 		"docs:check": "tsx scripts/generate-command-reference.ts --check",
@@ -41,10 +41,12 @@
 		"install:smoke:release": "node scripts/smoke-github-install.cjs https://github.com/Automattic/wcpay-cli/releases/download/v$npm_package_version/automattic-wcpay-cli-$npm_package_version.tgz $npm_package_version",
 		"test": "vitest run",
 		"test:watch": "vitest",
-		"check": "npm run lint && npm run docs:check && npm run release:check && npm run test && npm run site:build && npm run build && npm run install:smoke",
+		"test:coverage": "vitest run --coverage",
+		"check": "npm run lint && npm run format:check && npm run docs:check && npm run release:check && npm run test && npm run site:build && npm run build && npm run install:smoke",
 		"pack:release": "npm run build && npm pack",
 		"pack:dry-run": "npm pack --dry-run",
-		"format": "prettier --write ."
+		"format": "prettier --write .",
+		"format:check": "prettier --check ."
 	},
 	"keywords": [
 		"woocommerce",
@@ -71,11 +73,16 @@
 		"zod": "^3.23.8"
 	},
 	"devDependencies": {
+		"@eslint/js": "9.39.4",
 		"@types/node": "^22.10.2",
+		"@vitest/coverage-v8": "4.1.7",
+		"eslint": "9.39.4",
+		"globals": "17.6.0",
 		"husky": "9.1.7",
 		"prettier": "^3.4.2",
 		"tsx": "^4.19.2",
 		"typescript": "^5.7.2",
+		"typescript-eslint": "8.61.0",
 		"vitepress": "1.6.4",
 		"vitest": "4.1.7"
 	}

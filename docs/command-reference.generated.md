@@ -146,10 +146,19 @@ Options:
 - `--since <date>` — Filter after this date.
 - `--until <date>` — Filter before this date.
 - `--status <status>` — Filter status.
+- `--all` — Fetch all pages (up to 10 pages of 100 records).
 
 ## `deposits get <id>`
 
 Get a deposit.
+
+Options:
+
+- `--json` — Emit JSON output.
+
+## `deposits overview [options]`
+
+Show deposit and balance overview across currencies.
 
 Options:
 
@@ -171,6 +180,7 @@ Options:
 - `--since <date>` — Filter after this date.
 - `--until <date>` — Filter before this date.
 - `--status <status>` — Filter status.
+- `--all` — Fetch all pages (up to 10 pages of 100 records).
 
 ## `disputes get <id>`
 
@@ -178,6 +188,24 @@ Get a dispute.
 
 Options:
 
+- `--json` — Emit JSON output.
+
+## `disputes summary [options]`
+
+Show dispute counts by status.
+
+Options:
+
+- `--json` — Emit JSON output.
+
+## `disputes close <id>`
+
+Close (concede) a test/dev-mode dispute.
+
+Options:
+
+- `--dry-run` — Print the request without sending it.
+- `--yes` — Confirm the test/dev-mode write.
 - `--json` — Emit JSON output.
 
 ## `transactions [command]`
@@ -196,6 +224,17 @@ Options:
 - `--since <date>` — Filter after this date.
 - `--until <date>` — Filter before this date.
 - `--currency <code>` — Filter store currency.
+- `--all` — Fetch all pages (up to 10 pages of 100 records).
+
+## `transactions summary [options]`
+
+Show transaction totals for the selected filters.
+
+Options:
+
+- `--json` — Emit JSON output.
+- `--since <date>` — Filter after this date.
+- `--until <date>` — Filter before this date.
 
 ## `transactions get <id>`
 
@@ -217,27 +256,60 @@ Options:
 
 - `--json` — Emit JSON output.
 
-## `refunds [command]`
+## `payment-intents [command]`
 
-Create and inspect refunds.
+Inspect WooPayments payment intents.
 
-## `refunds create [options]`
+## `payment-intents get <id>`
 
-Create a test/dev-mode refund.
+Get a payment intent.
 
 Options:
 
-- `--order <order-id>` — WooCommerce order ID.
-- `--charge <charge-id>` — WooPayments/Stripe charge ID.
-- `--amount <minor-units>` — Refund amount in minor currency units.
-- `--reason <reason>` — Refund reason: requested_by_customer, duplicate, or fraudulent.
-- `--dry-run` — Print the request without sending it.
-- `--yes` — Confirm the test/dev-mode write.
+- `--json` — Emit JSON output.
+
+## `timeline [command]`
+
+Inspect WooPayments payment timelines.
+
+## `timeline get <intent-id>`
+
+Get the event timeline for a payment intent.
+
+Options:
+
 - `--json` — Emit JSON output.
 
 ## `authorizations [command]`
 
-Capture or cancel test/dev-mode authorizations.
+Inspect and manage uncaptured payment authorizations.
+
+## `authorizations list [options]`
+
+List uncaptured authorizations.
+
+Options:
+
+- `--json` — Emit JSON output.
+- `--page <page>` — Page number.
+- `--limit <limit>` — Page size.
+- `--all` — Fetch all pages (up to 10 pages of 100 records).
+
+## `authorizations get <payment-intent-id>`
+
+Get an authorization by payment intent ID.
+
+Options:
+
+- `--json` — Emit JSON output.
+
+## `authorizations summary [options]`
+
+Show a summary of uncaptured authorizations.
+
+Options:
+
+- `--json` — Emit JSON output.
 
 ## `authorizations capture [options]`
 
@@ -259,6 +331,36 @@ Options:
 
 - `--order <order-id>` — WooCommerce order ID.
 - `--intent <payment-intent-id>` — Payment intent ID.
+- `--dry-run` — Print the request without sending it.
+- `--yes` — Confirm the test/dev-mode write.
+- `--json` — Emit JSON output.
+
+## `orders [command]`
+
+Inspect WooCommerce orders and their WooPayments metadata.
+
+## `orders get <order-id>`
+
+Get an order with its WooPayments payment metadata.
+
+Options:
+
+- `--json` — Emit JSON output.
+
+## `refunds [command]`
+
+Create and inspect refunds.
+
+## `refunds create [options]`
+
+Create a test/dev-mode refund.
+
+Options:
+
+- `--order <order-id>` — WooCommerce order ID.
+- `--charge <charge-id>` — WooPayments/Stripe charge ID.
+- `--amount <minor-units>` — Refund amount in minor currency units.
+- `--reason <reason>` — Refund reason: requested_by_customer, duplicate, or fraudulent.
 - `--dry-run` — Print the request without sending it.
 - `--yes` — Confirm the test/dev-mode write.
 - `--json` — Emit JSON output.
@@ -315,7 +417,7 @@ Run the WooPayments CLI MCP server over stdio.
 
 ## `completions <shell>`
 
-Print shell completion script for bash or zsh.
+Print shell completion script for bash, zsh, or fish.
 
 Options:
 

@@ -1,5 +1,8 @@
+import { mkdtemp } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { resolveCredentials } from '../src/core/context.js';
+import { clientOptionsFromEnv, createContext, resolveCredentials } from '../src/core/context.js';
 import type { Profile } from '../src/core/profiles.js';
 import type { SecretStore } from '../src/core/secrets.js';
 
@@ -18,22 +21,88 @@ const emptyStore: SecretStore = {
 	delete: async () => undefined,
 };
 
-describe( 'resolveCredentials', () => {
-	it( 'validates credentials from environment variables', async () => {
+describe('resolveCredentials', () => {
+	it('validates credentials from environment variables', async () => {
 		await expect(
-			resolveCredentials( profile, emptyStore, {
+			resolveCredentials(profile, emptyStore, {
 				WCPAY_CONSUMER_KEY: 'not-a-key',
 				WCPAY_CONSUMER_SECRET: 'cs_test',
-			} as NodeJS.ProcessEnv )
-		).rejects.toMatchObject( { code: 'invalid_consumer_key' } );
-	} );
+			} as NodeJS.ProcessEnv)
+		).rejects.toMatchObject({ code: 'invalid_consumer_key' });
+	});
 
-	it( 'returns credentials from environment variables before reading the secret store', async () => {
+	it('returns credentials from environment variables before reading the secret store', async () => {
 		await expect(
-			resolveCredentials( profile, emptyStore, {
+			resolveCredentials(profile, emptyStore, {
 				WCPAY_CONSUMER_KEY: 'ck_test',
 				WCPAY_CONSUMER_SECRET: 'cs_test',
-			} as NodeJS.ProcessEnv )
-		).resolves.toEqual( { consumerKey: 'ck_test', consumerSecret: 'cs_test' } );
-	} );
-} );
+			} as NodeJS.ProcessEnv)
+		).resolves.toEqual({ consumerKey: 'ck_test', consumerSecret: 'cs_test' });
+	});
+});
+
+describe('clientOptionsFromEnv', () => {
+	it('reads WCPAY_TIMEOUT in seconds', () => {
+		expect(clientOptionsFromEnv({ WCPAY_TIMEOUT: '60' } as NodeJS.ProcessEnv).timeoutMs).toBe(
+			60000
+		);
+	});
+
+	it('defaults to no override', () => {
+		expect(clientOptionsFromEnv({} as NodeJS.ProcessEnv).timeoutMs).toBeUndefined();
+	});
+
+	it('rejects a non-numeric WCPAY_TIMEOUT', () => {
+		expect(() => clientOptionsFromEnv({ WCPAY_TIMEOUT: 'soon' } as NodeJS.ProcessEnv)).toThrow(
+			'WCPAY_TIMEOUT'
+		);
+	});
+
+	it('enables the debug logger with WCPAY_DEBUG', () => {
+		expect(clientOptionsFromEnv({ WCPAY_DEBUG: '1' } as NodeJS.ProcessEnv).logger).toBeTypeOf(
+			'function'
+		);
+		expect(clientOptionsFromEnv({} as NodeJS.ProcessEnv).logger).toBeUndefined();
+	});
+});
+
+describe('createContext with WCPAY_SITE_URL', () => {
+	async function envHome(): Promise<string> {
+		return mkdtemp(join(tmpdir(), 'wcpay-cli-context-'));
+	}
+
+	it('builds an ephemeral env profile', async () => {
+		const context = await createContext({}, {
+			WCPAY_HOME: await envHome(),
+			WCPAY_KEYRING: '0',
+			WCPAY_SITE_URL: 'https://example.com',
+			WCPAY_CONSUMER_KEY: 'ck_test',
+			WCPAY_CONSUMER_SECRET: 'cs_test',
+		} as NodeJS.ProcessEnv);
+
+		expect(context.profile.name).toBe('env');
+		expect(context.profile.siteUrl).toBe('https://example.com');
+	});
+
+	it('requires consumer credentials alongside WCPAY_SITE_URL', async () => {
+		await expect(
+			createContext({}, {
+				WCPAY_HOME: await envHome(),
+				WCPAY_KEYRING: '0',
+				WCPAY_SITE_URL: 'https://example.com',
+			} as NodeJS.ProcessEnv)
+		).rejects.toMatchObject({ code: 'missing_env_credentials' });
+	});
+
+	it('prefers an explicitly requested profile', async () => {
+		await expect(
+			createContext({ profile: 'missing' }, {
+				WCPAY_HOME: await envHome(),
+				WCPAY_KEYRING: '0',
+				WCPAY_SITE_URL: 'https://example.com',
+				WCPAY_CONSUMER_KEY: 'ck_test',
+				WCPAY_CONSUMER_SECRET: 'cs_test',
+			} as NodeJS.ProcessEnv)
+		).rejects.toMatchObject({ code: 'profile_not_found' });
+	});
+});

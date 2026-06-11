@@ -27,15 +27,16 @@ export const TEST_PAYMENT_SCENARIOS: Record<string, TestPaymentScenario> = {
 	},
 	dispute: {
 		alias: 'dispute',
-		description: 'Dispute-oriented test scenario. Exact dispute creation depends on downstream Stripe/WooPayments support.',
+		description:
+			'Dispute-oriented test scenario. Exact dispute creation depends on downstream Stripe/WooPayments support.',
 		paymentMethod: 'pm_card_createDispute',
 	},
 };
 
-export function getTestPaymentScenario( alias: string ): TestPaymentScenario | undefined {
-	return TEST_PAYMENT_SCENARIOS[ alias ];
+export function getTestPaymentScenario(alias: string): TestPaymentScenario | undefined {
+	return TEST_PAYMENT_SCENARIOS[alias];
 }
 
 export function listTestPaymentScenarios(): TestPaymentScenario[] {
-	return Object.values( TEST_PAYMENT_SCENARIOS );
+	return Object.values(TEST_PAYMENT_SCENARIOS);
 }

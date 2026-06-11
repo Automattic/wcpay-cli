@@ -1,0 +1,9 @@
+dist/
+coverage/
+node_modules/
+package-lock.json
+docs/.vitepress/cache/
+docs/.vitepress/dist/
+docs/command-reference.generated.md
+docs/assets/
+.github/repo-gardener.yml

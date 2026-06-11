@@ -42,6 +42,12 @@ wcpay deposits get <id>
 wcpay disputes list
 wcpay disputes get <id>
 wcpay charges get <id>
+wcpay timeline get <payment-intent-id>
+wcpay transactions summary
+wcpay deposits overview
+wcpay disputes summary
+wcpay payment-intents get <payment-intent-id>
+wcpay orders get <order-id>
 ```
 
 Typical flow:
@@ -50,6 +56,11 @@ Typical flow:
 2. Copy the ID from the output.
 3. Use the matching `get` command for details.
 4. Add `--json` when piping the result into another tool.
+
+Use `wcpay timeline get <payment-intent-id>` to see the full event history (authorization,
+capture, fees, deposit) for one payment.
+
+Pass `--all` to a list command to fetch every page (capped at 1,000 records) instead of one page.
 
 ## Make a direct REST API request
 
@@ -75,12 +86,21 @@ Write-capable commands are guarded in two ways:
 - they run only when WooPayments is in test/dev mode;
 - they require `--dry-run` or `--yes`.
 
+Find uncaptured authorizations first (read-only, safe on live stores):
+
+```bash
+wcpay authorizations list
+wcpay authorizations get <payment-intent-id>
+wcpay authorizations summary
+```
+
 Preview what would happen:
 
 ```bash
 wcpay refunds create --order <id> --amount <minor-units> --dry-run
 wcpay authorizations capture --order <id> --intent <payment-intent-id> --dry-run
 wcpay authorizations cancel --order <id> --intent <payment-intent-id> --dry-run
+wcpay disputes close <dispute-id> --dry-run
 ```
 
 Send the request in test/dev mode:
@@ -112,3 +132,16 @@ wcpay mcp
 ```
 
 `wcpay mcp` starts a local stdio MCP server with read-only tools for agents. It uses the same profiles, credentials, and safety model as the CLI.
+
+## Exit codes
+
+`wcpay` exits with a category code so scripts and agents can branch on failure type:
+
+| Code | Meaning                                           |
+| ---- | ------------------------------------------------- |
+| `0`  | Success                                           |
+| `1`  | Unexpected error                                  |
+| `2`  | Usage error (bad flags, missing profile or input) |
+| `3`  | Authentication failed (HTTP 401/403)              |
+| `4`  | Store API request failed (other HTTP errors)      |
+| `5`  | Write blocked because WooPayments is in live mode |

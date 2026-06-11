@@ -4,7 +4,8 @@ import { ENV_CONSUMER_KEY, ENV_CONSUMER_SECRET } from '../core/config.js';
 import { createContext } from '../core/context.js';
 import { CliError } from '../core/errors.js';
 import { classifyMode } from '../core/mode.js';
-import { printError, printSuccess } from '../core/output.js';
+import { printSuccess } from '../core/output.js';
+import { isJsonOutput, runCommandAction } from './common.js';
 import {
 	deriveProfileName,
 	normalizeSiteUrl,
@@ -72,8 +73,8 @@ export function registerLoginCommand(program: Command): void {
 		.option('--yes', 'Continue even if a profile is already configured.')
 		.option('--json', 'Emit JSON output.')
 		.action(async (options: LoginOptions) => {
-			const json = isJson(program, options);
-			await runAction({ json }, async () => {
+			const json = isJsonOutput(program, options);
+			await runCommandAction({ json }, async () => {
 				const pretty = isPrettyTerminal() && !json;
 				if (pretty) {
 					printLoginIntro();
@@ -89,8 +90,8 @@ export function registerLoginCommand(program: Command): void {
 					allowInsecureLocal: options.allowInsecureLocal,
 					interactive: pretty,
 				});
-				let consumerKey = options.consumerKey ?? process.env[ENV_CONSUMER_KEY];
-				let consumerSecret = options.consumerSecret ?? process.env[ENV_CONSUMER_SECRET];
+				const consumerKey = options.consumerKey ?? process.env[ENV_CONSUMER_KEY];
+				const consumerSecret = options.consumerSecret ?? process.env[ENV_CONSUMER_SECRET];
 
 				if (!consumerKey || !consumerSecret) {
 					writeApiKeyInstructions(normalized.siteUrl, json);
@@ -138,7 +139,7 @@ export function registerAuthCommands(program: Command): void {
 			const globalOptions = program.opts() as { json?: boolean };
 			const site = options.site;
 			const json = Boolean(options.json || globalOptions.json);
-			await runAction({ json }, async () => {
+			await runCommandAction({ json }, async () => {
 				const consumerKey = options.consumerKey ?? process.env[ENV_CONSUMER_KEY];
 				const consumerSecret = options.consumerSecret ?? process.env[ENV_CONSUMER_SECRET];
 
@@ -179,8 +180,8 @@ export function registerAuthCommands(program: Command): void {
 		.description('List site profiles.')
 		.option('--json', 'Emit JSON output.')
 		.action(async (options: { json?: boolean }) => {
-			const json = isJson(program, options);
-			await runAction({ json }, async () => {
+			const json = isJsonOutput(program, options);
+			await runCommandAction({ json }, async () => {
 				const store = new ProfileStore();
 				const config = await store.getConfig();
 				const profiles = (await store.list()).map(publicProfile);
@@ -205,8 +206,8 @@ export function registerAuthCommands(program: Command): void {
 		.description('Remove a site profile.')
 		.option('--json', 'Emit JSON output.')
 		.action(async (name: string, options: { json?: boolean }) => {
-			const json = isJson(program, options);
-			await runAction({ json }, async () => {
+			const json = isJsonOutput(program, options);
+			await runCommandAction({ json }, async () => {
 				const store = new ProfileStore();
 				const secretStore = createSecretStore();
 				const removed = await store.remove(name);
@@ -225,8 +226,8 @@ export function registerAuthCommands(program: Command): void {
 		.description('Validate credentials for a profile.')
 		.option('--json', 'Emit JSON output.')
 		.action(async (profileName: string | undefined, options: { json?: boolean }) => {
-			const json = isJson(program, options);
-			await runAction({ json }, async () => {
+			const json = isJsonOutput(program, options);
+			await runCommandAction({ json }, async () => {
 				const context = await createContext({ profile: profileName });
 				const settings = await context.client.request({
 					method: 'GET',
@@ -254,8 +255,8 @@ export function registerProfileCommands(program: Command): void {
 		.description('Set the default profile.')
 		.option('--json', 'Emit JSON output.')
 		.action(async (name: string, options: { json?: boolean }) => {
-			const json = isJson(program, options);
-			await runAction({ json }, async () => {
+			const json = isJsonOutput(program, options);
+			await runCommandAction({ json }, async () => {
 				const store = new ProfileStore();
 				const selected = await store.setDefault(name);
 				printSuccess(
@@ -275,8 +276,8 @@ export function registerWhoamiCommand(program: Command): void {
 		.description('Show authenticated site/user context.')
 		.option('--json', 'Emit JSON output.')
 		.action(async (options: { json?: boolean }) => {
-			const json = isJson(program, options);
-			await runAction({ json }, async () => {
+			const json = isJsonOutput(program, options);
+			await runCommandAction({ json }, async () => {
 				const context = await createContext({ profile: program.opts().profile });
 				printSuccess(
 					{ profile: publicProfile(context.profile) },
@@ -460,20 +461,7 @@ function writeApiKeyInstructions(siteUrl: string, json: boolean): void {
 	);
 }
 
-function isJson(program: Command, options: { json?: boolean }): boolean {
-	return Boolean(options.json || (program.opts() as { json?: boolean }).json);
-}
-
 function publicProfile(profile: Profile): Omit<Profile, 'auth'> {
 	const { auth: _auth, ...rest } = profile;
 	return rest;
-}
-
-async function runAction(options: { json?: boolean }, action: () => Promise<void>): Promise<void> {
-	try {
-		await action();
-	} catch (error) {
-		printError(error, { json: options.json });
-		process.exitCode = 1;
-	}
 }

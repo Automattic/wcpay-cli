@@ -63,10 +63,25 @@ This does not revoke the WooCommerce REST API key on the store. Remove unused AP
 
 ## Environment variables
 
-| Variable                | Purpose                                      |
-| ----------------------- | -------------------------------------------- |
+| Variable                | Purpose                                         |
+| ----------------------- | ----------------------------------------------- |
 | `WCPAY_PROFILE`         | Override default profile for one shell/session. |
-| `WCPAY_CONSUMER_KEY`    | Consumer key used by `auth add` or `login`.  |
-| `WCPAY_CONSUMER_SECRET` | Consumer secret used by `auth add` or `login`. |
-| `WCPAY_HOME`            | Override config directory.                   |
-| `WCPAY_KEYRING=0`       | Use file-backed secret storage.              |
+| `WCPAY_CONSUMER_KEY`    | Consumer key used by `auth add` or `login`.     |
+| `WCPAY_CONSUMER_SECRET` | Consumer secret used by `auth add` or `login`.  |
+| `WCPAY_HOME`            | Override config directory.                      |
+| `WCPAY_KEYRING=0`       | Use file-backed secret storage.                 |
+
+## Environment-based auth (CI and containers)
+
+For ephemeral environments you can skip profiles entirely:
+
+```bash
+export WCPAY_SITE_URL=https://store.example
+export WCPAY_CONSUMER_KEY=ck_...
+export WCPAY_CONSUMER_SECRET=cs_...
+wcpay doctor --json
+```
+
+When `WCPAY_SITE_URL` is set and no profile is selected (no `--profile`, no `WCPAY_PROFILE`),
+the CLI uses an ephemeral profile named `env`. Nothing is written to disk or the keychain. An
+explicitly requested profile always takes precedence.

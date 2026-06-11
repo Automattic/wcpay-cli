@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { assertReviewedWritePath, isReviewedWritePath } from '../src/commands/api.js';
 import {
 	buildRestUrl,
@@ -8,6 +8,7 @@ import {
 } from '../src/core/api.js';
 import { parseApiFields, parseAssignment, parseAssignments } from '../src/core/fields.js';
 import type { Profile } from '../src/core/profiles.js';
+import { VERSION } from '../src/core/version.js';
 
 const profile: Profile = {
 	name: 'local',
@@ -17,6 +18,10 @@ const profile: Profile = {
 	createdAt: '2026-05-20T00:00:00.000Z',
 	updatedAt: '2026-05-20T00:00:00.000Z',
 };
+
+function jsonResponse(data: unknown, status = 200): Response {
+	return new Response(JSON.stringify(data), { status });
+}
 
 describe('normalizeRestPath', () => {
 	it('normalizes wp-json paths', () => {
@@ -92,6 +97,16 @@ describe('RestClient', () => {
 		expect(request.headers.Authorization).toMatch(/^Basic /);
 	});
 
+	it('sends a versioned User-Agent header', () => {
+		const client = new RestClient(
+			{ ...profile, siteUrl: 'https://example.com' },
+			{ consumerKey: 'ck_test', consumerSecret: 'cs_test' }
+		);
+
+		const request = client.resolve({ method: 'GET', path: '/wc/v3/payments/accounts' });
+		expect(request.headers['User-Agent']).toBe(`wcpay-cli/${VERSION}`);
+	});
+
 	it('uses OAuth query parameters for HTTP sites', () => {
 		const client = new RestClient(
 			profile,
@@ -110,6 +125,138 @@ describe('RestClient', () => {
 		expect(url.searchParams.get('oauth_consumer_key')).toBe('ck_test');
 		expect(url.searchParams.get('oauth_signature_method')).toBe('HMAC-SHA256');
 		expect(url.searchParams.get('oauth_signature')).toBeTruthy();
+	});
+});
+
+describe('RestClient transport errors', () => {
+	const httpsProfile = { ...profile, siteUrl: 'https://example.com' };
+	const credentials = { consumerKey: 'ck_test', consumerSecret: 'cs_test' };
+
+	it('passes an abort signal to fetch', async () => {
+		const fetchMock = vi.fn<typeof fetch>().mockResolvedValue(jsonResponse({}));
+		const client = new RestClient(httpsProfile, credentials, { fetch: fetchMock });
+
+		await client.request({ method: 'GET', path: '/wc/v3/payments/accounts' });
+
+		expect(fetchMock.mock.calls[0][1]?.signal).toBeInstanceOf(AbortSignal);
+	});
+
+	it('maps fetch timeouts to a request_timeout error', async () => {
+		const fetchMock = vi
+			.fn<typeof fetch>()
+			.mockRejectedValue(new DOMException('The operation timed out.', 'TimeoutError'));
+		const client = new RestClient(httpsProfile, credentials, {
+			fetch: fetchMock,
+			timeoutMs: 5,
+			retries: 0,
+		});
+
+		await expect(
+			client.request({ method: 'GET', path: '/wc/v3/payments/accounts' })
+		).rejects.toMatchObject({ code: 'request_timeout', status: 408 });
+	});
+
+	it('maps network failures to a network_error', async () => {
+		const fetchMock = vi.fn<typeof fetch>().mockRejectedValue(new TypeError('fetch failed'));
+		const client = new RestClient(httpsProfile, credentials, {
+			fetch: fetchMock,
+			retries: 0,
+		});
+
+		await expect(
+			client.request({ method: 'GET', path: '/wc/v3/payments/accounts' })
+		).rejects.toMatchObject({ code: 'network_error' });
+	});
+});
+
+describe('RestClient retries', () => {
+	const httpsProfile = { ...profile, siteUrl: 'https://example.com' };
+	const credentials = { consumerKey: 'ck_test', consumerSecret: 'cs_test' };
+	const noSleep = async () => {};
+
+	it('retries reads on retryable statuses', async () => {
+		const fetchMock = vi
+			.fn<typeof fetch>()
+			.mockResolvedValueOnce(jsonResponse({ message: 'busy' }, 503))
+			.mockResolvedValueOnce(jsonResponse({ fine: true }));
+		const client = new RestClient(httpsProfile, credentials, {
+			fetch: fetchMock,
+			sleep: noSleep,
+		});
+
+		await expect(
+			client.request({ method: 'GET', path: '/wc/v3/payments/accounts' })
+		).resolves.toEqual({ fine: true });
+		expect(fetchMock).toHaveBeenCalledTimes(2);
+	});
+
+	it('retries reads on thrown transport errors', async () => {
+		const fetchMock = vi
+			.fn<typeof fetch>()
+			.mockRejectedValueOnce(new TypeError('fetch failed'))
+			.mockResolvedValueOnce(jsonResponse({ fine: true }));
+		const client = new RestClient(httpsProfile, credentials, {
+			fetch: fetchMock,
+			sleep: noSleep,
+		});
+
+		await expect(
+			client.request({ method: 'GET', path: '/wc/v3/payments/accounts' })
+		).resolves.toEqual({ fine: true });
+	});
+
+	it('gives up after exhausting retries', async () => {
+		const fetchMock = vi
+			.fn<typeof fetch>()
+			.mockResolvedValue(jsonResponse({ message: 'busy' }, 503));
+		const client = new RestClient(httpsProfile, credentials, {
+			fetch: fetchMock,
+			sleep: noSleep,
+		});
+
+		await expect(
+			client.request({ method: 'GET', path: '/wc/v3/payments/accounts' })
+		).rejects.toMatchObject({ status: 503 });
+		expect(fetchMock).toHaveBeenCalledTimes(3);
+	});
+
+	it('never retries writes', async () => {
+		const fetchMock = vi
+			.fn<typeof fetch>()
+			.mockResolvedValue(jsonResponse({ message: 'busy' }, 503));
+		const client = new RestClient(httpsProfile, credentials, {
+			fetch: fetchMock,
+			sleep: noSleep,
+		});
+
+		await expect(
+			client.request({ method: 'POST', path: '/wc/v3/payments/refund', body: {} })
+		).rejects.toMatchObject({ status: 503 });
+		expect(fetchMock).toHaveBeenCalledTimes(1);
+	});
+});
+
+describe('RestClient logging', () => {
+	it('logs redacted request and response lines', async () => {
+		const lines: string[] = [];
+		const fetchMock = vi.fn<typeof fetch>().mockResolvedValue(jsonResponse({}));
+		const client = new RestClient(
+			profile,
+			{ consumerKey: 'ck_test', consumerSecret: 'cs_test' },
+			{
+				fetch: fetchMock,
+				logger: (line) => lines.push(line),
+				nonce: () => 'nonce',
+				timestamp: () => 123,
+			}
+		);
+
+		await client.request({ method: 'GET', path: '/wc/v3/payments/accounts' });
+
+		expect(lines).toHaveLength(2);
+		expect(lines[0]).toContain('> GET');
+		expect(lines[0]).not.toContain('ck_test');
+		expect(lines[1]).toMatch(/^< 200 .*\(\d+ms\)$/);
 	});
 });
 

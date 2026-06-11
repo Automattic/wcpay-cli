@@ -18,20 +18,30 @@ Curated commands use WooPayments/WooCommerce REST endpoints directly. The CLI au
 
 ## Initial candidates
 
-| Method | Path                                                      | Purpose                     | Classification           | Notes                                                      |
-| ------ | --------------------------------------------------------- | --------------------------- | ------------------------ | ---------------------------------------------------------- |
-| GET    | `/wc/v3/payments/settings`                                | Settings and mode flags     | `allowlisted-read`       | Used for mode guard.                                       |
-| GET    | `/wc/v3/payments/accounts`                                | Account status              | `allowlisted-read`       | Used by `account status`.                                  |
-| GET    | `/wc/v3/payments/transactions`                            | List transactions           | `allowlisted-read`       | Implemented; uses `page`, `pagesize`, date filters.        |
-| GET    | `/wc/v3/payments/deposits`                                | List deposits               | `allowlisted-read`       | Implemented.                                               |
-| GET    | `/wc/v3/payments/deposits/{deposit_id}`                   | Get deposit                 | `allowlisted-read`       | Implemented.                                               |
-| GET    | `/wc/v3/payments/disputes`                                | List disputes               | `allowlisted-read`       | Implemented.                                               |
-| GET    | `/wc/v3/payments/disputes/{dispute_id}`                   | Get dispute                 | `allowlisted-read`       | Implemented.                                               |
-| GET    | `/wc/v3/payments/charges/{charge_id}`                     | Get charge                  | `allowlisted-read`       | Implemented.                                               |
-| POST   | `/wc/v3/payments/refund`                                  | Create refund               | `allowlisted-test-write` | Implemented with mode guard and `--yes`/`--dry-run`.       |
-| POST   | `/wc/v3/payments/orders/{order_id}/capture_authorization` | Capture authorization       | `allowlisted-test-write` | Implemented with mode guard and `--yes`/`--dry-run`.       |
-| POST   | `/wc/v3/payments/orders/{order_id}/cancel_authorization`  | Cancel authorization        | `allowlisted-test-write` | Implemented with mode guard and `--yes`/`--dry-run`.       |
-| POST   | `/wc/v3/orders`                                           | Create test order           | `allowlisted-test-write` | Implemented; requires existing product and test/dev mode.  |
+| Method | Path                                                      | Purpose                 | Classification           | Notes                                                     |
+| ------ | --------------------------------------------------------- | ----------------------- | ------------------------ | --------------------------------------------------------- |
+| GET    | `/wc/v3/payments/settings`                                | Settings and mode flags | `allowlisted-read`       | Used for mode guard.                                      |
+| GET    | `/wc/v3/payments/accounts`                                | Account status          | `allowlisted-read`       | Used by `account status`.                                 |
+| GET    | `/wc/v3/payments/transactions`                            | List transactions       | `allowlisted-read`       | Implemented; uses `page`, `pagesize`, date filters.       |
+| GET    | `/wc/v3/payments/deposits`                                | List deposits           | `allowlisted-read`       | Implemented.                                              |
+| GET    | `/wc/v3/payments/deposits/{deposit_id}`                   | Get deposit             | `allowlisted-read`       | Implemented.                                              |
+| GET    | `/wc/v3/payments/disputes`                                | List disputes           | `allowlisted-read`       | Implemented.                                              |
+| GET    | `/wc/v3/payments/disputes/{dispute_id}`                   | Get dispute             | `allowlisted-read`       | Implemented.                                              |
+| GET    | `/wc/v3/payments/charges/{charge_id}`                     | Get charge              | `allowlisted-read`       | Implemented.                                              |
+| GET    | `/wc/v3/payments/timeline/{intention_id}`                 | Payment event timeline  | `allowlisted-read`       | Implemented as `wcpay timeline get`.                      |
+| GET    | `/wc/v3/payments/authorizations`                          | List authorizations     | `allowlisted-read`       | Implemented as `wcpay authorizations list`.               |
+| GET    | `/wc/v3/payments/authorizations/{payment_intent_id}`      | Get authorization       | `allowlisted-read`       | Implemented as `wcpay authorizations get`.                |
+| GET    | `/wc/v3/payments/authorizations/summary`                  | Authorizations summary  | `allowlisted-read`       | Implemented as `wcpay authorizations summary`.            |
+| GET    | `/wc/v3/payments/transactions/summary`                    | Transaction totals      | `allowlisted-read`       | Implemented as `wcpay transactions summary`.              |
+| GET    | `/wc/v3/payments/deposits/overview-all`                   | Deposits overview       | `allowlisted-read`       | Implemented as `wcpay deposits overview`.                 |
+| GET    | `/wc/v3/payments/disputes/summary`                        | Dispute status counts   | `allowlisted-read`       | Implemented as `wcpay disputes summary`.                  |
+| GET    | `/wc/v3/payments/payment_intents/{payment_intent_id}`     | Get payment intent      | `allowlisted-read`       | Implemented as `wcpay payment-intents get`.               |
+| GET    | `/wc/v3/orders/{order_id}`                                | Get order w/ wcpay meta | `allowlisted-read`       | Implemented as `wcpay orders get`.                        |
+| POST   | `/wc/v3/payments/refund`                                  | Create refund           | `allowlisted-test-write` | Implemented with mode guard and `--yes`/`--dry-run`.      |
+| POST   | `/wc/v3/payments/orders/{order_id}/capture_authorization` | Capture authorization   | `allowlisted-test-write` | Implemented with mode guard and `--yes`/`--dry-run`.      |
+| POST   | `/wc/v3/payments/orders/{order_id}/cancel_authorization`  | Cancel authorization    | `allowlisted-test-write` | Implemented with mode guard and `--yes`/`--dry-run`.      |
+| POST   | `/wc/v3/orders`                                           | Create test order       | `allowlisted-test-write` | Implemented; requires existing product and test/dev mode. |
+| POST   | `/wc/v3/payments/disputes/{dispute_id}/close`             | Close (concede) dispute | `allowlisted-test-write` | Implemented with mode guard and `--yes`/`--dry-run`.      |
 
 ## Review checklist
 

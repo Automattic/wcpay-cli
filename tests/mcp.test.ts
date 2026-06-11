@@ -4,7 +4,9 @@ import { join } from 'node:path';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { InMemoryTransport } from '@modelcontextprotocol/sdk/inMemory.js';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { VERSION } from '../src/core/version.js';
 import { createMcpServer } from '../src/mcp/server.js';
+import { getToolRegistry } from '../src/tools/registry.js';
 
 describe('createMcpServer', () => {
 	beforeEach(async () => {
@@ -20,6 +22,13 @@ describe('createMcpServer', () => {
 		expect(server.isConnected()).toBe(false);
 	});
 
+	it('reports the CLI version as the MCP server version', async () => {
+		const { client, server } = await connectTestClient();
+		expect(client.getServerVersion()?.version).toBe(VERSION);
+		await client.close();
+		await server.close();
+	});
+
 	it('lists registered read tools', async () => {
 		const { client, server } = await connectTestClient();
 		const tools = await client.listTools();
@@ -27,6 +36,21 @@ describe('createMcpServer', () => {
 		expect(tools.tools.map((tool) => tool.name)).toContain('wcpay_get_mode');
 		expect(tools.tools.map((tool) => tool.name)).toContain('wcpay_api_get');
 		expect(tools.tools.every((tool) => tool.annotations?.readOnlyHint)).toBe(true);
+
+		await client.close();
+		await server.close();
+	});
+
+	it('registers exactly the registry tools marked mcp', async () => {
+		const { client, server } = await connectTestClient();
+		const tools = await client.listTools();
+
+		const serverNames = tools.tools.map((tool) => tool.name).sort();
+		const registryNames = getToolRegistry()
+			.filter((tool) => tool.mcp)
+			.map((tool) => tool.name)
+			.sort();
+		expect(serverNames).toEqual(registryNames);
 
 		await client.close();
 		await server.close();

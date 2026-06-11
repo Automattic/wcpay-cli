@@ -1,21 +1,15 @@
 import { Command } from 'commander';
 import { createContext } from '../core/context.js';
-import { formatList } from '../core/format.js';
-import { printError, printSuccess } from '../core/output.js';
-import { parseOptionalPositiveInteger } from '../core/validation.js';
-
-interface ListOptions {
-	json?: boolean;
-	page?: string;
-	limit?: string;
-	since?: string;
-	until?: string;
-	status?: string;
-	currency?: string;
-}
+import { amountColumn, formatKeyValue, formatList } from '../core/format.js';
+import { printSuccess } from '../core/output.js';
+import type { RestClient } from '../core/api.js';
+import { fetchAllPages } from '../core/pagination.js';
+import { isJsonOutput, runCommandAction } from './common.js';
+import { sendGuardedWrite } from './guarded-write.js';
+import { assertAllFlagUsage, buildListQuery, type ListOptions } from './list-options.js';
 
 export function registerResourceCommands(program: Command): void {
-	registerListGetResource(program, {
+	const deposits = registerListGetResource(program, {
 		name: 'deposits',
 		description: 'Inspect WooPayments deposits.',
 		basePath: '/wc/v3/payments/deposits',
@@ -23,13 +17,74 @@ export function registerResourceCommands(program: Command): void {
 		listDefaultSort: 'date',
 	});
 
-	registerListGetResource(program, {
+	const disputes = registerListGetResource(program, {
 		name: 'disputes',
 		description: 'Inspect WooPayments disputes.',
 		basePath: '/wc/v3/payments/disputes',
 		idName: 'dispute',
 		listDefaultSort: 'created',
 	});
+
+	deposits
+		.command('overview')
+		.description('Show deposit and balance overview across currencies.')
+		.option('--json', 'Emit JSON output.')
+		.action(async (options: { json?: boolean }) => {
+			const json = isJsonOutput(program, options);
+			await runCommandAction({ json }, async () => {
+				const context = await createContext({ profile: program.opts().profile });
+				const data = await context.client.request({
+					method: 'GET',
+					path: '/wc/v3/payments/deposits/overview-all',
+				});
+				printSuccess(data, { json });
+			});
+		});
+
+	disputes
+		.command('summary')
+		.description('Show dispute counts by status.')
+		.option('--json', 'Emit JSON output.')
+		.action(async (options: { json?: boolean }) => {
+			const json = isJsonOutput(program, options);
+			await runCommandAction({ json }, async () => {
+				const context = await createContext({ profile: program.opts().profile });
+				const data = await context.client.request({
+					method: 'GET',
+					path: '/wc/v3/payments/disputes/summary',
+				});
+				printSuccess(data, {
+					json,
+					human:
+						data && typeof data === 'object'
+							? formatKeyValue(data as Record<string, unknown>)
+							: String(data),
+				});
+			});
+		});
+
+	disputes
+		.command('close <id>')
+		.description('Close (concede) a test/dev-mode dispute.')
+		.option('--dry-run', 'Print the request without sending it.')
+		.option('--yes', 'Confirm the test/dev-mode write.')
+		.option('--json', 'Emit JSON output.')
+		.action(
+			async (id: string, options: { dryRun?: boolean; yes?: boolean; json?: boolean }) => {
+				const json = isJsonOutput(program, options);
+				await runCommandAction({ json }, async () => {
+					await sendGuardedWrite(program, {
+						path: `/wc/v3/payments/disputes/${encodeURIComponent(id)}/close`,
+						body: {},
+						dryRun: Boolean(
+							options.dryRun || (program.opts() as { dryRun?: boolean }).dryRun
+						),
+						yes: Boolean(options.yes || (program.opts() as { yes?: boolean }).yes),
+						json,
+					});
+				});
+			}
+		);
 
 	const transactions = program
 		.command('transactions')
@@ -43,17 +98,53 @@ export function registerResourceCommands(program: Command): void {
 		.option('--since <date>', 'Filter after this date.')
 		.option('--until <date>', 'Filter before this date.')
 		.option('--currency <code>', 'Filter store currency.')
+		.option('--all', 'Fetch all pages (up to 10 pages of 100 records).')
 		.action(async (options: ListOptions) => {
-			await runResourceAction({ json: isJson(program, options) }, async () => {
+			await runCommandAction({ json: isJsonOutput(program, options) }, async () => {
+				assertAllFlagUsage(options);
+				const context = await createContext({ profile: program.opts().profile });
+				const query = buildListQuery(options, { currencyParam: 'store_currency_is' });
+				const data = options.all
+					? await collectAllPages(context, '/wc/v3/payments/transactions', query)
+					: await context.client.request({
+							method: 'GET',
+							path: '/wc/v3/payments/transactions',
+							query,
+						});
+				printSuccess(data, {
+					json: isJsonOutput(program, options),
+					human: formatList(
+						data,
+						['transaction_id', 'date', 'type', 'amount', 'currency'],
+						{
+							amount: amountColumn,
+						}
+					),
+				});
+			});
+		});
+
+	transactions
+		.command('summary')
+		.description('Show transaction totals for the selected filters.')
+		.option('--json', 'Emit JSON output.')
+		.option('--since <date>', 'Filter after this date.')
+		.option('--until <date>', 'Filter before this date.')
+		.action(async (options: ListOptions) => {
+			const json = isJsonOutput(program, options);
+			await runCommandAction({ json }, async () => {
 				const context = await createContext({ profile: program.opts().profile });
 				const data = await context.client.request({
 					method: 'GET',
-					path: '/wc/v3/payments/transactions',
-					query: buildListQuery(options, { currencyParam: 'store_currency_is' }),
+					path: '/wc/v3/payments/transactions/summary',
+					query: buildListQuery(options),
 				});
 				printSuccess(data, {
-					json: isJson(program, options),
-					human: formatList(data, ['id', 'date', 'type', 'amount', 'currency']),
+					json,
+					human:
+						data && typeof data === 'object'
+							? formatKeyValue(data as Record<string, unknown>)
+							: String(data),
 				});
 			});
 		});
@@ -63,7 +154,7 @@ export function registerResourceCommands(program: Command): void {
 		.description('Get a transaction by ID if the store endpoint supports it.')
 		.option('--json', 'Emit JSON output.')
 		.action(async (id: string, options: { json?: boolean }) => {
-			await runResourceAction({ json: isJson(program, options) }, async () => {
+			await runCommandAction({ json: isJsonOutput(program, options) }, async () => {
 				// WooPayments currently exposes transaction list and summaries, but not a stable
 				// single-transaction REST route. Keep the command explicit rather than guessing.
 				printSuccess(
@@ -73,7 +164,7 @@ export function registerResourceCommands(program: Command): void {
 						reason: 'No reviewed single-transaction WooPayments REST endpoint is allowlisted yet.',
 					},
 					{
-						json: isJson(program, options),
+						json: isJsonOutput(program, options),
 						human: 'No allowlisted single-transaction endpoint yet.',
 					}
 				);
@@ -86,13 +177,51 @@ export function registerResourceCommands(program: Command): void {
 		.description('Get a charge.')
 		.option('--json', 'Emit JSON output.')
 		.action(async (id: string, options: { json?: boolean }) => {
-			await runResourceAction({ json: isJson(program, options) }, async () => {
+			await runCommandAction({ json: isJsonOutput(program, options) }, async () => {
 				const context = await createContext({ profile: program.opts().profile });
 				const data = await context.client.request({
 					method: 'GET',
 					path: `/wc/v3/payments/charges/${encodeURIComponent(id)}`,
 				});
-				printSuccess(data, { json: isJson(program, options) });
+				printSuccess(data, { json: isJsonOutput(program, options) });
+			});
+		});
+
+	const paymentIntents = program
+		.command('payment-intents')
+		.description('Inspect WooPayments payment intents.');
+	paymentIntents
+		.command('get <id>')
+		.description('Get a payment intent.')
+		.option('--json', 'Emit JSON output.')
+		.action(async (id: string, options: { json?: boolean }) => {
+			const json = isJsonOutput(program, options);
+			await runCommandAction({ json }, async () => {
+				const context = await createContext({ profile: program.opts().profile });
+				const data = await context.client.request({
+					method: 'GET',
+					path: `/wc/v3/payments/payment_intents/${encodeURIComponent(id)}`,
+				});
+				printSuccess(data, { json });
+			});
+		});
+
+	const timeline = program
+		.command('timeline')
+		.description('Inspect WooPayments payment timelines.');
+	timeline
+		.command('get <intent-id>')
+		.description('Get the event timeline for a payment intent.')
+		.option('--json', 'Emit JSON output.')
+		.action(async (intentId: string, options: { json?: boolean }) => {
+			const json = isJsonOutput(program, options);
+			await runCommandAction({ json }, async () => {
+				const context = await createContext({ profile: program.opts().profile });
+				const data = await context.client.request({
+					method: 'GET',
+					path: `/wc/v3/payments/timeline/${encodeURIComponent(intentId)}`,
+				});
+				printSuccess(data, { json });
 			});
 		});
 }
@@ -106,7 +235,7 @@ function registerListGetResource(
 		idName: string;
 		listDefaultSort?: string;
 	}
-): void {
+): Command {
 	const command = program.command(resource.name).description(resource.description);
 
 	command
@@ -118,17 +247,24 @@ function registerListGetResource(
 		.option('--since <date>', 'Filter after this date.')
 		.option('--until <date>', 'Filter before this date.')
 		.option('--status <status>', 'Filter status.')
+		.option('--all', 'Fetch all pages (up to 10 pages of 100 records).')
 		.action(async (options: ListOptions) => {
-			await runResourceAction({ json: isJson(program, options) }, async () => {
+			await runCommandAction({ json: isJsonOutput(program, options) }, async () => {
+				assertAllFlagUsage(options);
 				const context = await createContext({ profile: program.opts().profile });
-				const data = await context.client.request({
-					method: 'GET',
-					path: resource.basePath,
-					query: buildListQuery(options, { defaultSort: resource.listDefaultSort }),
-				});
+				const query = buildListQuery(options, { defaultSort: resource.listDefaultSort });
+				const data = options.all
+					? await collectAllPages(context, resource.basePath, query)
+					: await context.client.request({
+							method: 'GET',
+							path: resource.basePath,
+							query,
+						});
 				printSuccess(data, {
-					json: isJson(program, options),
-					human: formatList(data, columnsForResource(resource.name)),
+					json: isJsonOutput(program, options),
+					human: formatList(data, columnsForResource(resource.name), {
+						amount: amountColumn,
+					}),
 				});
 			});
 		});
@@ -138,15 +274,31 @@ function registerListGetResource(
 		.description(`Get a ${resource.idName}.`)
 		.option('--json', 'Emit JSON output.')
 		.action(async (id: string, options: { json?: boolean }) => {
-			await runResourceAction({ json: isJson(program, options) }, async () => {
+			await runCommandAction({ json: isJsonOutput(program, options) }, async () => {
 				const context = await createContext({ profile: program.opts().profile });
 				const data = await context.client.request({
 					method: 'GET',
 					path: `${resource.basePath}/${encodeURIComponent(id)}`,
 				});
-				printSuccess(data, { json: isJson(program, options) });
+				printSuccess(data, { json: isJsonOutput(program, options) });
 			});
 		});
+
+	return command;
+}
+
+export async function collectAllPages(
+	context: { client: RestClient },
+	path: string,
+	query: Record<string, string | number>
+): Promise<{ data: Array<Record<string, unknown>> }> {
+	const result = await fetchAllPages(context.client, path, query);
+	if (result.truncated) {
+		process.stderr.write(
+			`Stopped after ${result.pages} pages (${result.data.length} records). Refine filters to see the rest.\n`
+		);
+	}
+	return { data: result.data };
 }
 
 function columnsForResource(resourceName: string): string[] {
@@ -157,52 +309,4 @@ function columnsForResource(resourceName: string): string[] {
 		return ['id', 'created', 'amount', 'currency', 'status'];
 	}
 	return ['id'];
-}
-
-function buildListQuery(
-	options: ListOptions,
-	config: { currencyParam?: string; defaultSort?: string } = {}
-): Record<string, string | number> {
-	const query: Record<string, string | number> = {};
-	const page = parseOptionalPositiveInteger(options.page, '--page');
-	const limit = parseOptionalPositiveInteger(options.limit, '--limit');
-	if (page) {
-		query.page = page;
-	}
-	if (limit) {
-		query.pagesize = limit;
-	}
-	if (options.since) {
-		query.date_after = options.since;
-	}
-	if (options.until) {
-		query.date_before = options.until;
-	}
-	if (options.status) {
-		query.status_is = options.status;
-	}
-	if (config.defaultSort) {
-		query.sort = config.defaultSort;
-		query.direction = 'desc';
-	}
-	if (options.currency && config.currencyParam) {
-		query[config.currencyParam] = options.currency.toLowerCase();
-	}
-	return query;
-}
-
-function isJson(program: Command, options: { json?: boolean }): boolean {
-	return Boolean(options.json || (program.opts() as { json?: boolean }).json);
-}
-
-async function runResourceAction(
-	options: { json?: boolean },
-	action: () => Promise<void>
-): Promise<void> {
-	try {
-		await action();
-	} catch (error) {
-		printError(error, { json: options.json });
-		process.exitCode = 1;
-	}
 }

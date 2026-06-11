@@ -2,7 +2,8 @@ import { defineConfig } from 'vitepress';
 
 export default defineConfig({
 	title: 'WooPayments CLI',
-	description: 'Standalone CLI for WooPayments developers, support, agencies, scripts, and agents.',
+	description:
+		'Standalone CLI for WooPayments developers, support, agencies, scripts, and agents.',
 	base: '/wcpay-cli/',
 	cleanUrls: true,
 	lastUpdated: true,
@@ -38,9 +39,7 @@ export default defineConfig({
 				],
 			},
 		],
-		socialLinks: [
-			{ icon: 'github', link: 'https://github.com/Automattic/wcpay-cli' },
-		],
+		socialLinks: [{ icon: 'github', link: 'https://github.com/Automattic/wcpay-cli' }],
 		search: {
 			provider: 'local',
 		},
