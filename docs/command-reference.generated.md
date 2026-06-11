@@ -155,6 +155,14 @@ Options:
 
 - `--json` — Emit JSON output.
 
+## `deposits overview [options]`
+
+Show deposit and balance overview across currencies.
+
+Options:
+
+- `--json` — Emit JSON output.
+
 ## `disputes [command]`
 
 Inspect WooPayments disputes.
@@ -180,6 +188,14 @@ Options:
 
 - `--json` — Emit JSON output.
 
+## `disputes summary [options]`
+
+Show dispute counts by status.
+
+Options:
+
+- `--json` — Emit JSON output.
+
 ## `transactions [command]`
 
 Inspect WooPayments transactions.
@@ -196,6 +212,16 @@ Options:
 - `--since <date>` — Filter after this date.
 - `--until <date>` — Filter before this date.
 - `--currency <code>` — Filter store currency.
+
+## `transactions summary [options]`
+
+Show transaction totals for the selected filters.
+
+Options:
+
+- `--json` — Emit JSON output.
+- `--since <date>` — Filter after this date.
+- `--until <date>` — Filter before this date.
 
 ## `transactions get <id>`
 

@@ -24,6 +24,17 @@ describe('buildProgram', () => {
 		]);
 	});
 
+	it('registers summary and overview subcommands', () => {
+		const program = buildProgram();
+		const subcommands = (name: string) =>
+			program.commands
+				.find((command) => command.name() === name)
+				?.commands.map((command) => command.name());
+		expect(subcommands('transactions')).toContain('summary');
+		expect(subcommands('deposits')).toContain('overview');
+		expect(subcommands('disputes')).toContain('summary');
+	});
+
 	it('registers the timeline command', () => {
 		const names = buildProgram().commands.map((command) => command.name());
 		expect(names).toContain('timeline');

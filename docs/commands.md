@@ -43,6 +43,9 @@ wcpay disputes list
 wcpay disputes get <id>
 wcpay charges get <id>
 wcpay timeline get <payment-intent-id>
+wcpay transactions summary
+wcpay deposits overview
+wcpay disputes summary
 ```
 
 Typical flow:

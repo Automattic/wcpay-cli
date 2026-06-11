@@ -194,6 +194,39 @@ export function createMcpServer(): McpServer {
 	);
 
 	server.registerTool(
+		'wcpay_get_transactions_summary',
+		{
+			description: 'Summarize WooPayments transactions (totals, fees, net).',
+			inputSchema: optionalProfile,
+			annotations: readOnlyAnnotations,
+		},
+		async (args) =>
+			textResult(await getEndpoint(args.profile, '/wc/v3/payments/transactions/summary'))
+	);
+
+	server.registerTool(
+		'wcpay_get_deposits_overview',
+		{
+			description: 'Show WooPayments deposit and balance overview across currencies.',
+			inputSchema: optionalProfile,
+			annotations: readOnlyAnnotations,
+		},
+		async (args) =>
+			textResult(await getEndpoint(args.profile, '/wc/v3/payments/deposits/overview-all'))
+	);
+
+	server.registerTool(
+		'wcpay_get_disputes_summary',
+		{
+			description: 'Show WooPayments dispute counts by status.',
+			inputSchema: optionalProfile,
+			annotations: readOnlyAnnotations,
+		},
+		async (args) =>
+			textResult(await getEndpoint(args.profile, '/wc/v3/payments/disputes/summary'))
+	);
+
+	server.registerTool(
 		'wcpay_api_get',
 		{
 			description: 'Make an authenticated GET request to a store REST API path.',

@@ -1,6 +1,6 @@
 import { Command } from 'commander';
 import { createContext } from '../core/context.js';
-import { formatList } from '../core/format.js';
+import { formatKeyValue, formatList } from '../core/format.js';
 import { printSuccess } from '../core/output.js';
 import { isJsonOutput, runCommandAction } from './common.js';
 import { buildListQuery, type ListOptions } from './list-options.js';
@@ -21,6 +21,44 @@ export function registerResourceCommands(program: Command): void {
 		idName: 'dispute',
 		listDefaultSort: 'created',
 	});
+
+	deposits
+		.command('overview')
+		.description('Show deposit and balance overview across currencies.')
+		.option('--json', 'Emit JSON output.')
+		.action(async (options: { json?: boolean }) => {
+			const json = isJsonOutput(program, options);
+			await runCommandAction({ json }, async () => {
+				const context = await createContext({ profile: program.opts().profile });
+				const data = await context.client.request({
+					method: 'GET',
+					path: '/wc/v3/payments/deposits/overview-all',
+				});
+				printSuccess(data, { json });
+			});
+		});
+
+	disputes
+		.command('summary')
+		.description('Show dispute counts by status.')
+		.option('--json', 'Emit JSON output.')
+		.action(async (options: { json?: boolean }) => {
+			const json = isJsonOutput(program, options);
+			await runCommandAction({ json }, async () => {
+				const context = await createContext({ profile: program.opts().profile });
+				const data = await context.client.request({
+					method: 'GET',
+					path: '/wc/v3/payments/disputes/summary',
+				});
+				printSuccess(data, {
+					json,
+					human:
+						data && typeof data === 'object'
+							? formatKeyValue(data as Record<string, unknown>)
+							: String(data),
+				});
+			});
+		});
 
 	const transactions = program
 		.command('transactions')
@@ -45,6 +83,31 @@ export function registerResourceCommands(program: Command): void {
 				printSuccess(data, {
 					json: isJsonOutput(program, options),
 					human: formatList(data, ['id', 'date', 'type', 'amount', 'currency']),
+				});
+			});
+		});
+
+	transactions
+		.command('summary')
+		.description('Show transaction totals for the selected filters.')
+		.option('--json', 'Emit JSON output.')
+		.option('--since <date>', 'Filter after this date.')
+		.option('--until <date>', 'Filter before this date.')
+		.action(async (options: ListOptions) => {
+			const json = isJsonOutput(program, options);
+			await runCommandAction({ json }, async () => {
+				const context = await createContext({ profile: program.opts().profile });
+				const data = await context.client.request({
+					method: 'GET',
+					path: '/wc/v3/payments/transactions/summary',
+					query: buildListQuery(options),
+				});
+				printSuccess(data, {
+					json,
+					human:
+						data && typeof data === 'object'
+							? formatKeyValue(data as Record<string, unknown>)
+							: String(data),
 				});
 			});
 		});

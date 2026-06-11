@@ -32,6 +32,9 @@ Curated commands use WooPayments/WooCommerce REST endpoints directly. The CLI au
 | GET    | `/wc/v3/payments/authorizations`                          | List authorizations     | `allowlisted-read`       | Implemented as `wcpay authorizations list`.               |
 | GET    | `/wc/v3/payments/authorizations/{payment_intent_id}`      | Get authorization       | `allowlisted-read`       | Implemented as `wcpay authorizations get`.                |
 | GET    | `/wc/v3/payments/authorizations/summary`                  | Authorizations summary  | `allowlisted-read`       | Implemented as `wcpay authorizations summary`.            |
+| GET    | `/wc/v3/payments/transactions/summary`                    | Transaction totals      | `allowlisted-read`       | Implemented as `wcpay transactions summary`.              |
+| GET    | `/wc/v3/payments/deposits/overview-all`                   | Deposits overview       | `allowlisted-read`       | Implemented as `wcpay deposits overview`.                 |
+| GET    | `/wc/v3/payments/disputes/summary`                        | Dispute status counts   | `allowlisted-read`       | Implemented as `wcpay disputes summary`.                  |
 | POST   | `/wc/v3/payments/refund`                                  | Create refund           | `allowlisted-test-write` | Implemented with mode guard and `--yes`/`--dry-run`.      |
 | POST   | `/wc/v3/payments/orders/{order_id}/capture_authorization` | Capture authorization   | `allowlisted-test-write` | Implemented with mode guard and `--yes`/`--dry-run`.      |
 | POST   | `/wc/v3/payments/orders/{order_id}/cancel_authorization`  | Cancel authorization    | `allowlisted-test-write` | Implemented with mode guard and `--yes`/`--dry-run`.      |
