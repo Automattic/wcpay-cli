@@ -1,5 +1,5 @@
 import type { CliEnvelope } from './types.js';
-import { CliError } from './errors.js';
+import { CliError, exitCodeForError } from './errors.js';
 
 export function printJson(envelope: CliEnvelope): void {
 	process.stdout.write(`${JSON.stringify(envelope, null, 2)}\n`);
@@ -35,6 +35,8 @@ export function printError(error: unknown, options: { json?: boolean } = {}): vo
 					message: error instanceof Error ? error.message : String(error),
 					status: 1,
 				});
+
+	process.exitCode = exitCodeForError(cliError);
 
 	if (options.json) {
 		printJson({ ok: false, error: cliError.toJSON() });

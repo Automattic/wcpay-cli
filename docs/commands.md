@@ -112,3 +112,16 @@ wcpay mcp
 ```
 
 `wcpay mcp` starts a local stdio MCP server with read-only tools for agents. It uses the same profiles, credentials, and safety model as the CLI.
+
+## Exit codes
+
+`wcpay` exits with a category code so scripts and agents can branch on failure type:
+
+| Code | Meaning                                           |
+| ---- | ------------------------------------------------- |
+| `0`  | Success                                           |
+| `1`  | Unexpected error                                  |
+| `2`  | Usage error (bad flags, missing profile or input) |
+| `3`  | Authentication failed (HTTP 401/403)              |
+| `4`  | Store API request failed (other HTTP errors)      |
+| `5`  | Write blocked because WooPayments is in live mode |

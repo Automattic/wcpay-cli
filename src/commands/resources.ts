@@ -1,7 +1,8 @@
 import { Command } from 'commander';
 import { createContext } from '../core/context.js';
 import { formatList } from '../core/format.js';
-import { printError, printSuccess } from '../core/output.js';
+import { printSuccess } from '../core/output.js';
+import { isJsonOutput, runCommandAction } from './common.js';
 import { parseOptionalPositiveInteger } from '../core/validation.js';
 
 interface ListOptions {
@@ -44,7 +45,7 @@ export function registerResourceCommands(program: Command): void {
 		.option('--until <date>', 'Filter before this date.')
 		.option('--currency <code>', 'Filter store currency.')
 		.action(async (options: ListOptions) => {
-			await runResourceAction({ json: isJson(program, options) }, async () => {
+			await runCommandAction({ json: isJsonOutput(program, options) }, async () => {
 				const context = await createContext({ profile: program.opts().profile });
 				const data = await context.client.request({
 					method: 'GET',
@@ -52,7 +53,7 @@ export function registerResourceCommands(program: Command): void {
 					query: buildListQuery(options, { currencyParam: 'store_currency_is' }),
 				});
 				printSuccess(data, {
-					json: isJson(program, options),
+					json: isJsonOutput(program, options),
 					human: formatList(data, ['id', 'date', 'type', 'amount', 'currency']),
 				});
 			});
@@ -63,7 +64,7 @@ export function registerResourceCommands(program: Command): void {
 		.description('Get a transaction by ID if the store endpoint supports it.')
 		.option('--json', 'Emit JSON output.')
 		.action(async (id: string, options: { json?: boolean }) => {
-			await runResourceAction({ json: isJson(program, options) }, async () => {
+			await runCommandAction({ json: isJsonOutput(program, options) }, async () => {
 				// WooPayments currently exposes transaction list and summaries, but not a stable
 				// single-transaction REST route. Keep the command explicit rather than guessing.
 				printSuccess(
@@ -73,7 +74,7 @@ export function registerResourceCommands(program: Command): void {
 						reason: 'No reviewed single-transaction WooPayments REST endpoint is allowlisted yet.',
 					},
 					{
-						json: isJson(program, options),
+						json: isJsonOutput(program, options),
 						human: 'No allowlisted single-transaction endpoint yet.',
 					}
 				);
@@ -86,13 +87,13 @@ export function registerResourceCommands(program: Command): void {
 		.description('Get a charge.')
 		.option('--json', 'Emit JSON output.')
 		.action(async (id: string, options: { json?: boolean }) => {
-			await runResourceAction({ json: isJson(program, options) }, async () => {
+			await runCommandAction({ json: isJsonOutput(program, options) }, async () => {
 				const context = await createContext({ profile: program.opts().profile });
 				const data = await context.client.request({
 					method: 'GET',
 					path: `/wc/v3/payments/charges/${encodeURIComponent(id)}`,
 				});
-				printSuccess(data, { json: isJson(program, options) });
+				printSuccess(data, { json: isJsonOutput(program, options) });
 			});
 		});
 }
@@ -119,7 +120,7 @@ function registerListGetResource(
 		.option('--until <date>', 'Filter before this date.')
 		.option('--status <status>', 'Filter status.')
 		.action(async (options: ListOptions) => {
-			await runResourceAction({ json: isJson(program, options) }, async () => {
+			await runCommandAction({ json: isJsonOutput(program, options) }, async () => {
 				const context = await createContext({ profile: program.opts().profile });
 				const data = await context.client.request({
 					method: 'GET',
@@ -127,7 +128,7 @@ function registerListGetResource(
 					query: buildListQuery(options, { defaultSort: resource.listDefaultSort }),
 				});
 				printSuccess(data, {
-					json: isJson(program, options),
+					json: isJsonOutput(program, options),
 					human: formatList(data, columnsForResource(resource.name)),
 				});
 			});
@@ -138,13 +139,13 @@ function registerListGetResource(
 		.description(`Get a ${resource.idName}.`)
 		.option('--json', 'Emit JSON output.')
 		.action(async (id: string, options: { json?: boolean }) => {
-			await runResourceAction({ json: isJson(program, options) }, async () => {
+			await runCommandAction({ json: isJsonOutput(program, options) }, async () => {
 				const context = await createContext({ profile: program.opts().profile });
 				const data = await context.client.request({
 					method: 'GET',
 					path: `${resource.basePath}/${encodeURIComponent(id)}`,
 				});
-				printSuccess(data, { json: isJson(program, options) });
+				printSuccess(data, { json: isJsonOutput(program, options) });
 			});
 		});
 }
@@ -189,20 +190,4 @@ function buildListQuery(
 		query[config.currencyParam] = options.currency.toLowerCase();
 	}
 	return query;
-}
-
-function isJson(program: Command, options: { json?: boolean }): boolean {
-	return Boolean(options.json || (program.opts() as { json?: boolean }).json);
-}
-
-async function runResourceAction(
-	options: { json?: boolean },
-	action: () => Promise<void>
-): Promise<void> {
-	try {
-		await action();
-	} catch (error) {
-		printError(error, { json: options.json });
-		process.exitCode = 1;
-	}
 }

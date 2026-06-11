@@ -81,7 +81,6 @@ export function registerApiCommand(program: Command): void {
 					printSuccess(data, { json: options.json });
 				} catch (error) {
 					printError(error, { json: options.json });
-					process.exitCode = 1;
 				}
 			}
 		);

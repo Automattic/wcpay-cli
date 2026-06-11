@@ -8,8 +8,9 @@ import {
 } from '../core/doctor.js';
 import { classifyMode, ModeService } from '../core/mode.js';
 import { formatKeyValue } from '../core/format.js';
-import { printError, printSuccess } from '../core/output.js';
+import { printSuccess } from '../core/output.js';
 import { formatCommand, formatMuted } from '../core/ux.js';
+import { isJsonOutput, runCommandAction } from './common.js';
 
 export function registerReadCommands(program: Command): void {
 	program
@@ -17,8 +18,8 @@ export function registerReadCommands(program: Command): void {
 		.description('Show WooPayments mode for the selected profile.')
 		.option('--json', 'Emit JSON output.')
 		.action(async (options: { json?: boolean }) => {
-			const json = isJson(program, options);
-			await runReadAction({ json }, async () => {
+			const json = isJsonOutput(program, options);
+			await runCommandAction({ json }, async () => {
 				const context = await createContext({ profile: program.opts().profile });
 				const modeService = new ModeService(context.client);
 				const settings = await modeService.getSettings();
@@ -39,8 +40,8 @@ export function registerReadCommands(program: Command): void {
 		.option('--json', 'Emit JSON output.')
 		.option('--redact', 'Redact sensitive values.', true)
 		.action(async (options: { json?: boolean }) => {
-			const json = isJson(program, options);
-			await runReadAction({ json }, async () => {
+			const json = isJsonOutput(program, options);
+			await runCommandAction({ json }, async () => {
 				const context = await createContext({ profile: program.opts().profile });
 				const { mode, checks, summary } = await runDoctorChecks(context);
 				printSuccess(
@@ -67,8 +68,8 @@ export function registerReadCommands(program: Command): void {
 		.description('Show account status.')
 		.option('--json', 'Emit JSON output.')
 		.action(async (options: { json?: boolean }) => {
-			const json = isJson(program, options);
-			await runReadAction({ json }, async () => {
+			const json = isJsonOutput(program, options);
+			await runCommandAction({ json }, async () => {
 				const context = await createContext({ profile: program.opts().profile });
 				const data = await context.client.request({
 					method: 'GET',
@@ -87,8 +88,8 @@ export function registerReadCommands(program: Command): void {
 		.description('Show settings.')
 		.option('--json', 'Emit JSON output.')
 		.action(async (options: { json?: boolean }) => {
-			const json = isJson(program, options);
-			await runReadAction({ json }, async () => {
+			const json = isJsonOutput(program, options);
+			await runCommandAction({ json }, async () => {
 				const context = await createContext({ profile: program.opts().profile });
 				const data = await context.client.request({
 					method: 'GET',
@@ -207,20 +208,4 @@ function getNested(object: Record<string, unknown>, path: string[]): unknown {
 		current = (current as Record<string, unknown>)[key];
 	}
 	return current;
-}
-
-function isJson(program: Command, options: { json?: boolean }): boolean {
-	return Boolean(options.json || (program.opts() as { json?: boolean }).json);
-}
-
-async function runReadAction(
-	options: { json?: boolean },
-	action: () => Promise<void>
-): Promise<void> {
-	try {
-		await action();
-	} catch (error) {
-		printError(error, { json: options.json });
-		process.exitCode = 1;
-	}
 }

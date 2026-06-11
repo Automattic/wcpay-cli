@@ -11,7 +11,6 @@ export function registerMcpCommand(program: Command): void {
 				await runMcpServer();
 			} catch (error) {
 				printError(error, { json: false });
-				process.exitCode = 1;
 			}
 		});
 }
