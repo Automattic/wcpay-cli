@@ -148,6 +148,7 @@ describe('RestClient transport errors', () => {
 		const client = new RestClient(httpsProfile, credentials, {
 			fetch: fetchMock,
 			timeoutMs: 5,
+			retries: 0,
 		});
 
 		await expect(
@@ -157,11 +158,81 @@ describe('RestClient transport errors', () => {
 
 	it('maps network failures to a network_error', async () => {
 		const fetchMock = vi.fn<typeof fetch>().mockRejectedValue(new TypeError('fetch failed'));
-		const client = new RestClient(httpsProfile, credentials, { fetch: fetchMock });
+		const client = new RestClient(httpsProfile, credentials, {
+			fetch: fetchMock,
+			retries: 0,
+		});
 
 		await expect(
 			client.request({ method: 'GET', path: '/wc/v3/payments/accounts' })
 		).rejects.toMatchObject({ code: 'network_error' });
+	});
+});
+
+describe('RestClient retries', () => {
+	const httpsProfile = { ...profile, siteUrl: 'https://example.com' };
+	const credentials = { consumerKey: 'ck_test', consumerSecret: 'cs_test' };
+	const noSleep = async () => {};
+
+	it('retries reads on retryable statuses', async () => {
+		const fetchMock = vi
+			.fn<typeof fetch>()
+			.mockResolvedValueOnce(jsonResponse({ message: 'busy' }, 503))
+			.mockResolvedValueOnce(jsonResponse({ fine: true }));
+		const client = new RestClient(httpsProfile, credentials, {
+			fetch: fetchMock,
+			sleep: noSleep,
+		});
+
+		await expect(
+			client.request({ method: 'GET', path: '/wc/v3/payments/accounts' })
+		).resolves.toEqual({ fine: true });
+		expect(fetchMock).toHaveBeenCalledTimes(2);
+	});
+
+	it('retries reads on thrown transport errors', async () => {
+		const fetchMock = vi
+			.fn<typeof fetch>()
+			.mockRejectedValueOnce(new TypeError('fetch failed'))
+			.mockResolvedValueOnce(jsonResponse({ fine: true }));
+		const client = new RestClient(httpsProfile, credentials, {
+			fetch: fetchMock,
+			sleep: noSleep,
+		});
+
+		await expect(
+			client.request({ method: 'GET', path: '/wc/v3/payments/accounts' })
+		).resolves.toEqual({ fine: true });
+	});
+
+	it('gives up after exhausting retries', async () => {
+		const fetchMock = vi
+			.fn<typeof fetch>()
+			.mockResolvedValue(jsonResponse({ message: 'busy' }, 503));
+		const client = new RestClient(httpsProfile, credentials, {
+			fetch: fetchMock,
+			sleep: noSleep,
+		});
+
+		await expect(
+			client.request({ method: 'GET', path: '/wc/v3/payments/accounts' })
+		).rejects.toMatchObject({ status: 503 });
+		expect(fetchMock).toHaveBeenCalledTimes(3);
+	});
+
+	it('never retries writes', async () => {
+		const fetchMock = vi
+			.fn<typeof fetch>()
+			.mockResolvedValue(jsonResponse({ message: 'busy' }, 503));
+		const client = new RestClient(httpsProfile, credentials, {
+			fetch: fetchMock,
+			sleep: noSleep,
+		});
+
+		await expect(
+			client.request({ method: 'POST', path: '/wc/v3/payments/refund', body: {} })
+		).rejects.toMatchObject({ status: 503 });
+		expect(fetchMock).toHaveBeenCalledTimes(1);
 	});
 });
 

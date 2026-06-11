@@ -25,11 +25,16 @@ export interface ResolvedRestRequest {
 
 export const DEFAULT_TIMEOUT_MS = 30_000;
 
+const RETRYABLE_STATUSES = new Set([429, 502, 503, 504]);
+const RETRY_DELAYS_MS = [250, 1000];
+
 export interface RestClientOptions {
 	fetch?: typeof fetch;
 	nonce?: () => string;
 	timestamp?: () => number;
 	timeoutMs?: number;
+	retries?: number;
+	sleep?: (ms: number) => Promise<void>;
 }
 
 export class RestClient {
@@ -37,6 +42,8 @@ export class RestClient {
 	private readonly nonce: () => string;
 	private readonly timestamp: () => number;
 	private readonly timeoutMs: number;
+	private readonly retries: number;
+	private readonly sleep: (ms: number) => Promise<void>;
 
 	public constructor(
 		private readonly profile: Profile,
@@ -47,6 +54,9 @@ export class RestClient {
 		this.nonce = options.nonce ?? (() => randomBytes(16).toString('hex'));
 		this.timestamp = options.timestamp ?? (() => Math.floor(Date.now() / 1000));
 		this.timeoutMs = options.timeoutMs ?? DEFAULT_TIMEOUT_MS;
+		this.retries = options.retries ?? 2;
+		this.sleep =
+			options.sleep ?? ((ms: number) => new Promise((resolve) => setTimeout(resolve, ms)));
 	}
 
 	public resolve(request: RestRequest): ResolvedRestRequest {
@@ -77,32 +87,50 @@ export class RestClient {
 
 	public async request<T = unknown>(request: RestRequest): Promise<T> {
 		const resolved = this.resolve(request);
-		let response: Response;
-		try {
-			response = await this.fetchImpl(resolved.url, {
-				method: resolved.method,
-				headers: resolved.headers,
-				body: resolved.body,
-				signal: AbortSignal.timeout(this.timeoutMs),
-			});
-		} catch (error) {
-			throw toTransportError(error, resolved, this.timeoutMs);
+		const maxAttempts = isReadMethod(resolved.method) ? this.retries + 1 : 1;
+
+		for (let attempt = 1; ; attempt += 1) {
+			let response: Response;
+			try {
+				response = await this.fetchImpl(resolved.url, {
+					method: resolved.method,
+					headers: resolved.headers,
+					body: resolved.body,
+					signal: AbortSignal.timeout(this.timeoutMs),
+				});
+			} catch (error) {
+				if (attempt < maxAttempts) {
+					await this.sleep(retryDelay(attempt));
+					continue;
+				}
+				throw toTransportError(error, resolved, this.timeoutMs);
+			}
+
+			if (RETRYABLE_STATUSES.has(response.status) && attempt < maxAttempts) {
+				await this.sleep(retryDelay(attempt));
+				continue;
+			}
+
+			const text = await response.text();
+			const data = parseResponseBody(text);
+
+			if (!response.ok) {
+				throw new CliError({
+					code: getErrorCode(data) ?? 'rest_request_failed',
+					message:
+						getErrorMessage(data) ?? `Request failed with status ${response.status}.`,
+					status: response.status,
+					details: data,
+				});
+			}
+
+			return data as T;
 		}
-
-		const text = await response.text();
-		const data = parseResponseBody(text);
-
-		if (!response.ok) {
-			throw new CliError({
-				code: getErrorCode(data) ?? 'rest_request_failed',
-				message: getErrorMessage(data) ?? `Request failed with status ${response.status}.`,
-				status: response.status,
-				details: data,
-			});
-		}
-
-		return data as T;
 	}
+}
+
+function retryDelay(attempt: number): number {
+	return RETRY_DELAYS_MS[Math.min(attempt - 1, RETRY_DELAYS_MS.length - 1)];
 }
 
 function toTransportError(
