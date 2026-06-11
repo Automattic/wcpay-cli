@@ -39,6 +39,20 @@ WCPAY_HOME=$TMP_WCPAY_HOME WCPAY_KEYRING=0 node dist/cli.js refunds create --ord
 WCPAY_HOME=$TMP_WCPAY_HOME WCPAY_KEYRING=0 node dist/cli.js test order create --product 123 --quantity 1 --dry-run --json
 ```
 
+## 2026-06-11 result
+
+Validated the 0.2.4 release branch against the local WooPayments site (dev mode, connected test account), using a temporary read/write key and an isolated `WCPAY_HOME`:
+
+- `doctor` passed 7/7 checks; `mode` returned `dev`.
+- `transactions list` rendered live data with currency-formatted amounts (`£125.00`, `-£30.00`); `transactions summary`, `disputes summary`, `deposits overview`, and `authorizations list/summary` all returned live data.
+- `orders get` surfaced `_intent_id`, `_charge_id`, and `_wcpay_mode` from order meta.
+- `--verbose` printed redacted request/response lines; consumer key and OAuth signature redacted.
+- `refunds create --dry-run` and `disputes close --dry-run` passed the dev-mode guard and printed redacted requests without sending.
+- Exit codes observed live: `2` (missing `--yes`/`--dry-run`, `--all` with `--page`, unsupported completion shell), `3` (invalid consumer key), `4` (API errors and `--timeout 1` against an unreachable host).
+- `WCPAY_SITE_URL`/`WCPAY_CONSUMER_KEY`/`WCPAY_CONSUMER_SECRET` env auth worked with no stored profile.
+- MCP over stdio reported the package version, listed all 16 tools, and `wcpay_get_mode` returned live data.
+- Note: `timeline get` and `payment-intents get` could only be plumbing-checked — the local platform server fixtures only seed the transactions list, so intent lookups 404 (as does the pre-existing `charges get` on fixture IDs).
+
 ## 2026-05-22 result
 
 Validated successfully against the local WooPayments site with a connected test/dev account:

@@ -75,20 +75,27 @@ Use `doctor` before debugging a store. It verifies the selected profile, site UR
 
 ```bash
 wcpay transactions list --limit 25
+wcpay transactions summary
 wcpay deposits list
 wcpay deposits get po_...
+wcpay deposits overview
 wcpay disputes list
 wcpay disputes get dp_...
+wcpay disputes summary
 wcpay charges get ch_...
+wcpay authorizations list
+wcpay timeline get pi_...
+wcpay orders get 123
 ```
 
-These commands are read-only and safe to run against live stores.
+These commands are read-only and safe to run against live stores. Amounts are formatted as currency in human output; pass `--all` to a list command to fetch every page, and `--verbose` to see redacted request/response logs.
 
 ### Try a write safely
 
 ```bash
 wcpay refunds create --order 123 --amount 500 --dry-run
 wcpay authorizations capture --order 123 --intent pi_... --dry-run
+wcpay disputes close dp_... --dry-run
 ```
 
 `--dry-run` resolves the request, checks the store mode, redacts secrets, and prints what would be sent without making the write request.
@@ -120,6 +127,17 @@ wcpay mcp
 - Linux: Secret Service via `secret-tool`
 
 If the OS keychain is unavailable, the CLI fails with instructions instead of silently writing secrets to disk. Set `WCPAY_KEYRING=0` to explicitly use file-backed secret storage for CI/containers.
+
+For ephemeral environments you can skip profiles entirely with environment variables:
+
+```bash
+export WCPAY_SITE_URL=https://store.example
+export WCPAY_CONSUMER_KEY=ck_...
+export WCPAY_CONSUMER_SECRET=cs_...
+wcpay doctor --json
+```
+
+Commands exit with category codes (`2` usage, `3` auth, `4` API failure, `5` live-mode write blocked) so scripts and agents can branch on failure type — see the [command guide](docs/commands.md) for the full table.
 
 ## Documentation
 
