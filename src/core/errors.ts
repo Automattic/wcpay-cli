@@ -22,3 +22,22 @@ export class CliError extends Error {
 		};
 	}
 }
+
+export function exitCodeForError(error: unknown): number {
+	if (!(error instanceof CliError)) {
+		return 1;
+	}
+	if (error.code === 'live_mode_write_blocked') {
+		return 5;
+	}
+	if (error.status === 2) {
+		return 2;
+	}
+	if (error.status === 401 || error.status === 403) {
+		return 3;
+	}
+	if (error.status !== undefined && error.status >= 400) {
+		return 4;
+	}
+	return 1;
+}
