@@ -113,9 +113,13 @@ export function registerResourceCommands(program: Command): void {
 						});
 				printSuccess(data, {
 					json: isJsonOutput(program, options),
-					human: formatList(data, ['id', 'date', 'type', 'amount', 'currency'], {
-						amount: amountColumn,
-					}),
+					human: formatList(
+						data,
+						['transaction_id', 'date', 'type', 'amount', 'currency'],
+						{
+							amount: amountColumn,
+						}
+					),
 				});
 			});
 		});
