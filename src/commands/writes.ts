@@ -19,14 +19,6 @@ interface RefundCreateOptions {
 	json?: boolean;
 }
 
-interface AuthorizationOptions {
-	order?: string;
-	intent?: string;
-	dryRun?: boolean;
-	yes?: boolean;
-	json?: boolean;
-}
-
 interface TestOrderCreateOptions {
 	product?: string;
 	quantity?: string;
@@ -89,12 +81,6 @@ export function registerWriteCommands(program: Command): void {
 				});
 			});
 		});
-
-	const authorizations = program
-		.command('authorizations')
-		.description('Capture or cancel test/dev-mode authorizations.');
-	registerAuthorizationCommand(program, authorizations, 'capture', 'capture_authorization');
-	registerAuthorizationCommand(program, authorizations, 'cancel', 'cancel_authorization');
 
 	registerTestCommands(program);
 }
@@ -187,37 +173,6 @@ function registerTestCommands(program: Command): void {
 					orderId: parsePositiveInteger(options.order, '--order'),
 					paymentMethod: options.paymentMethod ?? scenario!.paymentMethod,
 					scenario: options.scenario ?? scenario!.alias,
-					dryRun: Boolean(
-						options.dryRun || (program.opts() as { dryRun?: boolean }).dryRun
-					),
-					yes: Boolean(options.yes || (program.opts() as { yes?: boolean }).yes),
-					json,
-				});
-			});
-		});
-}
-
-function registerAuthorizationCommand(
-	program: Command,
-	authorizations: Command,
-	name: 'capture' | 'cancel',
-	endpointAction: 'capture_authorization' | 'cancel_authorization'
-): void {
-	authorizations
-		.command(name)
-		.description(`${name === 'capture' ? 'Capture' : 'Cancel'} a test/dev-mode authorization.`)
-		.requiredOption('--order <order-id>', 'WooCommerce order ID.')
-		.requiredOption('--intent <payment-intent-id>', 'Payment intent ID.')
-		.option('--dry-run', 'Print the request without sending it.')
-		.option('--yes', 'Confirm the test/dev-mode write.')
-		.option('--json', 'Emit JSON output.')
-		.action(async (options: AuthorizationOptions) => {
-			const json = isJsonOutput(program, options);
-			await runCommandAction({ json }, async () => {
-				const orderId = parsePositiveInteger(options.order, '--order');
-				await sendGuardedWrite(program, {
-					path: `/wc/v3/payments/orders/${orderId}/${endpointAction}`,
-					body: { payment_intent_id: options.intent },
 					dryRun: Boolean(
 						options.dryRun || (program.opts() as { dryRun?: boolean }).dryRun
 					),

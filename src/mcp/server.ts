@@ -161,6 +161,23 @@ export function createMcpServer(): McpServer {
 	);
 
 	server.registerTool(
+		'wcpay_list_authorizations',
+		{
+			description: 'List uncaptured WooPayments authorizations.',
+			inputSchema: listArgs,
+			annotations: readOnlyAnnotations,
+		},
+		async (args) =>
+			textResult(
+				await getEndpoint(
+					args.profile,
+					'/wc/v3/payments/authorizations',
+					buildListQuery(args)
+				)
+			)
+	);
+
+	server.registerTool(
 		'wcpay_get_timeline',
 		{
 			description: 'Get the WooPayments event timeline for a payment intent.',

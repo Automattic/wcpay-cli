@@ -79,6 +79,14 @@ Write-capable commands are guarded in two ways:
 - they run only when WooPayments is in test/dev mode;
 - they require `--dry-run` or `--yes`.
 
+Find uncaptured authorizations first (read-only, safe on live stores):
+
+```bash
+wcpay authorizations list
+wcpay authorizations get <payment-intent-id>
+wcpay authorizations summary
+```
+
 Preview what would happen:
 
 ```bash

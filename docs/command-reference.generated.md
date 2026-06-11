@@ -229,27 +229,35 @@ Options:
 
 - `--json` — Emit JSON output.
 
-## `refunds [command]`
+## `authorizations [command]`
 
-Create and inspect refunds.
+Inspect and manage uncaptured payment authorizations.
 
-## `refunds create [options]`
+## `authorizations list [options]`
 
-Create a test/dev-mode refund.
+List uncaptured authorizations.
 
 Options:
 
-- `--order <order-id>` — WooCommerce order ID.
-- `--charge <charge-id>` — WooPayments/Stripe charge ID.
-- `--amount <minor-units>` — Refund amount in minor currency units.
-- `--reason <reason>` — Refund reason: requested_by_customer, duplicate, or fraudulent.
-- `--dry-run` — Print the request without sending it.
-- `--yes` — Confirm the test/dev-mode write.
+- `--json` — Emit JSON output.
+- `--page <page>` — Page number.
+- `--limit <limit>` — Page size.
+
+## `authorizations get <payment-intent-id>`
+
+Get an authorization by payment intent ID.
+
+Options:
+
 - `--json` — Emit JSON output.
 
-## `authorizations [command]`
+## `authorizations summary [options]`
 
-Capture or cancel test/dev-mode authorizations.
+Show a summary of uncaptured authorizations.
+
+Options:
+
+- `--json` — Emit JSON output.
 
 ## `authorizations capture [options]`
 
@@ -271,6 +279,24 @@ Options:
 
 - `--order <order-id>` — WooCommerce order ID.
 - `--intent <payment-intent-id>` — Payment intent ID.
+- `--dry-run` — Print the request without sending it.
+- `--yes` — Confirm the test/dev-mode write.
+- `--json` — Emit JSON output.
+
+## `refunds [command]`
+
+Create and inspect refunds.
+
+## `refunds create [options]`
+
+Create a test/dev-mode refund.
+
+Options:
+
+- `--order <order-id>` — WooCommerce order ID.
+- `--charge <charge-id>` — WooPayments/Stripe charge ID.
+- `--amount <minor-units>` — Refund amount in minor currency units.
+- `--reason <reason>` — Refund reason: requested_by_customer, duplicate, or fraudulent.
 - `--dry-run` — Print the request without sending it.
 - `--yes` — Confirm the test/dev-mode write.
 - `--json` — Emit JSON output.

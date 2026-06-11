@@ -11,6 +11,19 @@ describe('buildProgram', () => {
 		expect(program.commands.map((command) => command.name())).toContain('login');
 	});
 
+	it('registers read and write authorization subcommands', () => {
+		const authorizations = buildProgram().commands.find(
+			(command) => command.name() === 'authorizations'
+		);
+		expect(authorizations?.commands.map((command) => command.name()).sort()).toEqual([
+			'cancel',
+			'capture',
+			'get',
+			'list',
+			'summary',
+		]);
+	});
+
 	it('registers the timeline command', () => {
 		const names = buildProgram().commands.map((command) => command.name());
 		expect(names).toContain('timeline');

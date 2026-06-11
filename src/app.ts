@@ -1,5 +1,6 @@
 import { Command } from 'commander';
 import { registerApiCommand } from './commands/api.js';
+import { registerAuthorizationCommands } from './commands/authorizations.js';
 import {
 	registerAuthCommands,
 	registerLoginCommand,
@@ -66,6 +67,7 @@ export function buildProgram(): Command {
 	registerApiCommand(program);
 	registerReadCommands(program);
 	registerResourceCommands(program);
+	registerAuthorizationCommands(program);
 	registerWriteCommands(program);
 	registerMcpCommand(program);
 	registerCompletionsCommand(program);
