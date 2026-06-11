@@ -35,6 +35,13 @@
 5. **Version sync.** `src/core/version.ts` must match `package.json`
    (`tests/version.test.ts` enforces).
 6. **ESM imports end in `.js`** even for `.ts` sources (NodeNext resolution).
+7. **Docs ship with the change.** Whenever you update functionality or change the
+   API/command surface, update the affected docs in the same change: `README.md`,
+   `docs/commands.md`, `docs/getting-started.md`, `docs/auth.md`, `docs/api.md`,
+   and `docs/mcp.md` (its tool list is prose, not generated). Only the generated
+   reference and the MCP sync are test-enforced — the prose pages are not, so
+   check them deliberately; the 0.2.4 release initially shipped with a stale MCP
+   tool list.
 
 ## Gotchas
 
