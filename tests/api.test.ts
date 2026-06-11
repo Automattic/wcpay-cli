@@ -236,6 +236,30 @@ describe('RestClient retries', () => {
 	});
 });
 
+describe('RestClient logging', () => {
+	it('logs redacted request and response lines', async () => {
+		const lines: string[] = [];
+		const fetchMock = vi.fn<typeof fetch>().mockResolvedValue(jsonResponse({}));
+		const client = new RestClient(
+			profile,
+			{ consumerKey: 'ck_test', consumerSecret: 'cs_test' },
+			{
+				fetch: fetchMock,
+				logger: (line) => lines.push(line),
+				nonce: () => 'nonce',
+				timestamp: () => 123,
+			}
+		);
+
+		await client.request({ method: 'GET', path: '/wc/v3/payments/accounts' });
+
+		expect(lines).toHaveLength(2);
+		expect(lines[0]).toContain('> GET');
+		expect(lines[0]).not.toContain('ck_test');
+		expect(lines[1]).toMatch(/^< 200 .*\(\d+ms\)$/);
+	});
+});
+
 describe('createOAuthSignature', () => {
 	it('is deterministic for a fixed request', () => {
 		const url = new URL('http://localhost:8082/wp-json/wc/v3/payments/accounts?page=1');

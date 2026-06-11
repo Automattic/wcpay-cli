@@ -12,7 +12,9 @@ import { registerReadCommands } from './commands/read.js';
 import { registerResourceCommands } from './commands/resources.js';
 import { registerToolsCommands } from './commands/tools.js';
 import { registerWriteCommands } from './commands/writes.js';
+import { ENV_DEBUG, ENV_TIMEOUT } from './core/config.js';
 import { printSuccess } from './core/output.js';
+import type { GlobalOptions } from './core/types.js';
 import { printWelcome } from './core/ux.js';
 import { VERSION } from './core/version.js';
 
@@ -27,6 +29,8 @@ export function buildProgram(): Command {
 		.option('--json', 'Emit JSON output.')
 		.option('--dry-run', 'Resolve and validate without sending write requests.')
 		.option('--yes', 'Skip interactive confirmation prompts where supported.')
+		.option('--verbose', 'Print request/response debug logs to stderr.')
+		.option('--timeout <seconds>', 'HTTP request timeout in seconds.')
 		.action(() => {
 			if ((program.opts() as { json?: boolean }).json) {
 				printSuccess(
@@ -44,6 +48,16 @@ export function buildProgram(): Command {
 			}
 			printWelcome();
 		});
+
+	program.hook('preAction', () => {
+		const options = program.opts() as GlobalOptions;
+		if (options.verbose) {
+			process.env[ENV_DEBUG] = '1';
+		}
+		if (options.timeout) {
+			process.env[ENV_TIMEOUT] = options.timeout;
+		}
+	});
 
 	registerLoginCommand(program);
 	registerAuthCommands(program);

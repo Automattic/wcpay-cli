@@ -10,6 +10,13 @@ describe('buildProgram', () => {
 		expect(program.commands.map((command) => command.name())).toContain('tools');
 		expect(program.commands.map((command) => command.name())).toContain('login');
 	});
+
+	it('exposes global --verbose and --timeout options', () => {
+		const program = buildProgram();
+		const flags = program.options.map((option) => option.flags);
+		expect(flags).toContain('--verbose');
+		expect(flags).toContain('--timeout <seconds>');
+	});
 });
 
 describe('config paths', () => {

@@ -54,4 +54,11 @@ describe('clientOptionsFromEnv', () => {
 			'WCPAY_TIMEOUT'
 		);
 	});
+
+	it('enables the debug logger with WCPAY_DEBUG', () => {
+		expect(clientOptionsFromEnv({ WCPAY_DEBUG: '1' } as NodeJS.ProcessEnv).logger).toBeTypeOf(
+			'function'
+		);
+		expect(clientOptionsFromEnv({} as NodeJS.ProcessEnv).logger).toBeUndefined();
+	});
 });

@@ -1,4 +1,4 @@
-import { ENV_CONSUMER_KEY, ENV_CONSUMER_SECRET, ENV_TIMEOUT } from './config.js';
+import { ENV_CONSUMER_KEY, ENV_CONSUMER_SECRET, ENV_DEBUG, ENV_TIMEOUT } from './config.js';
 import { CliError } from './errors.js';
 import { ProfileStore, type Profile } from './profiles.js';
 import {
@@ -40,6 +40,9 @@ export function clientOptionsFromEnv(env: NodeJS.ProcessEnv = process.env): Rest
 	const timeoutSeconds = parseOptionalPositiveInteger(env[ENV_TIMEOUT], ENV_TIMEOUT);
 	if (timeoutSeconds !== undefined) {
 		options.timeoutMs = timeoutSeconds * 1000;
+	}
+	if (env[ENV_DEBUG] === '1' || env[ENV_DEBUG] === 'true') {
+		options.logger = (line) => process.stderr.write(`${line}\n`);
 	}
 	return options;
 }

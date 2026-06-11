@@ -35,6 +35,7 @@ export interface RestClientOptions {
 	timeoutMs?: number;
 	retries?: number;
 	sleep?: (ms: number) => Promise<void>;
+	logger?: (line: string) => void;
 }
 
 export class RestClient {
@@ -44,6 +45,7 @@ export class RestClient {
 	private readonly timeoutMs: number;
 	private readonly retries: number;
 	private readonly sleep: (ms: number) => Promise<void>;
+	private readonly logger?: (line: string) => void;
 
 	public constructor(
 		private readonly profile: Profile,
@@ -57,6 +59,7 @@ export class RestClient {
 		this.retries = options.retries ?? 2;
 		this.sleep =
 			options.sleep ?? ((ms: number) => new Promise((resolve) => setTimeout(resolve, ms)));
+		this.logger = options.logger;
 	}
 
 	public resolve(request: RestRequest): ResolvedRestRequest {
@@ -90,6 +93,10 @@ export class RestClient {
 		const maxAttempts = isReadMethod(resolved.method) ? this.retries + 1 : 1;
 
 		for (let attempt = 1; ; attempt += 1) {
+			this.logger?.(
+				`> ${resolved.method} ${redactUrl(resolved.url)}${attempt > 1 ? ` (attempt ${attempt})` : ''}`
+			);
+			const startedAt = Date.now();
 			let response: Response;
 			try {
 				response = await this.fetchImpl(resolved.url, {
@@ -105,6 +112,10 @@ export class RestClient {
 				}
 				throw toTransportError(error, resolved, this.timeoutMs);
 			}
+
+			this.logger?.(
+				`< ${response.status} ${response.statusText} (${Date.now() - startedAt}ms)`
+			);
 
 			if (RETRYABLE_STATUSES.has(response.status) && attempt < maxAttempts) {
 				await this.sleep(retryDelay(attempt));
