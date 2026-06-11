@@ -3,6 +3,7 @@ import { createContext } from '../core/context.js';
 import { formatKeyValue, formatList } from '../core/format.js';
 import { printSuccess } from '../core/output.js';
 import { isJsonOutput, runCommandAction } from './common.js';
+import { sendGuardedWrite } from './guarded-write.js';
 import { buildListQuery, type ListOptions } from './list-options.js';
 
 export function registerResourceCommands(program: Command): void {
@@ -59,6 +60,29 @@ export function registerResourceCommands(program: Command): void {
 				});
 			});
 		});
+
+	disputes
+		.command('close <id>')
+		.description('Close (concede) a test/dev-mode dispute.')
+		.option('--dry-run', 'Print the request without sending it.')
+		.option('--yes', 'Confirm the test/dev-mode write.')
+		.option('--json', 'Emit JSON output.')
+		.action(
+			async (id: string, options: { dryRun?: boolean; yes?: boolean; json?: boolean }) => {
+				const json = isJsonOutput(program, options);
+				await runCommandAction({ json }, async () => {
+					await sendGuardedWrite(program, {
+						path: `/wc/v3/payments/disputes/${encodeURIComponent(id)}/close`,
+						body: {},
+						dryRun: Boolean(
+							options.dryRun || (program.opts() as { dryRun?: boolean }).dryRun
+						),
+						yes: Boolean(options.yes || (program.opts() as { yes?: boolean }).yes),
+						json,
+					});
+				});
+			}
+		);
 
 	const transactions = program
 		.command('transactions')

@@ -196,6 +196,19 @@ export const toolRegistry: ToolDescriptor[] = [
 		examples: ['wcpay api get /wc/v3/payments/accounts --json'],
 	},
 	{
+		name: 'wcpay_close_dispute',
+		description: 'Close (concede) a dispute in WooPayments test/dev mode.',
+		command: 'wcpay disputes close <id> --yes --json',
+		safety: 'test_mode_write',
+		mcp: false,
+		inputs: {
+			id: { type: 'string' },
+			confirm: { type: 'boolean' },
+			dryRun: { type: 'boolean', optional: true },
+		},
+		examples: ['wcpay disputes close dp_123 --dry-run --json'],
+	},
+	{
 		name: 'wcpay_create_refund',
 		description: 'Create a refund in WooPayments test/dev mode.',
 		command: 'wcpay refunds create --order <id> --amount <minor-units> --yes --json',

@@ -40,6 +40,11 @@ describe('buildProgram', () => {
 		expect(names).toContain('timeline');
 	});
 
+	it('registers the disputes close write subcommand', () => {
+		const disputes = buildProgram().commands.find((command) => command.name() === 'disputes');
+		expect(disputes?.commands.map((command) => command.name())).toContain('close');
+	});
+
 	it('registers payment-intents and orders commands', () => {
 		const names = buildProgram().commands.map((command) => command.name());
 		expect(names).toContain('payment-intents');

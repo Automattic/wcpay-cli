@@ -196,6 +196,16 @@ Options:
 
 - `--json` — Emit JSON output.
 
+## `disputes close <id>`
+
+Close (concede) a test/dev-mode dispute.
+
+Options:
+
+- `--dry-run` — Print the request without sending it.
+- `--yes` — Confirm the test/dev-mode write.
+- `--json` — Emit JSON output.
+
 ## `transactions [command]`
 
 Inspect WooPayments transactions.

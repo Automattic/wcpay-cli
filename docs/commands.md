@@ -98,6 +98,7 @@ Preview what would happen:
 wcpay refunds create --order <id> --amount <minor-units> --dry-run
 wcpay authorizations capture --order <id> --intent <payment-intent-id> --dry-run
 wcpay authorizations cancel --order <id> --intent <payment-intent-id> --dry-run
+wcpay disputes close <dispute-id> --dry-run
 ```
 
 Send the request in test/dev mode:

@@ -41,6 +41,7 @@ Curated commands use WooPayments/WooCommerce REST endpoints directly. The CLI au
 | POST   | `/wc/v3/payments/orders/{order_id}/capture_authorization` | Capture authorization   | `allowlisted-test-write` | Implemented with mode guard and `--yes`/`--dry-run`.      |
 | POST   | `/wc/v3/payments/orders/{order_id}/cancel_authorization`  | Cancel authorization    | `allowlisted-test-write` | Implemented with mode guard and `--yes`/`--dry-run`.      |
 | POST   | `/wc/v3/orders`                                           | Create test order       | `allowlisted-test-write` | Implemented; requires existing product and test/dev mode. |
+| POST   | `/wc/v3/payments/disputes/{dispute_id}/close`             | Close (concede) dispute | `allowlisted-test-write` | Implemented with mode guard and `--yes`/`--dry-run`.      |
 
 ## Review checklist
 
