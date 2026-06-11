@@ -90,8 +90,8 @@ export function registerLoginCommand(program: Command): void {
 					allowInsecureLocal: options.allowInsecureLocal,
 					interactive: pretty,
 				});
-				let consumerKey = options.consumerKey ?? process.env[ENV_CONSUMER_KEY];
-				let consumerSecret = options.consumerSecret ?? process.env[ENV_CONSUMER_SECRET];
+				const consumerKey = options.consumerKey ?? process.env[ENV_CONSUMER_KEY];
+				const consumerSecret = options.consumerSecret ?? process.env[ENV_CONSUMER_SECRET];
 
 				if (!consumerKey || !consumerSecret) {
 					writeApiKeyInstructions(normalized.siteUrl, json);
