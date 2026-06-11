@@ -63,7 +63,7 @@ npm install -g @automattic/wcpay-cli
 Before npm publication, the GitHub release tarball is the install source. Keep this URL aligned with `package.json` during every release; `npm run release:check` enforces that the documented release asset URL points at the current package version.
 
 ```bash
-npm install -g https://github.com/Automattic/wcpay-cli/releases/download/v0.2.3/automattic-wcpay-cli-0.2.3.tgz
+npm install -g https://github.com/Automattic/wcpay-cli/releases/download/v0.2.4/automattic-wcpay-cli-0.2.4.tgz
 ```
 
 ## Releasing
