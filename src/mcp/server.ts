@@ -3,6 +3,7 @@ import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
 import { z } from 'zod';
 import { normalizeRestPath } from '../core/api.js';
 import { createContext } from '../core/context.js';
+import { runDoctorChecks } from '../core/doctor.js';
 import { CliError } from '../core/errors.js';
 import { classifyMode, ModeService } from '../core/mode.js';
 import type { CliEnvelope } from '../core/types.js';
@@ -225,22 +226,15 @@ async function getEndpoint(
 async function doctor(profile?: string): Promise<CliEnvelope> {
 	try {
 		const context = await createContext({ profile });
-		const settings = await context.client.request({
-			method: 'GET',
-			path: '/wc/v3/payments/settings',
-		});
-		const mode = classifyMode(settings as Record<string, unknown>);
+		const result = await runDoctorChecks(context);
 		return {
 			ok: true,
 			data: {
 				profile: context.profile.name,
-				mode,
-				checks: [
-					{ name: 'profile', status: 'pass', message: context.profile.name },
-					{ name: 'site_url', status: 'pass', message: context.profile.siteUrl },
-					{ name: 'auth', status: 'pass', message: 'Credentials accepted.' },
-					{ name: 'mode', status: 'pass', message: mode },
-				],
+				site: context.profile.siteUrl,
+				mode: result.mode,
+				summary: result.summary,
+				checks: result.checks,
 			},
 		};
 	} catch (error) {
